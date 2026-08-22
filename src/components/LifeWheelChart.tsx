@@ -4,6 +4,9 @@ interface Props {
   areas: LifeWheelAreaScore[]
   /** Snapshot anterior, dibujado como contorno punteado para comparar. */
   previousAreas?: LifeWheelAreaScore[]
+  /** Índice de área resaltada al pasar el mouse (opcional, no usado por la página real). */
+  hoveredIndex?: number | null
+  onHoverArea?: (index: number | null) => void
 }
 
 const SIZE = 320
@@ -28,7 +31,7 @@ function polygonPoints(areas: LifeWheelAreaScore[]): string {
 }
 
 /** Radar de la Rueda de la vida. SVG puro, mismo espíritu que `LineChart`. */
-export function LifeWheelChart({ areas, previousAreas }: Props) {
+export function LifeWheelChart({ areas, previousAreas, hoveredIndex = null, onHoverArea }: Props) {
   if (areas.length === 0) {
     return <p className="chart-empty">Necesitás al menos una categoría para graficar la rueda.</p>
   }
@@ -78,7 +81,23 @@ export function LifeWheelChart({ areas, previousAreas }: Props) {
         <polygon points={polygonPoints(areas)} className="chart__line" />
 
         {areas.map((area, i) => {
+          const p = point(i, total, area.score)
+          const hovered = hoveredIndex === i
+          return (
+            <circle
+              key={`dot-${area.categoryId}`}
+              cx={p.x}
+              cy={p.y}
+              r={hovered ? 5 : 3}
+              fill={hovered ? 'var(--accent)' : 'var(--text)'}
+              opacity={hovered ? 1 : 0.7}
+            />
+          )
+        })}
+
+        {areas.map((area, i) => {
           const p = point(i, total, MAX_SCORE + 1.7)
+          const hovered = hoveredIndex === i
           return (
             <text
               key={area.categoryId}
@@ -87,11 +106,29 @@ export function LifeWheelChart({ areas, previousAreas }: Props) {
               y={p.y}
               textAnchor="middle"
               dominantBaseline="middle"
+              fill={hovered ? 'var(--accent)' : undefined}
+              fontWeight={hovered ? 700 : undefined}
             >
               {area.categoryName} ({area.score})
             </text>
           )
         })}
+
+        {onHoverArea &&
+          areas.map((area, i) => {
+            const p = point(i, total, area.score)
+            return (
+              <circle
+                key={`hit-${area.categoryId}`}
+                className="chart__hit"
+                cx={p.x}
+                cy={p.y}
+                r={18}
+                onMouseEnter={() => onHoverArea(i)}
+                onMouseLeave={() => onHoverArea(null)}
+              />
+            )
+          })}
       </svg>
     </div>
   )
