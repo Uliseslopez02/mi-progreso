@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { getSession } from '../auth/supabaseAuth'
+import { consumeFocusIntent } from '../auth/focusIntent'
+import { ProgressPath } from '../components/ProgressPath'
 import {
   LIFE_AREAS,
   RECOMMENDED_MAX_GOALS,
@@ -35,7 +37,10 @@ const TOTAL_STEPS = 4
 export function OnboardingWizard({ onComplete }: Props) {
   const { data, dispatch } = useAppData()
   const [step, setStep] = useState<Step>('areas')
-  const [selectedAreaIds, setSelectedAreaIds] = useState<Set<string>>(new Set())
+  const [selectedAreaIds, setSelectedAreaIds] = useState<Set<string>>(() => {
+    const focusAreaId = consumeFocusIntent()
+    return focusAreaId ? new Set([focusAreaId]) : new Set()
+  })
   const [draftGoals, setDraftGoals] = useState<GoalDraft[]>([])
   const [customName, setCustomName] = useState('')
   const [firstName, setFirstName] = useState<string | null>(null)
@@ -150,9 +155,7 @@ export function OnboardingWizard({ onComplete }: Props) {
     <div className="onboarding-screen">
       <div className="card onboarding-card">
         <p className="hero__eyebrow">Mi Progreso</p>
-        <p className="onboarding-step">
-          Paso {STEP_NUMBER[step]} de {TOTAL_STEPS}
-        </p>
+        <ProgressPath steps={TOTAL_STEPS} activeIndex={STEP_NUMBER[step] - 1} size="sm" />
 
         {step === 'areas' && (
           <>

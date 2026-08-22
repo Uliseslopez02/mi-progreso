@@ -42,3 +42,12 @@ export const PASSWORD_STRENGTH_LABELS: Record<PasswordStrength, string> = {
   2: 'Buena',
   3: 'Fuerte',
 }
+
+/** "ulises@walabi.ar" -> "u****@walabi.ar" — para confirmar sin exponer el email completo. */
+export function maskEmail(email: string): string {
+  const [local, domain] = email.trim().split('@')
+  if (!local || !domain) return email
+  const visible = local.slice(0, 1)
+  const stars = '*'.repeat(Math.max(local.length - 1, 3))
+  return `${visible}${stars}@${domain}`
+}

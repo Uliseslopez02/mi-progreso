@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ProgressPath } from './ProgressPath'
 
 interface Props {
   message: string
@@ -28,10 +29,7 @@ export function LoadingScreen({ message, onRetry, slowAfterMs = 6000, stuckAfter
 
   return (
     <div className="loading-screen">
-      <div className="loading-screen__mark" aria-hidden="true">
-        <span className="loading-screen__ring" />
-        <span className="loading-screen__logo">MP</span>
-      </div>
+      <ProgressPath steps={5} indeterminate size="md" />
       <p className="loading-screen__brand">Mi Progreso</p>
       <p className="loading-screen__message" role="status">
         {message}

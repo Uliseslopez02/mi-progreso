@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { signOut } from './auth/supabaseAuth'
 import { ErrorScreen } from './components/ErrorScreen'
 import { LoadingScreen } from './components/LoadingScreen'
 import { formatLongDate } from './domain/date'
@@ -13,6 +14,7 @@ import { PlannerPage } from './pages/PlannerPage'
 import { RoutinesPage } from './pages/RoutinesPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { TodayPage } from './pages/TodayPage'
+import { FirstTimeIntro } from './onboarding/FirstTimeIntro'
 import { OnboardingWizard } from './onboarding/OnboardingWizard'
 import { useAppContext } from './state/context'
 
@@ -50,6 +52,7 @@ export function App() {
   const { state, retryHydrate, saveStatus } = useAppContext()
   const [tab, setTab] = useState<Tab>('hoy')
   const [onboarding, setOnboarding] = useState<OnboardingFlag>(null)
+  const [introSeen, setIntroSeen] = useState(false)
   const appName = state.data?.settings.appName ?? 'Mi Progreso'
 
   useEffect(() => {
@@ -73,17 +76,29 @@ export function App() {
   if (state.status === 'error') {
     return (
       <ErrorScreen
-        message={state.error ?? 'No pudimos cargar tus datos. Probá de nuevo en un momento.'}
+        message={state.error ?? 'No pudimos preparar tu progreso. Probá de nuevo en un momento.'}
         onRetry={retryHydrate}
+        onSignOut={() => void signOut()}
       />
     )
   }
 
   if (state.status !== 'ready' || !state.data) {
-    return <LoadingScreen message="Cargando tus datos…" onRetry={retryHydrate} />
+    return <LoadingScreen message="Recuperando tus avances…" onRetry={retryHydrate} />
   }
 
   if (onboarding) {
+    if (!introSeen) {
+      return (
+        <FirstTimeIntro
+          onContinue={() => setIntroSeen(true)}
+          onSkip={() => {
+            setIntroSeen(true)
+            setOnboarding(false)
+          }}
+        />
+      )
+    }
     return <OnboardingWizard onComplete={() => setOnboarding(false)} />
   }
 

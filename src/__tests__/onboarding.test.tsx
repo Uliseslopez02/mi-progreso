@@ -20,6 +20,12 @@ function renderFreshApp() {
   }
 }
 
+/** La cuenta nueva ve primero la introducción breve de bienvenida — la salteamos para llegar al wizard. */
+async function skipIntro(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByRole('button', { name: 'Saltar' }))
+  await user.click(await screen.findByRole('button', { name: 'Crear mi primer objetivo' }))
+}
+
 function renderExistingApp() {
   const repository = createLocalStorageRepository()
   void repository.save(createInitialData('2026-08-18T10:00:00.000Z'))
@@ -42,9 +48,14 @@ describe('Onboarding', () => {
     vi.restoreAllMocks()
   })
 
-  it('una cuenta nueva ve el wizard, no la app', async () => {
+  it('una cuenta nueva ve primero la introducción, después el wizard, nunca la app', async () => {
+    const user = userEvent.setup()
     renderFreshApp()
 
+    expect(await screen.findByText('Esto no se trata de hacerlo todo.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Hoy' })).not.toBeInTheDocument()
+
+    await skipIntro(user)
     expect(await screen.findByText('¿Qué querés mejorar?')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Hoy' })).not.toBeInTheDocument()
   })
@@ -52,6 +63,7 @@ describe('Onboarding', () => {
   it('elegir áreas filtra las sugerencias del paso 2', async () => {
     const user = userEvent.setup()
     renderFreshApp()
+    await skipIntro(user)
     await screen.findByText('¿Qué querés mejorar?')
 
     await user.click(screen.getByRole('button', { name: 'Salud' }))
@@ -67,6 +79,7 @@ describe('Onboarding', () => {
   it('permite agregar un objetivo propio', async () => {
     const user = userEvent.setup()
     renderFreshApp()
+    await skipIntro(user)
     await screen.findByText('¿Qué querés mejorar?')
 
     await user.click(screen.getByRole('button', { name: 'Salud' }))
@@ -82,6 +95,7 @@ describe('Onboarding', () => {
   it('avisa (sin bloquear) al elegir muchos objetivos', async () => {
     const user = userEvent.setup()
     renderFreshApp()
+    await skipIntro(user)
     await screen.findByText('¿Qué querés mejorar?')
 
     for (const area of ['Salud', 'Productividad', 'Desarrollo personal']) {
@@ -107,6 +121,7 @@ describe('Onboarding', () => {
   it('crea las categorías y objetivos con el peso del tier elegido, y entra a la app', async () => {
     const user = userEvent.setup()
     const { repository } = renderFreshApp()
+    await skipIntro(user)
     await screen.findByText('¿Qué querés mejorar?')
 
     await user.click(screen.getByRole('button', { name: 'Salud' }))
@@ -143,6 +158,7 @@ describe('Onboarding', () => {
   it('cerrar antes de terminar no persiste nada: al reabrir arranca de cero', async () => {
     const user = userEvent.setup()
     const { unmount, repository } = renderFreshApp()
+    await skipIntro(user)
     await screen.findByText('¿Qué querés mejorar?')
 
     await user.click(screen.getByRole('button', { name: 'Salud' }))
@@ -155,6 +171,7 @@ describe('Onboarding', () => {
     })
 
     renderFreshApp()
+    await skipIntro(user)
     expect(await screen.findByText('¿Qué querés mejorar?')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Salud' })).toHaveAttribute('aria-pressed', 'false')
   })
@@ -175,6 +192,7 @@ describe('Onboarding', () => {
     await user.click(screen.getByRole('button', { name: 'Ajustes' }))
     await user.click(screen.getByRole('button', { name: 'Borrar todos los datos' }))
 
+    await skipIntro(user)
     expect(await screen.findByText('¿Qué querés mejorar?')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Hoy' })).not.toBeInTheDocument()
   })
@@ -183,6 +201,7 @@ describe('Onboarding', () => {
     const user = userEvent.setup()
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     renderFreshApp()
+    await skipIntro(user)
     await screen.findByText('¿Qué querés mejorar?')
 
     await user.click(screen.getByRole('button', { name: 'Prefiero empezar con objetivos de ejemplo' }))
