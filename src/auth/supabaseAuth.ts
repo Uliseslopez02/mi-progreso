@@ -24,18 +24,25 @@ export async function signIn(email: string, password: string): Promise<void> {
   if (error) throw error
 }
 
-/** Devuelve si hace falta confirmar el email antes de poder iniciar sesión. */
+/**
+ * Devuelve si hace falta confirmar el email antes de poder iniciar sesión, y
+ * si el email ya tenía una cuenta. Supabase no tira error en ese último caso
+ * (para no confirmar por error la existencia de una cuenta a quien no la
+ * conoce de antes) — la señal es `identities` vacío en la respuesta.
+ */
 export async function signUp(
   email: string,
   password: string,
-): Promise<{ needsEmailConfirmation: boolean }> {
+  fullName: string,
+): Promise<{ needsEmailConfirmation: boolean; alreadyRegistered: boolean }> {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: window.location.origin },
+    options: { emailRedirectTo: window.location.origin, data: { full_name: fullName } },
   })
   if (error) throw error
-  return { needsEmailConfirmation: !data.session }
+  const alreadyRegistered = Boolean(data.user) && data.user!.identities?.length === 0
+  return { needsEmailConfirmation: !data.session && !alreadyRegistered, alreadyRegistered }
 }
 
 export async function signOut(): Promise<void> {

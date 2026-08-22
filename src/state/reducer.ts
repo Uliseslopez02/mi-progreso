@@ -29,9 +29,10 @@ function closePast(data: AppData, today: DateKey): AppData {
 }
 
 export interface AppState {
-  status: 'loading' | 'ready'
+  status: 'loading' | 'ready' | 'error'
   data: AppData | null
   today: DateKey
+  error: string | null
 }
 
 export type Action =
@@ -67,11 +68,21 @@ export type Action =
   | { type: 'addReflection'; reflection: Reflection }
   | { type: 'removeReflection'; id: string }
   | { type: 'replaceData'; data: AppData }
+  | { type: 'hydrateError'; message: string }
+  | { type: 'hydrateRetry' }
 
 export function reducer(state: AppState, action: Action): AppState {
   if (action.type === 'hydrate') {
     const data = syncToday(closePast(action.data, action.today), action.today)
-    return { status: 'ready', data, today: action.today }
+    return { status: 'ready', data, today: action.today, error: null }
+  }
+
+  if (action.type === 'hydrateError') {
+    return { status: 'error', data: null, today: state.today, error: action.message }
+  }
+
+  if (action.type === 'hydrateRetry') {
+    return { status: 'loading', data: null, today: state.today, error: null }
   }
 
   if (!state.data) return state

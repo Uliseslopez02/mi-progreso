@@ -6,7 +6,7 @@ import { createInitialData } from '../domain/defaults'
 import { AppProvider } from '../state/AppProvider'
 import { createLocalStorageRepository } from '../storage/localStorageRepository'
 
-vi.mock('../auth/supabaseAuth', () => ({ signOut: vi.fn() }))
+vi.mock('../auth/supabaseAuth', () => ({ signOut: vi.fn(), getSession: vi.fn().mockResolvedValue(null) }))
 
 function renderFreshApp() {
   const repository = createLocalStorageRepository()

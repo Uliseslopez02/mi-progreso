@@ -9,7 +9,7 @@ import { AppProvider } from '../state/AppProvider'
 import { serializeBackup } from '../storage/backup'
 import { STORAGE_KEY, createLocalStorageRepository } from '../storage/localStorageRepository'
 
-vi.mock('../auth/supabaseAuth', () => ({ signOut: vi.fn() }))
+vi.mock('../auth/supabaseAuth', () => ({ signOut: vi.fn(), getSession: vi.fn().mockResolvedValue(null) }))
 
 function renderApp() {
   const repository = createLocalStorageRepository()
@@ -40,6 +40,34 @@ describe('Mi Progreso', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
+  })
+
+  it('si la carga inicial falla, muestra un error con reintentar en vez de quedar trabada', async () => {
+    let attempt = 0
+    const repository = {
+      load: vi.fn().mockImplementation(() => {
+        attempt += 1
+        if (attempt === 1) return Promise.reject(new Error('network down'))
+        return Promise.resolve(createInitialData('2026-08-18T10:00:00.000Z'))
+      }),
+      save: vi.fn().mockResolvedValue(undefined),
+      clear: vi.fn().mockResolvedValue(undefined),
+    }
+
+    render(
+      <AppProvider repository={repository as never}>
+        <App />
+      </AppProvider>,
+    )
+
+    const retryButton = await screen.findByRole('button', { name: 'Reintentar' })
+    expect(screen.getByRole('alert')).toHaveTextContent(/no pudimos/i)
+
+    const user = userEvent.setup()
+    await user.click(retryButton)
+
+    expect(await screen.findByTestId('ring-percent')).toBeInTheDocument()
+    expect(repository.load).toHaveBeenCalledTimes(2)
   })
 
   it('arranca el día en 0% con los objetivos por defecto', async () => {

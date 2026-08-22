@@ -8,6 +8,10 @@ export interface AppContextValue {
   dispatch: Dispatch<Action>
   /** Sólo lo usan pantallas con persistencia propia fuera del blob (ver Enfoque). */
   repository: ProgressRepository
+  /** Reintenta la carga inicial después de un error (ver estado 'error'). */
+  retryHydrate: () => void
+  /** Estado del guardado en segundo plano, para avisar si algo no se pudo guardar. */
+  saveStatus: 'idle' | 'saving' | 'error'
 }
 
 export const AppContext = createContext<AppContextValue | null>(null)

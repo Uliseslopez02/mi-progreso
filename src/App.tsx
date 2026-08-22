@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { ErrorScreen } from './components/ErrorScreen'
+import { LoadingScreen } from './components/LoadingScreen'
 import { formatLongDate } from './domain/date'
 import { CalendarPage } from './pages/CalendarPage'
 import { FocusPage } from './pages/FocusPage'
@@ -45,7 +47,7 @@ const TABS: Array<{ id: Tab; label: string }> = [
 type OnboardingFlag = boolean | null
 
 export function App() {
-  const { state } = useAppContext()
+  const { state, retryHydrate, saveStatus } = useAppContext()
   const [tab, setTab] = useState<Tab>('hoy')
   const [onboarding, setOnboarding] = useState<OnboardingFlag>(null)
   const appName = state.data?.settings.appName ?? 'Mi Progreso'
@@ -68,8 +70,17 @@ export function App() {
     if (onboarding === false && isEmpty) setOnboarding(true)
   }, [onboarding, isEmpty])
 
+  if (state.status === 'error') {
+    return (
+      <ErrorScreen
+        message={state.error ?? 'No pudimos cargar tus datos. Probá de nuevo en un momento.'}
+        onRetry={retryHydrate}
+      />
+    )
+  }
+
   if (state.status !== 'ready' || !state.data) {
-    return <div className="loading">Cargando tu progreso…</div>
+    return <LoadingScreen message="Cargando tus datos…" onRetry={retryHydrate} />
   }
 
   if (onboarding) {
@@ -78,6 +89,11 @@ export function App() {
 
   return (
     <div className="app-shell">
+      {saveStatus === 'error' && (
+        <div className="save-banner" role="status">
+          No pudimos guardar tus últimos cambios. Reintentando…
+        </div>
+      )}
       <header className="app-header">
         <div className="container app-header__row">
           <div className="brand">

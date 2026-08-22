@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { KeyboardEvent } from 'react'
+import { getSession } from '../auth/supabaseAuth'
 import {
   LIFE_AREAS,
   RECOMMENDED_MAX_GOALS,
@@ -37,6 +38,16 @@ export function OnboardingWizard({ onComplete }: Props) {
   const [selectedAreaIds, setSelectedAreaIds] = useState<Set<string>>(new Set())
   const [draftGoals, setDraftGoals] = useState<GoalDraft[]>([])
   const [customName, setCustomName] = useState('')
+  const [firstName, setFirstName] = useState<string | null>(null)
+
+  useEffect(() => {
+    getSession()
+      .then((session) => {
+        const fullName = session?.user.user_metadata?.full_name as string | undefined
+        if (fullName?.trim()) setFirstName(fullName.trim().split(' ')[0])
+      })
+      .catch(() => {})
+  }, [])
 
   const selectedAreas = LIFE_AREAS.filter((area) => selectedAreaIds.has(area.id))
   const suggestions = suggestedGoalsFor([...selectedAreaIds])
@@ -145,6 +156,7 @@ export function OnboardingWizard({ onComplete }: Props) {
 
         {step === 'areas' && (
           <>
+            {firstName && <p className="onboarding-greeting">¡Bienvenido, {firstName}! 👋</p>}
             <h1 className="card__title">¿Qué querés mejorar?</h1>
             <p className="card__hint">Elegí una o más áreas de tu vida en las que querés progresar.</p>
             <div className="onboarding-options">
