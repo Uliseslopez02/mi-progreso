@@ -27,6 +27,17 @@ function initialModeFromUrl(): Mode {
   return new URLSearchParams(window.location.search).get('signup') ? 'signUp' : 'signIn'
 }
 
+type LinkError = 'expired' | 'invalid' | null
+
+/** Supabase vuelve con `#error=...&error_code=otp_expired` cuando el enlace de recuperación venció o ya se usó. */
+function readLinkErrorFromUrl(): LinkError {
+  const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash
+  const params = new URLSearchParams(hash)
+  const code = params.get('error_code')
+  if (!params.get('error')) return null
+  return code === 'otp_expired' ? 'expired' : 'invalid'
+}
+
 /** Pantalla de acceso que envuelve toda la app: login, registro y recuperación de contraseña con Supabase Auth. */
 export function AuthGate({ children }: Props) {
   const [checking, setChecking] = useState(true)
@@ -44,6 +55,16 @@ export function AuthGate({ children }: Props) {
   const [resendCooldown, setResendCooldown] = useState(0)
   const [entering, setEntering] = useState(false)
   const [welcome] = useState(() => pickWelcomeCopy(isReturningDevice()))
+  const [linkError, setLinkError] = useState<LinkError>(() => readLinkErrorFromUrl())
+
+  useEffect(() => {
+    // Sólo se lee una vez: si hay un error de enlace en la URL, se limpia para
+    // que un refresh no lo vuelva a mostrar ni quede visible en la barra.
+    if (linkError) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     // Si getSession() nunca resuelve (red caída, backend caído), no dejamos
@@ -100,6 +121,44 @@ export function AuthGate({ children }: Props) {
             Creá <code>.env.local</code> con <code>VITE_SUPABASE_URL</code> y{' '}
             <code>VITE_SUPABASE_ANON_KEY</code> (mirá <code>.env.example</code>) y reiniciá el servidor.
           </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (linkError) {
+    return (
+      <div className="auth-screen">
+        <div className="card auth-card">
+          <div className="auth-card__brand">
+            <span className="auth-card__mark" aria-hidden="true">
+              MP
+            </span>
+            <p className="hero__eyebrow">Mi Progreso</p>
+          </div>
+          <h1 className="card__title">
+            {linkError === 'expired' ? 'Este enlace ya venció.' : 'Este enlace no es válido.'}
+          </h1>
+          <p className="card__hint auth-card__subtitle">
+            {linkError === 'expired'
+              ? 'Por seguridad, los enlaces para restablecer tu contraseña duran un tiempo limitado.'
+              : 'Puede que ya se haya usado, o que el link esté incompleto.'}
+          </p>
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={() => {
+              setLinkError(null)
+              setMode('resetPassword')
+            }}
+          >
+            Pedir un enlace nuevo
+          </button>
+          <div className="auth-card__links auth-card__links--center">
+            <button type="button" className="btn btn--ghost" onClick={() => setLinkError(null)}>
+              Volver al inicio
+            </button>
+          </div>
         </div>
       </div>
     )

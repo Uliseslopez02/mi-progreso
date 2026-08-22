@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { AuthGate } from '../auth/AuthGate'
 import * as supabaseAuth from '../auth/supabaseAuth'
@@ -45,6 +45,10 @@ describe('AuthGate', () => {
     vi.mocked(supabaseAuth.signUp).mockReset()
     vi.mocked(supabaseAuth.requestPasswordReset).mockReset()
     vi.mocked(supabaseAuth.updatePassword).mockReset()
+  })
+
+  afterEach(() => {
+    window.history.replaceState(null, '', '/')
   })
 
   it('sin sesión, muestra el login y no el contenido protegido', async () => {
@@ -282,6 +286,24 @@ describe('AuthGate', () => {
     await user.click(screen.getByRole('button', { name: 'Cambiar email' }))
     expect(screen.getByRole('heading', { name: '¿No recordás tu contraseña?' })).toBeInTheDocument()
     expect(screen.getByLabelText('Email')).toHaveValue('quien-sea@walabi.ar')
+  })
+
+  it('un enlace de recuperación vencido muestra una pantalla propia, no el login mudo', async () => {
+    window.history.replaceState(null, '', '/#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired')
+    vi.mocked(supabaseAuth.getSession).mockResolvedValue(null)
+    vi.mocked(supabaseAuth.onAuthStateChange).mockReturnValue(() => {})
+    const user = userEvent.setup()
+
+    render(
+      <AuthGate>
+        <p>Contenido secreto</p>
+      </AuthGate>,
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Este enlace ya venció.' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Pedir un enlace nuevo' }))
+    expect(await screen.findByRole('heading', { name: '¿No recordás tu contraseña?' })).toBeInTheDocument()
   })
 
   it('cerrar sesión (evento de auth con sesión null) vuelve al login', async () => {
