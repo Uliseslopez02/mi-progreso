@@ -42,7 +42,7 @@ function frequencyFrom(
 }
 
 export function SettingsPage() {
-  const { data, dispatch } = useAppData()
+  const { data, plan, dispatch } = useAppData()
   const [newGoalName, setNewGoalName] = useState('')
   const [newGoalCategory, setNewGoalCategory] = useState(data.categories[0]?.id ?? '')
   const [newGoalWeight, setNewGoalWeight] = useState(1)
@@ -854,6 +854,9 @@ export function SettingsPage() {
       <section className="card">
         <div className="card__header">
           <h2 className="card__title">Cuenta</h2>
+          <span className={`pill pill--${plan === 'premium' ? 'personal' : 'professional'}`}>
+            {plan === 'premium' ? 'Premium' : 'Free'}
+          </span>
         </div>
         <div className="row">
           <button type="button" className="btn btn--ghost" onClick={() => void signOut()}>

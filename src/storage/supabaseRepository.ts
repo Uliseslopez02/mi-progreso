@@ -15,6 +15,7 @@ import type {
   Reflection,
   Routine,
   RoutineRun,
+  UserPlan,
 } from '../domain/types'
 import { supabase } from '../lib/supabaseClient'
 import type { ProgressRepository } from './repository'
@@ -253,6 +254,12 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         linked_planner_item_id: session.linkedPlannerItemId ?? null,
       })
       if (error) throw error
+    },
+
+    async getUserPlan() {
+      const { data, error } = await client.from('profiles').select('plan').single()
+      if (error) throw error
+      return (data?.plan as UserPlan | undefined) ?? 'free'
     },
   }
 }

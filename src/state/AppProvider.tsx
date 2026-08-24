@@ -17,7 +17,7 @@ import { AppContext } from './context'
 import { reducer } from './reducer'
 import type { AppState } from './reducer'
 
-const initialState: AppState = { status: 'loading', data: null, today: todayKey(), error: null }
+const initialState: AppState = { status: 'loading', data: null, today: todayKey(), error: null, plan: 'free' }
 
 /** Contra una red, guardar en cada tecla/tilde es un request por cambio. */
 const SAVE_DEBOUNCE_MS = 800
@@ -71,6 +71,24 @@ export function AppProvider({ repository, children }: Props) {
       cancelled = true
     }
   }, [repository, attempt])
+
+  // Plan de la cuenta: no bloquea la carga principal ni tiene reintento propio —
+  // si falla, se queda en 'free' (el default de initialState), que es lo correcto
+  // hasta que se resuelva (nadie pierde acceso a nada por esto, sin cobros todavía).
+  useEffect(() => {
+    let cancelled = false
+    repository
+      .getUserPlan()
+      .then((plan) => {
+        if (!cancelled) dispatch({ type: 'setPlan', plan })
+      })
+      .catch(() => {
+        // silencioso a propósito: ver comentario arriba
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [repository])
 
   // Intenta guardar; si falla (red caída, backend caído) no se pierde el
   // cambio en silencio: queda pendiente y se reintenta solo, más adelante.

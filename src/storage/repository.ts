@@ -1,4 +1,4 @@
-import type { AppData, FocusSession } from '../domain/types'
+import type { AppData, FocusSession, UserPlan } from '../domain/types'
 
 /**
  * Contrato de persistencia. La UI sólo conoce esta interfaz, así que el día que
@@ -9,6 +9,9 @@ import type { AppData, FocusSession } from '../domain/types'
  * `load/save` de un solo blob: el historial de enfoque crece sin límite
  * superior, así que se persiste sesión por sesión (una escritura al
  * terminarla), no reenviando todo el historial en cada guardado con debounce.
+ *
+ * `getUserPlan` es de sólo lectura a propósito: todavía no hay forma de
+ * cambiar de plan desde la app (sin cobros), así que no existe un `setUserPlan`.
  */
 export interface ProgressRepository {
   load(): Promise<AppData | null>
@@ -16,4 +19,5 @@ export interface ProgressRepository {
   clear(): Promise<void>
   loadFocusSessions(): Promise<FocusSession[]>
   saveFocusSession(session: FocusSession): Promise<void>
+  getUserPlan(): Promise<UserPlan>
 }

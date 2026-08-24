@@ -298,3 +298,11 @@ export interface AppData {
 }
 
 export const SCHEMA_VERSION = 8
+
+/**
+ * Plan comercial del usuario (`profiles.plan` en Supabase). Todavía sin cobros ni
+ * límites reales — vive fuera de `AppData` a propósito, igual criterio que
+ * `FocusSession`: no es parte del blob que puntúa/trackea progreso, es un dato
+ * de cuenta que se lee aparte (ver `ProgressRepository.getUserPlan`).
+ */
+export type UserPlan = 'free' | 'premium'

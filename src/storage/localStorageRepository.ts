@@ -59,6 +59,10 @@ export function createLocalStorageRepository(
         // sin espacio o modo privado: se pierde el historial de enfoque, no rompe la app
       }
     },
+    async getUserPlan() {
+      // No hay concepto de cuenta/plan sin Supabase — localStorage es siempre 'free'.
+      return 'free'
+    },
   }
 }
 

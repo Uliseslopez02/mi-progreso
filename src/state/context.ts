@@ -26,5 +26,5 @@ export function useAppContext(): AppContextValue {
 export function useAppData() {
   const { state, dispatch } = useAppContext()
   if (!state.data) throw new Error('Los datos todavía no están cargados')
-  return { data: state.data, today: state.today, dispatch }
+  return { data: state.data, today: state.today, plan: state.plan, dispatch }
 }

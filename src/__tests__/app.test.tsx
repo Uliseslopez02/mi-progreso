@@ -52,6 +52,7 @@ describe('Mi Progreso', () => {
       }),
       save: vi.fn().mockResolvedValue(undefined),
       clear: vi.fn().mockResolvedValue(undefined),
+      getUserPlan: vi.fn().mockResolvedValue('free'),
     }
 
     render(
@@ -151,6 +152,15 @@ describe('Mi Progreso', () => {
     await user.click(screen.getByRole('button', { name: 'Hoy' }))
     expect(await screen.findByRole('checkbox', { name: 'Meditar 10 minutos' })).toBeInTheDocument()
     expect(screen.getByText('0 de 12 objetivos completados')).toBeInTheDocument()
+  })
+
+  it('Ajustes muestra el plan de la cuenta (Free por defecto sin Supabase)', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
+    expect(await screen.findByText('Free')).toBeInTheDocument()
   })
 
   it('eliminar un objetivo en Ajustes lo saca del día', async () => {

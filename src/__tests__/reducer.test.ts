@@ -23,7 +23,7 @@ function hydrated(): AppState {
     },
   ]
   return reducer(
-    { status: 'loading', data: null, today: TODAY, error: null },
+    { status: 'loading', data: null, today: TODAY, error: null, plan: 'free' },
     { type: 'hydrate', data, today: TODAY },
   )
 }
@@ -47,7 +47,7 @@ describe('reducer: objetivos semanales', () => {
 
   it('ignora el toggle si el período todavía no existe', () => {
     const state = reducer(
-      { status: 'loading', data: null, today: TODAY, error: null },
+      { status: 'loading', data: null, today: TODAY, error: null, plan: 'free' },
       { type: 'hydrate', data: createInitialData('2026-08-01T10:00:00.000Z'), today: TODAY },
     )
     const next = reducer(state, {
@@ -60,7 +60,7 @@ describe('reducer: objetivos semanales', () => {
 
   it('un objetivo semanal creado desde Ajustes entra a la semana vigente', () => {
     let state = reducer(
-      { status: 'loading', data: null, today: TODAY, error: null },
+      { status: 'loading', data: null, today: TODAY, error: null, plan: 'free' },
       { type: 'hydrate', data: createInitialData('2026-08-01T10:00:00.000Z'), today: TODAY },
     )
     state = reducer(state, {
@@ -98,24 +98,30 @@ describe('reducer: objetivos semanales', () => {
 describe('reducer: error de carga inicial', () => {
   it('hydrateError pasa a status error sin datos y con el mensaje', () => {
     const state = reducer(
-      { status: 'loading', data: null, today: TODAY, error: null },
+      { status: 'loading', data: null, today: TODAY, error: null, plan: 'free' },
       { type: 'hydrateError', message: 'No pudimos conectarnos.' },
     )
-    expect(state).toEqual({ status: 'error', data: null, today: TODAY, error: 'No pudimos conectarnos.' })
+    expect(state).toEqual({
+      status: 'error',
+      data: null,
+      today: TODAY,
+      error: 'No pudimos conectarnos.',
+      plan: 'free',
+    })
   })
 
   it('hydrateRetry vuelve a loading y limpia el error', () => {
     const errored = reducer(
-      { status: 'loading', data: null, today: TODAY, error: null },
+      { status: 'loading', data: null, today: TODAY, error: null, plan: 'free' },
       { type: 'hydrateError', message: 'falló' },
     )
     const state = reducer(errored, { type: 'hydrateRetry' })
-    expect(state).toEqual({ status: 'loading', data: null, today: TODAY, error: null })
+    expect(state).toEqual({ status: 'loading', data: null, today: TODAY, error: null, plan: 'free' })
   })
 
   it('un hydrate exitoso después de un error limpia el estado de error', () => {
     const errored = reducer(
-      { status: 'loading', data: null, today: TODAY, error: null },
+      { status: 'loading', data: null, today: TODAY, error: null, plan: 'free' },
       { type: 'hydrateError', message: 'falló' },
     )
     const retried = reducer(errored, { type: 'hydrateRetry' })

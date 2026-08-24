@@ -14,6 +14,7 @@ import type {
   Routine,
   RoutineRun,
   Settings,
+  UserPlan,
 } from '../domain/types'
 
 /** Sincroniza el día de hoy y las ventanas semanal/mensual vigentes. */
@@ -33,10 +34,13 @@ export interface AppState {
   data: AppData | null
   today: DateKey
   error: string | null
+  /** Plan comercial de la cuenta. 'free' hasta que `getUserPlan()` resuelva (ver AppProvider). */
+  plan: UserPlan
 }
 
 export type Action =
   | { type: 'hydrate'; data: AppData; today: DateKey }
+  | { type: 'setPlan'; plan: UserPlan }
   | { type: 'setToday'; today: DateKey }
   | { type: 'toggleGoal'; date: DateKey; goalId: string }
   | { type: 'setGoalProgress'; date: DateKey; goalId: string; value: number | boolean }
@@ -74,15 +78,19 @@ export type Action =
 export function reducer(state: AppState, action: Action): AppState {
   if (action.type === 'hydrate') {
     const data = syncToday(closePast(action.data, action.today), action.today)
-    return { status: 'ready', data, today: action.today, error: null }
+    return { status: 'ready', data, today: action.today, error: null, plan: state.plan }
   }
 
   if (action.type === 'hydrateError') {
-    return { status: 'error', data: null, today: state.today, error: action.message }
+    return { status: 'error', data: null, today: state.today, error: action.message, plan: state.plan }
   }
 
   if (action.type === 'hydrateRetry') {
-    return { status: 'loading', data: null, today: state.today, error: null }
+    return { status: 'loading', data: null, today: state.today, error: null, plan: state.plan }
+  }
+
+  if (action.type === 'setPlan') {
+    return { ...state, plan: action.plan }
   }
 
   if (!state.data) return state

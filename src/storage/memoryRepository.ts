@@ -1,8 +1,11 @@
-import type { AppData, FocusSession } from '../domain/types'
+import type { AppData, FocusSession, UserPlan } from '../domain/types'
 import type { ProgressRepository } from './repository'
 
 /** Implementación en memoria: usada en tests y como fallback sin localStorage. */
-export function createMemoryRepository(initial: AppData | null = null): ProgressRepository {
+export function createMemoryRepository(
+  initial: AppData | null = null,
+  plan: UserPlan = 'free',
+): ProgressRepository {
   let data = initial
   let focusSessions: FocusSession[] = []
   return {
@@ -21,6 +24,9 @@ export function createMemoryRepository(initial: AppData | null = null): Progress
     },
     async saveFocusSession(session) {
       focusSessions = [session, ...focusSessions.filter((s) => s.id !== session.id)]
+    },
+    async getUserPlan() {
+      return plan
     },
   }
 }
