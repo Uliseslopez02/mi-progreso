@@ -128,7 +128,9 @@ export function PasswordField({
           onKeyDown={checkCapsLock}
           onKeyUp={checkCapsLock}
           aria-invalid={Boolean(error)}
-          aria-describedby={error ? `${id}-error` : capsLock ? `${id}-capslock` : undefined}
+          aria-describedby={
+            [error && `${id}-error`, capsLock && `${id}-capslock`].filter(Boolean).join(' ') || undefined
+          }
         />
         <button
           type="button"
