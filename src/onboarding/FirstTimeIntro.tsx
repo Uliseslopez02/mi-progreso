@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ProgressPath } from '../components/ProgressPath'
+import { useAutoFocusHeading } from '../hooks/useAutoFocusHeading'
 
 interface Props {
   /** Termina la intro y sigue al wizard de objetivos. */
@@ -20,6 +21,7 @@ const CAPABILITIES = [
 /** Introducción breve y opcional para quien recién crea una cuenta — nunca bloquea, siempre se puede saltear. */
 export function FirstTimeIntro({ onContinue, onSkip }: Props) {
   const [moment, setMoment] = useState<Moment>(0)
+  const textRef = useAutoFocusHeading<HTMLParagraphElement>(moment)
 
   return (
     <div className="onboarding-screen">
@@ -32,19 +34,25 @@ export function FirstTimeIntro({ onContinue, onSkip }: Props) {
 
         {moment === 0 && (
           <div className="intro-card__moment">
-            <p className="intro-card__text">Esto no se trata de hacerlo todo.</p>
+            <p className="intro-card__text" ref={textRef} tabIndex={-1}>
+              Esto no se trata de hacerlo todo.
+            </p>
           </div>
         )}
 
         {moment === 1 && (
           <div className="intro-card__moment">
-            <p className="intro-card__text">Se trata de avanzar un poco cada día.</p>
+            <p className="intro-card__text" ref={textRef} tabIndex={-1}>
+              Se trata de avanzar un poco cada día.
+            </p>
           </div>
         )}
 
         {moment === 2 && (
           <div className="intro-card__moment">
-            <p className="intro-card__text intro-card__text--sm">Con Mi Progreso podés</p>
+            <p className="intro-card__text intro-card__text--sm" ref={textRef} tabIndex={-1}>
+              Con Mi Progreso podés
+            </p>
             <div className="intro-card__capabilities">
               {CAPABILITIES.map((c) => (
                 <div key={c.label} className="intro-card__capability">
@@ -58,7 +66,9 @@ export function FirstTimeIntro({ onContinue, onSkip }: Props) {
 
         {moment === 3 && (
           <div className="intro-card__moment">
-            <p className="intro-card__text">Empezá por algo pequeño.</p>
+            <p className="intro-card__text" ref={textRef} tabIndex={-1}>
+              Empezá por algo pequeño.
+            </p>
             <div className="intro-card__actions">
               <button type="button" className="btn btn--primary" onClick={onContinue}>
                 Crear mi primer objetivo

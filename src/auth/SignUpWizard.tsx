@@ -7,6 +7,7 @@ import { isValidEmail, passwordMeetsRequirements } from './validation'
 import { IconField, PasswordField } from '../components/AuthFields'
 import { ProgressPath } from '../components/ProgressPath'
 import { MailIcon, UserIcon } from '../components/icons'
+import { useAutoFocusHeading } from '../hooks/useAutoFocusHeading'
 
 interface Props {
   onSwitchToSignIn: () => void
@@ -55,6 +56,7 @@ export function SignUpWizard({ onSwitchToSignIn, onGoToReset, onEnterApp }: Prop
   const [attempted, setAttempted] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [outcome, setOutcome] = useState<'confirmEmail' | 'alreadyRegistered' | 'immediateSession' | null>(null)
+  const headingRef = useAutoFocusHeading<HTMLHeadingElement>(`${step}:${outcome}`)
 
   const set = (patch: Partial<Fields>) => setFields((f) => ({ ...f, ...patch }))
   const markTouched = (field: keyof Fields) => () => setTouched((t) => ({ ...t, [field]: true }))
@@ -120,7 +122,9 @@ export function SignUpWizard({ onSwitchToSignIn, onGoToReset, onEnterApp }: Prop
 
         {step === 'welcome' && (
           <>
-            <h1 className="card__title">Empecemos por vos.</h1>
+            <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+              Empecemos por vos.
+            </h1>
             <p className="card__hint auth-card__subtitle">
               En menos de un minuto vas a tener tu propio espacio para avanzar.
             </p>
@@ -147,7 +151,9 @@ export function SignUpWizard({ onSwitchToSignIn, onGoToReset, onEnterApp }: Prop
             }}
             noValidate
           >
-            <h1 className="card__title">Tu identidad</h1>
+            <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+              Tu identidad
+            </h1>
             <p className="card__hint auth-card__subtitle">Así vamos a llamarte dentro de la app.</p>
             <IconField
               id="signup-name"
@@ -189,7 +195,9 @@ export function SignUpWizard({ onSwitchToSignIn, onGoToReset, onEnterApp }: Prop
             }}
             noValidate
           >
-            <h1 className="card__title">{firstName ? `Mucho gusto, ${firstName}.` : 'Protejamos tu cuenta.'}</h1>
+            <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+              {firstName ? `Mucho gusto, ${firstName}.` : 'Protejamos tu cuenta.'}
+            </h1>
             <p className="card__hint auth-card__subtitle">Elegí una contraseña segura para tu espacio.</p>
             <PasswordField
               id="signup-password"
@@ -223,7 +231,9 @@ export function SignUpWizard({ onSwitchToSignIn, onGoToReset, onEnterApp }: Prop
 
         {step === 'intention' && (
           <>
-            <h1 className="card__title">¿Qué te gustaría mejorar primero?</h1>
+            <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+              ¿Qué te gustaría mejorar primero?
+            </h1>
             <p className="card__hint auth-card__subtitle">Sirve para sugerirte cosas — nunca te limita.</p>
             {error && (
               <p className="auth-card__error" role="alert">
@@ -270,7 +280,9 @@ export function SignUpWizard({ onSwitchToSignIn, onGoToReset, onEnterApp }: Prop
 
         {step === 'done' && outcome === 'alreadyRegistered' && (
           <>
-            <h1 className="card__title">Esa cuenta ya existe</h1>
+            <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+              Esa cuenta ya existe
+            </h1>
             <p className="card__hint auth-card__subtitle">
               Ya hay una cuenta con ese email. Iniciá sesión o recuperá tu contraseña.
             </p>
@@ -287,7 +299,9 @@ export function SignUpWizard({ onSwitchToSignIn, onGoToReset, onEnterApp }: Prop
 
         {step === 'done' && outcome === 'confirmEmail' && (
           <>
-            <h1 className="card__title">{firstName ? `¡Listo, ${firstName}!` : '¡Listo!'}</h1>
+            <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+              {firstName ? `¡Listo, ${firstName}!` : '¡Listo!'}
+            </h1>
             <p className="card__hint auth-card__subtitle">
               Este es tu punto de partida. Te enviamos un email para confirmar tu cuenta — confirmalo y volvé para
               entrar.
@@ -300,7 +314,9 @@ export function SignUpWizard({ onSwitchToSignIn, onGoToReset, onEnterApp }: Prop
 
         {step === 'done' && outcome === 'immediateSession' && (
           <>
-            <h1 className="card__title">{firstName ? `¡Listo, ${firstName}!` : '¡Listo!'}</h1>
+            <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+              {firstName ? `¡Listo, ${firstName}!` : '¡Listo!'}
+            </h1>
             <p className="card__hint auth-card__subtitle">Este es tu punto de partida.</p>
             <button type="button" className="btn btn--primary" onClick={onEnterApp}>
               Empezar a explorar

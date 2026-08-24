@@ -5,6 +5,7 @@ import { IconField, PasswordField } from '../components/AuthFields'
 import { EnterTransition } from '../components/EnterTransition'
 import { LoadingScreen } from '../components/LoadingScreen'
 import { MailIcon } from '../components/icons'
+import { useAutoFocusHeading } from '../hooks/useAutoFocusHeading'
 import { SUPABASE_CONFIG_ERROR } from '../lib/supabaseClient'
 import { describeAuthError } from './authErrors'
 import { SignUpWizard } from './SignUpWizard'
@@ -56,6 +57,10 @@ export function AuthGate({ children }: Props) {
   const [entering, setEntering] = useState(false)
   const [welcome] = useState(() => pickWelcomeCopy(isReturningDevice()))
   const [linkError, setLinkError] = useState<LinkError>(() => readLinkErrorFromUrl())
+  // Una sola pantalla con h1 está montada por vez (configError/linkError/resetSent/mode son
+  // returns tempranos mutuamente excluyentes), así que esta clave combinada alcanza para mover
+  // el foco al encabezado correcto en cada transición.
+  const headingRef = useAutoFocusHeading<HTMLHeadingElement>(`${configError}|${linkError}|${mode}|${resetSent}`)
 
   useEffect(() => {
     // Sólo se lee una vez: si hay un error de enlace en la URL, se limpia para
@@ -116,7 +121,9 @@ export function AuthGate({ children }: Props) {
       <div className="auth-screen">
         <div className="card auth-card">
           <p className="hero__eyebrow">Mi Progreso</p>
-          <h1 className="card__title">Falta configurar Supabase</h1>
+          <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+            Falta configurar Supabase
+          </h1>
           <p className="card__hint">
             Creá <code>.env.local</code> con <code>VITE_SUPABASE_URL</code> y{' '}
             <code>VITE_SUPABASE_ANON_KEY</code> (mirá <code>.env.example</code>) y reiniciá el servidor.
@@ -136,7 +143,7 @@ export function AuthGate({ children }: Props) {
             </span>
             <p className="hero__eyebrow">Mi Progreso</p>
           </div>
-          <h1 className="card__title">
+          <h1 className="card__title" ref={headingRef} tabIndex={-1}>
             {linkError === 'expired' ? 'Este enlace ya venció.' : 'Este enlace no es válido.'}
           </h1>
           <p className="card__hint auth-card__subtitle">
@@ -287,7 +294,9 @@ export function AuthGate({ children }: Props) {
               </span>
               <p className="hero__eyebrow">Mi Progreso</p>
             </div>
-            <h1 className="card__title">Revisá tu correo.</h1>
+            <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+              Revisá tu correo.
+            </h1>
             <p className="card__hint auth-card__subtitle" role="status">
               Si existe una cuenta asociada a <strong>{maskEmail(email)}</strong>, te enviamos instrucciones para
               restablecer tu contraseña.
@@ -334,7 +343,9 @@ export function AuthGate({ children }: Props) {
             </span>
             <p className="hero__eyebrow">Mi Progreso</p>
           </div>
-          <h1 className="card__title">¿No recordás tu contraseña?</h1>
+          <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+            ¿No recordás tu contraseña?
+          </h1>
           <p className="card__hint auth-card__subtitle">No pasa nada. Te ayudamos a volver.</p>
           <IconField
             id="reset-email"
@@ -380,7 +391,9 @@ export function AuthGate({ children }: Props) {
             </span>
             <p className="hero__eyebrow">Mi Progreso</p>
           </div>
-          <h1 className="card__title">Elegí una contraseña nueva</h1>
+          <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+            Elegí una contraseña nueva
+          </h1>
           <p className="card__hint auth-card__subtitle">Ya casi. Elegí una contraseña segura para tu cuenta.</p>
           <PasswordField
             id="auth-new-password"
@@ -422,7 +435,9 @@ export function AuthGate({ children }: Props) {
           </span>
           <p className="hero__eyebrow">Mi Progreso</p>
         </div>
-        <h1 className="card__title">{welcome.title}</h1>
+        <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+          {welcome.title}
+        </h1>
         <p className="card__hint auth-card__subtitle">{welcome.subtitle}</p>
 
         <IconField

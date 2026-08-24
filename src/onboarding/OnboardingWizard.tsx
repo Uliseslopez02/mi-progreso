@@ -3,6 +3,7 @@ import type { KeyboardEvent } from 'react'
 import { getSession } from '../auth/supabaseAuth'
 import { consumeFocusIntent } from '../auth/focusIntent'
 import { ProgressPath } from '../components/ProgressPath'
+import { useAutoFocusHeading } from '../hooks/useAutoFocusHeading'
 import {
   LIFE_AREAS,
   RECOMMENDED_MAX_GOALS,
@@ -44,6 +45,7 @@ export function OnboardingWizard({ onComplete }: Props) {
   const [draftGoals, setDraftGoals] = useState<GoalDraft[]>([])
   const [customName, setCustomName] = useState('')
   const [firstName, setFirstName] = useState<string | null>(null)
+  const headingRef = useAutoFocusHeading<HTMLHeadingElement>(step)
 
   useEffect(() => {
     getSession()
@@ -160,7 +162,9 @@ export function OnboardingWizard({ onComplete }: Props) {
         {step === 'areas' && (
           <>
             {firstName && <p className="onboarding-greeting">¡Bienvenido, {firstName}! 👋</p>}
-            <h1 className="card__title">¿Qué querés mejorar?</h1>
+            <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+              ¿Qué querés mejorar?
+            </h1>
             <p className="card__hint">Elegí una o más áreas de tu vida en las que querés progresar.</p>
             <div className="onboarding-options">
               {LIFE_AREAS.map((area) => (
@@ -193,7 +197,9 @@ export function OnboardingWizard({ onComplete }: Props) {
 
         {step === 'goals' && (
           <>
-            <h1 className="card__title">¿Qué querés lograr?</h1>
+            <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+              ¿Qué querés lograr?
+            </h1>
             <p className="card__hint">Elegí los objetivos que te gustaría empezar a trackear.</p>
 
             {suggestions.length > 0 && (
@@ -277,7 +283,9 @@ export function OnboardingWizard({ onComplete }: Props) {
 
         {step === 'weights' && (
           <>
-            <h1 className="card__title">¿Qué tan importante es cada objetivo?</h1>
+            <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+              ¿Qué tan importante es cada objetivo?
+            </h1>
             <p className="card__hint">
               Los objetivos con más importancia pesan más en tu progreso del día.
             </p>
@@ -317,7 +325,9 @@ export function OnboardingWizard({ onComplete }: Props) {
 
         {step === 'finish' && (
           <>
-            <h1 className="card__title">Ya está. Mañana empiezo.</h1>
+            <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+              Ya está. Mañana empiezo.
+            </h1>
             <p className="card__hint">Estos son los objetivos que armaste:</p>
 
             <div className="stack" style={{ gap: 14, marginTop: 6 }}>
