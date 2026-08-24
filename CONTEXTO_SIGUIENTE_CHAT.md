@@ -33,6 +33,28 @@ a9c446e Add /producto: interactive public showcase of Mi Progreso
 178/178 tests, `tsc -b` y `vite build` verdes al cierre. Working tree limpio (todo commiteado y
 pusheado).
 
+## Despliegue — la app ya está en producción de verdad, no es sólo un proyecto local
+
+Esto faltaba en la versión anterior de este documento y es información crítica:
+
+- **Repo**: https://github.com/Uliseslopez02/mi-progreso (público, cuenta real de Ulises, `gh`
+  ya autenticado como `Uliseslopez02` en esta máquina).
+- **Producción**: https://mi-progreso-one.vercel.app — proyecto Vercel `ULISES/mi-progreso`,
+  conectado al repo de GitHub. **Cada `git push` a `master` redespliega solo**, no hace falta
+  ningún paso manual. Preset Vite autodetectado, sin config custom de build.
+- **Env vars en Vercel** (Production and Preview): `VITE_SUPABASE_URL`,
+  `VITE_SUPABASE_ANON_KEY` — mismos valores que `.env.local` (la anon key es la "publishable",
+  pensada para estar expuesta en el cliente, no es un secreto).
+- Para futuros cambios de código: commitear y pushear a `master` es suficiente para que lleguen a
+  producción. No hace falta tocar Vercel a mano salvo que cambien env vars o config de dominio.
+- La cuenta de prueba real ya existe y funciona en producción: `ulises@walabi.ar` (email
+  confirmado). El Site URL de Supabase Auth y las Redirect URLs ya están configuradas para
+  `https://mi-progreso-one.vercel.app` y `http://localhost:5174` (antes apuntaban por error a
+  `localhost:3000`, un puerto que ni siquiera es el del dev server real — ver commit `82fa165`).
+- El Artifact viejo (`claude.ai/code/artifact/7dfb2332-...`) ya no representa nada — es una
+  versión estática pre-Supabase de hace semanas. **La URL de referencia para mostrarle la app a
+  cualquiera, incluido Ulises, es la de Vercel de arriba.**
+
 ## Los 8 módulos del roadmap de producto: TODOS completos y en producción
 
 Hábitos, Objetivos y metas (LifeGoal), Planificador semanal, Rutinas, Estadísticas mejoradas,
@@ -54,13 +76,13 @@ verificó) está en la memoria de auto-memory del proyecto (`project_mi_progreso
    tokens reales de Mi Progreso (verde `--accent`, no la paleta de Rimu). Vive en
    `src/showcase/`, ruta montada por `main.tsx` vía chequeo de `pathname` (sin React Router),
    con `React.lazy` para no pesarle a la app autenticada. `vercel.json` nuevo con rewrite SPA
-   (necesario para que `/producto` no dé 404 en producción — **no verificado en el deploy real
-   de Vercel todavía**, sólo en dev local). Login (`AuthGate.tsx`) ganó un link "Ver qué podés
-   hacer →" y lee `?signup=1` para arrancar en modo registro.
+   (necesario para que `/producto` no dé 404 en producción — verificado después, ver "Qué falta"
+   más abajo). Login (`AuthGate.tsx`) ganó un link "Ver qué podés hacer →" y lee `?signup=1` para
+   arrancar en modo registro.
 2. **`plan: 'free' | 'premium'`** (commit `97dac1b`): arquitectura comercial mínima pedida en el
    prompt original de Fase 3 ("preparada para venderlo... free/premium, sin cobros todavía").
-   Columna nueva `profiles.plan` (migración `supabase/migrations/0012_user_plan.sql`, **escrita
-   pero NO aplicada a la base real todavía** — ver pendientes), método
+   Columna nueva `profiles.plan` (migración `supabase/migrations/0012_user_plan.sql`, aplicada a
+   la base real después — ver "Qué falta" más abajo), método
    `ProgressRepository.getUserPlan()` (select real contra Supabase; `'free'` fijo en
    local/memoria), cargado una vez en `AppProvider` y expuesto vía `useAppData().plan`, mostrado
    como pill en Ajustes → Cuenta. **A propósito no incluye límites/gating**: no hay números de
@@ -87,15 +109,12 @@ link de reseteo vencido/inválido, contraste corregido. Esto **cubre en gran par
    **faltan los números de negocio**: ¿cuántos hábitos/metas/rutinas/objetivos entran gratis?
    ¿qué se bloquea al llegar al límite? Esto es una decisión de Ulises, no técnica — preguntarle
    antes de inventar cualquier cifra.
-3. **Migración `0012_user_plan.sql` sin aplicar a producción** — escrita y testeada localmente,
-   pero la columna `plan` no existe todavía en el Supabase real (`iwnrmzbdhrqwcbouhyqf`). Hasta
-   que se aplique, `getUserPlan()` contra la cuenta real puede fallar (cae a `'free'` en
-   silencio vía el catch de `AppProvider`, así que no rompe nada, pero tampoco refleja un plan
-   premium real si alguna vez se asigna uno a mano). Aplicar con el método ya probado (portapapeles
-   + Chrome logueado, ver notas operativas abajo) cuando Ulises dé el ok.
-4. **`/producto` sin verificar en el deploy real de Vercel** — funciona en dev local
-   (`localhost:5174/producto`), pero no se confirmó que el `vercel.json` nuevo resuelva bien el
-   rewrite SPA contra el proyecto real desplegado. Verificar después del próximo deploy.
+3. ~~Migración `0012_user_plan.sql` sin aplicar a producción~~ **RESUELTO** (2026-08-24): aplicada
+   a mano contra `iwnrmzbdhrqwcbouhyqf` — `profiles.plan` ya existe en la base real, default
+   `'free'`. `getUserPlan()` ya devuelve un valor real, no el fallback silencioso.
+4. ~~`/producto` sin verificar en el deploy real de Vercel~~ **RESUELTO** (2026-08-24): verificado
+   contra `https://mi-progreso-one.vercel.app/producto` en producción real — carga y los 9
+   módulos renderizan bien, el rewrite SPA de `vercel.json` funciona.
 5. **SMTP propio en Supabase** — pendiente desde Fase 2, sigue bloqueando abrir registro público
    masivo (rate limit muy bajo del SMTP compartido). No bloquea seguir desarrollando.
 6. **"Reflexión diaria" como feature propia** — el tipo `Reflection` existe y Momento Mori lo usa,
