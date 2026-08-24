@@ -141,7 +141,7 @@ export function PasswordField({
       </div>
 
       {capsLock && (
-        <p className="field__hint field__hint--warn" id={`${id}-capslock`}>
+        <p className="field__hint field__hint--warn" id={`${id}-capslock`} role="status">
           Bloq Mayús está activado.
         </p>
       )}
