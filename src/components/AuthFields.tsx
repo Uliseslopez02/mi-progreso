@@ -135,7 +135,6 @@ export function PasswordField({
           className="input-group__toggle"
           onClick={() => setVisible((v) => !v)}
           aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-          tabIndex={-1}
         >
           {visible ? <EyeOffIcon /> : <EyeIcon />}
         </button>

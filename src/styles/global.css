@@ -1091,7 +1091,11 @@ main { flex: 1; padding: 28px 0 72px; }
 
 .progress-path--sm .progress-path__node { width: 7px; height: 7px; }
 
-.progress-path__node--done { background: var(--accent); border-color: var(--accent); }
+.progress-path__node--done {
+  background: var(--accent);
+  border-color: var(--accent);
+  animation: progress-path-complete 0.4s var(--ease);
+}
 
 .progress-path__node--active {
   background: var(--accent);
@@ -1105,18 +1109,39 @@ main { flex: 1; padding: 28px 0 72px; }
   height: 2px;
   background: var(--border-strong);
   flex-shrink: 0;
-  transition: background 0.3s var(--ease);
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-path__connector::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.45s var(--ease);
 }
 
 .progress-path--sm .progress-path__connector { width: 16px; }
 
 .progress-path--vertical .progress-path__connector { width: 2px; height: 20px; }
 
-.progress-path__connector--done { background: var(--accent); }
+.progress-path--vertical .progress-path__connector::after { transform: scaleY(0); transform-origin: top; }
+
+.progress-path__connector.progress-path__connector--done::after { transform: scaleX(1); }
+
+.progress-path--vertical .progress-path__connector.progress-path__connector--done::after { transform: scaleY(1); }
 
 @keyframes progress-path-pulse {
   0%, 100% { box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.18); }
   50% { box-shadow: 0 0 0 7px rgba(52, 211, 153, 0.05); }
+}
+
+@keyframes progress-path-complete {
+  0% { transform: scale(0.82); }
+  55% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 
 .progress-path--indeterminate .progress-path__node {
