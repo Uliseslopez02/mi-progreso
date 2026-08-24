@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { signOut } from './auth/supabaseAuth'
 import { ErrorScreen } from './components/ErrorScreen'
 import { LoadingScreen } from './components/LoadingScreen'
+import { SectionLayout } from './components/SectionLayout'
 import { formatLongDate } from './domain/date'
 import { CalendarPage } from './pages/CalendarPage'
 import { FocusPage } from './pages/FocusPage'
 import { GoalsPage } from './pages/GoalsPage'
 import { HabitsPage } from './pages/HabitsPage'
 import { HistoryPage } from './pages/HistoryPage'
+import { InformesPage } from './pages/InformesPage'
 import { LifeWheelPage } from './pages/LifeWheelPage'
-import { MomentoMoriPage } from './pages/MomentoMoriPage'
 import { PlannerPage } from './pages/PlannerPage'
 import { RoutinesPage } from './pages/RoutinesPage'
 import { SettingsPage } from './pages/SettingsPage'
@@ -18,42 +20,56 @@ import { FirstTimeIntro } from './onboarding/FirstTimeIntro'
 import { OnboardingWizard } from './onboarding/OnboardingWizard'
 import { useAppContext } from './state/context'
 
-export type Tab =
-  | 'hoy'
-  | 'habitos'
-  | 'metas'
-  | 'planificador'
-  | 'rutinas'
-  | 'enfoque'
-  | 'rueda'
-  | 'momento-mori'
-  | 'historial'
-  | 'calendario'
-  | 'ajustes'
-
-const TABS: Array<{ id: Tab; label: string }> = [
-  { id: 'hoy', label: 'Hoy' },
-  { id: 'habitos', label: 'Hábitos' },
-  { id: 'metas', label: 'Metas' },
-  { id: 'planificador', label: 'Planificador' },
-  { id: 'rutinas', label: 'Rutinas' },
-  { id: 'enfoque', label: 'Enfoque' },
-  { id: 'rueda', label: 'Rueda de la vida' },
-  { id: 'momento-mori', label: 'Momento Mori' },
-  { id: 'historial', label: 'Historial' },
-  { id: 'calendario', label: 'Calendario' },
-  { id: 'ajustes', label: 'Ajustes' },
+const TABS = [
+  { label: 'Hoy', path: '/' },
+  { label: 'Agenda', path: '/agenda' },
+  { label: 'Objetivos', path: '/objetivos' },
+  { label: 'Historial', path: '/historial' },
+  { label: 'Informes', path: '/informes' },
+  { label: 'Ajustes', path: '/ajustes' },
 ]
+
+const AGENDA_ITEMS = [
+  { to: '/agenda', label: 'Planificador' },
+  { to: '/agenda/enfoque', label: 'Enfoque' },
+]
+
+const OBJETIVOS_ITEMS = [
+  { to: '/objetivos', label: 'Hábitos' },
+  { to: '/objetivos/metas', label: 'Metas' },
+  { to: '/objetivos/rutinas', label: 'Rutinas' },
+  { to: '/objetivos/rueda-de-la-vida', label: 'Rueda de la vida' },
+]
+
+const HISTORIAL_ITEMS = [
+  { to: '/historial', label: 'Resumen' },
+  { to: '/historial/calendario', label: 'Calendario' },
+]
+
+/** true si `pathname` es exactamente `base` o una sub-ruta de `base` ('/' sólo matchea la raíz). */
+function isWithin(pathname: string, base: string): boolean {
+  if (base === '/') return pathname === '/'
+  return pathname === base || pathname.startsWith(`${base}/`)
+}
 
 /** true = necesita el wizard, false = ya tiene datos propios, null = todavía no se decidió. */
 type OnboardingFlag = boolean | null
 
 export function App() {
+  return (
+    <BrowserRouter>
+      <AppShell />
+    </BrowserRouter>
+  )
+}
+
+function AppShell() {
   const { state, retryHydrate, saveStatus } = useAppContext()
-  const [tab, setTab] = useState<Tab>('hoy')
   const [onboarding, setOnboarding] = useState<OnboardingFlag>(null)
   const [introSeen, setIntroSeen] = useState(false)
   const appName = state.data?.settings.appName ?? 'Mi Progreso'
+  const location = useLocation()
+  const navigate = useNavigate()
 
   useEffect(() => {
     document.title = appName
@@ -118,11 +134,11 @@ export function App() {
           <nav className="nav" aria-label="Secciones">
             {TABS.map((item) => (
               <button
-                key={item.id}
+                key={item.path}
                 type="button"
-                className={`nav__item${tab === item.id ? ' nav__item--active' : ''}`}
-                aria-current={tab === item.id ? 'page' : undefined}
-                onClick={() => setTab(item.id)}
+                className={`nav__item${isWithin(location.pathname, item.path) ? ' nav__item--active' : ''}`}
+                aria-current={isWithin(location.pathname, item.path) ? 'page' : undefined}
+                onClick={() => navigate(item.path)}
               >
                 {item.label}
               </button>
@@ -133,17 +149,26 @@ export function App() {
 
       <main>
         <div className="container">
-          {tab === 'hoy' && <TodayPage onNavigate={setTab} />}
-          {tab === 'habitos' && <HabitsPage />}
-          {tab === 'metas' && <GoalsPage />}
-          {tab === 'planificador' && <PlannerPage />}
-          {tab === 'rutinas' && <RoutinesPage />}
-          {tab === 'enfoque' && <FocusPage />}
-          {tab === 'rueda' && <LifeWheelPage />}
-          {tab === 'momento-mori' && <MomentoMoriPage />}
-          {tab === 'historial' && <HistoryPage />}
-          {tab === 'calendario' && <CalendarPage />}
-          {tab === 'ajustes' && <SettingsPage />}
+          <Routes>
+            <Route path="/" element={<TodayPage onNavigate={navigate} />} />
+            <Route path="/agenda" element={<SectionLayout items={AGENDA_ITEMS} ariaLabel="Agenda" />}>
+              <Route index element={<PlannerPage />} />
+              <Route path="enfoque" element={<FocusPage />} />
+            </Route>
+            <Route path="/objetivos" element={<SectionLayout items={OBJETIVOS_ITEMS} ariaLabel="Objetivos" />}>
+              <Route index element={<HabitsPage />} />
+              <Route path="metas" element={<GoalsPage />} />
+              <Route path="rutinas" element={<RoutinesPage />} />
+              <Route path="rueda-de-la-vida" element={<LifeWheelPage />} />
+            </Route>
+            <Route path="/historial" element={<SectionLayout items={HISTORIAL_ITEMS} ariaLabel="Historial" />}>
+              <Route index element={<HistoryPage />} />
+              <Route path="calendario" element={<CalendarPage />} />
+            </Route>
+            <Route path="/informes" element={<InformesPage />} />
+            <Route path="/ajustes" element={<SettingsPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </div>
       </main>
     </div>

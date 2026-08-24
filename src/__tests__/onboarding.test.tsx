@@ -8,6 +8,13 @@ import { createLocalStorageRepository } from '../storage/localStorageRepository'
 
 vi.mock('../auth/supabaseAuth', () => ({ signOut: vi.fn(), getSession: vi.fn().mockResolvedValue(null) }))
 
+beforeEach(() => {
+  // BrowserRouter lee el location real de jsdom, que sobrevive entre tests
+  // del mismo archivo: si un test anterior navegó a otra tab, el siguiente
+  // arrancaría ahí en vez de en "Hoy".
+  window.history.pushState({}, '', '/')
+})
+
 function renderFreshApp() {
   const repository = createLocalStorageRepository()
   return {

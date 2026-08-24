@@ -90,14 +90,16 @@ describe('formatGrade', () => {
 
 describe('messageForPercent', () => {
   it('cubre cada tramo', () => {
-    expect(messageForPercent(0)).toMatch(/día difícil/i)
-    expect(messageForPercent(29)).toMatch(/día difícil/i)
-    expect(messageForPercent(30)).toMatch(/margen para mejorar/i)
-    expect(messageForPercent(49)).toMatch(/margen para mejorar/i)
-    expect(messageForPercent(50)).toMatch(/buen esfuerzo/i)
+    expect(messageForPercent(0)).toMatch(/no fue tu mejor día/i)
+    expect(messageForPercent(29)).toMatch(/no fue tu mejor día/i)
+    expect(messageForPercent(30)).toMatch(/por debajo del objetivo/i)
+    expect(messageForPercent(49)).toMatch(/por debajo del objetivo/i)
+    expect(messageForPercent(50)).toMatch(/aceptable/i)
+    expect(messageForPercent(69)).toMatch(/aceptable/i)
     expect(messageForPercent(70)).toMatch(/muy buen día/i)
-    expect(messageForPercent(85)).toMatch(/excelente/i)
-    expect(messageForPercent(100)).toMatch(/día perfecto/i)
+    expect(messageForPercent(89)).toMatch(/muy buen día/i)
+    expect(messageForPercent(90)).toMatch(/excelente/i)
+    expect(messageForPercent(100)).toMatch(/excelente/i)
   })
 })
 

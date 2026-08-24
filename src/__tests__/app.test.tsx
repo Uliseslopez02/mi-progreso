@@ -36,6 +36,10 @@ const ringPercent = () => screen.getByTestId('ring-percent').textContent
 describe('Mi Progreso', () => {
   beforeEach(() => {
     window.localStorage.clear()
+    // BrowserRouter lee el location real de jsdom, que sobrevive entre tests
+    // del mismo archivo: si un test anterior navegó a otra tab, el siguiente
+    // arrancaría ahí en vez de en "Hoy".
+    window.history.pushState({}, '', '/')
   })
 
   afterEach(() => {
@@ -104,7 +108,7 @@ describe('Mi Progreso', () => {
     )
   })
 
-  it('completar todo llega a 100%, nota 10 y mensaje de día perfecto', async () => {
+  it('completar todo llega a 100%, nota 10 y mensaje de excelente día', async () => {
     const user = userEvent.setup()
     renderApp()
     await screen.findByText('Objetivos de hoy')
@@ -115,7 +119,7 @@ describe('Mi Progreso', () => {
 
     expect(ringPercent()).toBe('100%')
     expect(screen.getByText('10 / 10')).toBeInTheDocument()
-    expect(screen.getByText('Día perfecto. Completaste todos tus objetivos.')).toBeInTheDocument()
+    expect(screen.getByText('Excelente día. Estás construyendo una gran consistencia.')).toBeInTheDocument()
   })
 
   it('lo marcado sobrevive a cerrar y volver a abrir la app', async () => {
@@ -199,6 +203,7 @@ describe('Mi Progreso', () => {
     renderApp()
     await screen.findByText('Objetivos de hoy')
 
+    await user.click(screen.getByRole('button', { name: 'Historial' }))
     await user.click(screen.getByRole('button', { name: 'Calendario' }))
 
     expect(await screen.findByRole('button', { name: 'Mes siguiente' })).toBeDisabled()
@@ -365,6 +370,7 @@ describe('Mi Progreso', () => {
     const { repository } = renderApp()
     await screen.findByText('Objetivos de hoy')
 
+    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
     await user.click(screen.getByRole('button', { name: 'Metas' }))
     await user.type(screen.getByLabelText('Nombre'), 'Mejorar mi condición física')
     await user.selectOptions(screen.getByLabelText('Ámbito'), 'Personal')
@@ -398,6 +404,7 @@ describe('Mi Progreso', () => {
     const { repository } = renderApp()
     await screen.findByText('Objetivos de hoy')
 
+    await user.click(screen.getByRole('button', { name: 'Agenda' }))
     await user.click(screen.getByRole('button', { name: 'Planificador' }))
     await user.type(screen.getByLabelText('Título'), 'Revisar propuesta')
     await user.selectOptions(screen.getByLabelText('Prioridad'), 'Alta')
@@ -426,6 +433,7 @@ describe('Mi Progreso', () => {
     const { repository } = renderApp()
     await screen.findByText('Objetivos de hoy')
 
+    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
     await user.click(screen.getByRole('button', { name: 'Rutinas' }))
     await user.type(screen.getByLabelText('Nombre'), 'Ritual matutino')
     await user.click(screen.getByRole('button', { name: 'Crear rutina' }))
@@ -458,6 +466,7 @@ describe('Mi Progreso', () => {
     const { repository } = renderApp()
     await screen.findByText('Objetivos de hoy')
 
+    await user.click(screen.getByRole('button', { name: 'Agenda' }))
     await user.click(screen.getByRole('button', { name: 'Enfoque' }))
     await user.click(screen.getByRole('button', { name: 'Iniciar' }))
 
@@ -480,6 +489,7 @@ describe('Mi Progreso', () => {
     const { repository } = renderApp()
     await screen.findByText('Objetivos de hoy')
 
+    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
     await user.click(screen.getByRole('button', { name: 'Rueda de la vida' }))
     fireEvent.change(screen.getByLabelText('Salud'), { target: { value: '8' } })
     await user.type(screen.getByLabelText('Notas (opcional)'), 'Primer registro')
@@ -503,44 +513,17 @@ describe('Mi Progreso', () => {
     })
   })
 
-  it('Momento Mori calcula el tiempo vivido y guarda una reflexión que persiste', async () => {
-    const user = userEvent.setup()
-    const { repository } = renderApp()
-    await screen.findByText('Objetivos de hoy')
-
-    await user.click(screen.getByRole('button', { name: 'Momento Mori' }))
-    await user.type(screen.getByLabelText('Fecha de nacimiento'), '1990-01-01')
-    await user.click(screen.getByRole('button', { name: 'Guardar' }))
-
-    expect(await screen.findByText(/Viviste/)).toBeInTheDocument()
-
-    await user.type(screen.getByLabelText('Tu respuesta'), 'Ayudé a alguien sin que me lo pidiera')
-    await user.click(screen.getByRole('button', { name: 'Guardar reflexión' }))
-
-    expect(await screen.findByText('Ayudé a alguien sin que me lo pidiera')).toBeInTheDocument()
-
-    await waitFor(async () => {
-      const stored = await repository.load()
-      expect(stored?.settings.birthDate).toBe('1990-01-01')
-      expect(stored?.reflections).toHaveLength(1)
-      expect(stored?.reflections[0]).toMatchObject({
-        date: todayKey(),
-        answer: 'Ayudé a alguien sin que me lo pidiera',
-      })
-    })
-
-    await user.click(screen.getByRole('button', { name: /Eliminar reflexión del/ }))
-    await waitFor(async () => {
-      const stored = await repository.load()
-      expect(stored?.reflections).toHaveLength(0)
-    })
-  })
+  // Momento Mori se sacó de la navegación comercial (Fase 1 del roadmap de producto);
+  // `MomentoMoriPage`/`domain/momentoMori.ts` siguen en el repo sin ruta que los monte,
+  // ver plan `drifting-hugging-crystal.md`. Cobertura de esa pantalla queda sin test
+  // mientras no tenga una entrada en la UI.
 
   it('el dashboard muestra la prioridad principal del día y los accesos rápidos navegan', async () => {
     const user = userEvent.setup()
     renderApp()
     await screen.findByText('Objetivos de hoy')
 
+    await user.click(screen.getByRole('button', { name: 'Agenda' }))
     await user.click(screen.getByRole('button', { name: 'Planificador' }))
     await user.type(screen.getByLabelText('Título'), 'Revisar propuesta')
     await user.selectOptions(screen.getByLabelText('Prioridad'), 'Alta')

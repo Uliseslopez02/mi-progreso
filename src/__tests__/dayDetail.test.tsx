@@ -22,7 +22,7 @@ describe('DayDetail', () => {
     expect(screen.getByText('Lunes 17 de agosto')).toBeInTheDocument()
     expect(screen.getByText('67%')).toBeInTheDocument()
     expect(screen.getByText('Nota 6,7 / 10')).toBeInTheDocument()
-    expect(screen.getByText('2 de 3 objetivos · Buen esfuerzo')).toBeInTheDocument()
+    expect(screen.getByText('2 de 3 objetivos · Aceptable')).toBeInTheDocument()
     expect(screen.queryAllByRole('checkbox')).toHaveLength(0)
   })
 

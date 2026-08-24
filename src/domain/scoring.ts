@@ -83,22 +83,20 @@ export function computeDayStats(day: Completable | undefined): DayStats {
   }
 }
 
-/** Frase del día. Tono adulto: reconoce el resultado sin festejarlo de más. */
+/** Frase del día. Tono adulto: reconoce el resultado sin festejarlo ni castigar de más. */
 export function messageForPercent(percent: number): string {
-  if (percent >= 100) return 'Día perfecto. Completaste todos tus objetivos.'
-  if (percent >= 85) return 'Excelente. Estuviste muy enfocado.'
-  if (percent >= 70) return 'Muy buen día.'
-  if (percent >= 50) return 'Buen esfuerzo. Seguí construyendo.'
-  if (percent >= 30) return 'Hay margen para mejorar.'
-  return 'Hoy fue un día difícil. Mañana es una nueva oportunidad.'
+  if (percent >= 90) return 'Excelente día. Estás construyendo una gran consistencia.'
+  if (percent >= 70) return 'Muy buen día. Seguiste avanzando en lo importante.'
+  if (percent >= 50) return 'Un día aceptable, pero hay margen para mejorar.'
+  if (percent >= 30) return 'Día por debajo del objetivo. Revisemos qué pasó.'
+  return 'No fue tu mejor día. Mañana es una nueva oportunidad.'
 }
 
 /** Etiqueta corta para acompañar la nota. */
 export function labelForPercent(percent: number): string {
-  if (percent >= 100) return 'Día perfecto'
-  if (percent >= 85) return 'Excelente'
+  if (percent >= 90) return 'Excelente'
   if (percent >= 70) return 'Muy buen día'
-  if (percent >= 50) return 'Buen esfuerzo'
+  if (percent >= 50) return 'Aceptable'
   if (percent >= 30) return 'Por debajo'
   return 'Día difícil'
 }

@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import type { Tab } from '../App'
 import { GoalList } from '../components/GoalList'
 import { PeriodGoalsCard } from '../components/PeriodGoalsCard'
 import { ProgressRing } from '../components/ProgressRing'
@@ -26,7 +25,7 @@ import { useAppData } from '../state/context'
 const PRIORITY_LABEL: Record<string, string> = { low: 'Baja', medium: 'Media', high: 'Alta' }
 
 interface Props {
-  onNavigate: (tab: Tab) => void
+  onNavigate: (path: string) => void
 }
 
 export function TodayPage({ onNavigate }: Props) {
@@ -183,16 +182,16 @@ export function TodayPage({ onNavigate }: Props) {
             <h2 className="card__title">Accesos rápidos</h2>
           </div>
           <div className="chip-list">
-            <button type="button" className="btn btn--ghost" onClick={() => onNavigate('rutinas')}>
+            <button type="button" className="btn btn--ghost" onClick={() => onNavigate('/objetivos/rutinas')}>
               Iniciar rutina
             </button>
-            <button type="button" className="btn btn--ghost" onClick={() => onNavigate('planificador')}>
+            <button type="button" className="btn btn--ghost" onClick={() => onNavigate('/agenda')}>
               Planificar semana
             </button>
-            <button type="button" className="btn btn--ghost" onClick={() => onNavigate('enfoque')}>
+            <button type="button" className="btn btn--ghost" onClick={() => onNavigate('/agenda/enfoque')}>
               Iniciar enfoque
             </button>
-            <button type="button" className="btn btn--ghost" onClick={() => onNavigate('planificador')}>
+            <button type="button" className="btn btn--ghost" onClick={() => onNavigate('/agenda')}>
               Agregar tarea
             </button>
             <button
