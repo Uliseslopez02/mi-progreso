@@ -82,7 +82,10 @@ export function FirstTimeIntro({ onContinue, onSkip }: Props) {
 
         {moment < 3 && (
           <div className="intro-card__nav">
-            <ProgressPath steps={4} activeIndex={moment} size="sm" />
+            {/* 8 = estos 4 momentos + los 4 pasos de OnboardingWizard que sigue después
+                ("Crear mi primer objetivo") — un solo camino continuo, no dos wizards
+                separados que reinician el progreso. */}
+            <ProgressPath steps={8} activeIndex={moment} size="sm" />
             <button type="button" className="btn btn--primary" onClick={() => setMoment((m) => (m + 1) as Moment)}>
               Seguir
             </button>

@@ -75,6 +75,10 @@ function AppShell() {
   const [entryIntent] = useState(() => consumeEntryIntent())
   const [onboarding, setOnboarding] = useState<OnboardingFlag>(null)
   const [introSeen, setIntroSeen] = useState(() => entryIntent === 'createHabit')
+  // true sólo si se recorrió FirstTimeIntro de verdad (no si se entró directo al
+  // wizard, ni si se lo salteó) — decide si el wizard continúa el mismo camino de
+  // progreso o arranca el suyo propio desde cero.
+  const [introCompleted, setIntroCompleted] = useState(false)
   const appName = state.data?.settings.appName ?? 'Mi Progreso'
   const location = useLocation()
   const navigate = useNavigate()
@@ -124,7 +128,10 @@ function AppShell() {
     if (!introSeen) {
       return (
         <FirstTimeIntro
-          onContinue={() => setIntroSeen(true)}
+          onContinue={() => {
+            setIntroCompleted(true)
+            setIntroSeen(true)
+          }}
           onSkip={() => {
             setIntroSeen(true)
             setOnboarding(false)
@@ -132,7 +139,7 @@ function AppShell() {
         />
       )
     }
-    return <OnboardingWizard onComplete={() => setOnboarding(false)} />
+    return <OnboardingWizard onComplete={() => setOnboarding(false)} stepOffset={introCompleted ? 4 : 0} />
   }
 
   return (

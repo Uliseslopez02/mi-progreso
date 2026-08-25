@@ -68,6 +68,34 @@ describe('Onboarding', () => {
     expect(screen.queryByRole('button', { name: 'Hoy' })).not.toBeInTheDocument()
   })
 
+  it('el wizard continúa el camino de progreso del intro en vez de reiniciarlo', async () => {
+    // El intro tiene 4 momentos y el wizard 4 pasos propios: si se recorrió el
+    // intro de verdad ("Crear mi primer objetivo"), el primer paso del wizard
+    // debería verse como el 5to nodo de 8, no como el 1ro de 4 — una sola
+    // experiencia continua, no dos wizards separados.
+    const user = userEvent.setup()
+    const { container } = renderFreshApp()
+
+    await skipIntro(user)
+    await screen.findByText('¿Qué querés mejorar?')
+
+    const nodes = container.querySelectorAll('.progress-path__node')
+    expect(nodes).toHaveLength(8)
+    expect(nodes[4]).toHaveClass('progress-path__node--active')
+    expect(nodes[3]).toHaveClass('progress-path__node--done')
+  })
+
+  it('entrar directo al wizard (sin ver el intro) arranca su propio camino de 4', async () => {
+    window.localStorage.setItem(ENTRY_INTENT_KEY, 'createHabit')
+    const { container } = renderFreshApp()
+
+    await screen.findByText('¿Qué querés mejorar?')
+
+    const nodes = container.querySelectorAll('.progress-path__node')
+    expect(nodes).toHaveLength(4)
+    expect(nodes[0]).toHaveClass('progress-path__node--active')
+  })
+
   it('elegir áreas filtra las sugerencias del paso 2', async () => {
     const user = userEvent.setup()
     renderFreshApp()

@@ -20,6 +20,11 @@ import { useAppData } from '../state/context'
 
 interface Props {
   onComplete: () => void
+  /** Cantidad de pasos ya recorridos antes de este wizard (p. ej. los 4 momentos de
+   * FirstTimeIntro) — el camino de progreso continúa desde ahí en vez de reiniciar,
+   * para que se sienta una sola experiencia y no dos wizards separados. 0 si se
+   * entra directo (sin haber visto la introducción). */
+  stepOffset?: number
 }
 
 type Step = 'areas' | 'goals' | 'weights' | 'finish'
@@ -32,10 +37,10 @@ interface GoalDraft {
 }
 
 const STEP_NUMBER: Record<Step, number> = { areas: 1, goals: 2, weights: 3, finish: 4 }
-const TOTAL_STEPS = 4
+const WIZARD_STEPS = 4
 
 /** Wizard de primeros pasos para una cuenta nueva y vacía: nada se persiste hasta "Crear mis objetivos". */
-export function OnboardingWizard({ onComplete }: Props) {
+export function OnboardingWizard({ onComplete, stepOffset = 0 }: Props) {
   const { data, dispatch } = useAppData()
   const [step, setStep] = useState<Step>('areas')
   const [selectedAreaIds, setSelectedAreaIds] = useState<Set<string>>(() => {
@@ -157,7 +162,11 @@ export function OnboardingWizard({ onComplete }: Props) {
     <div className="onboarding-screen">
       <div className="card onboarding-card">
         <p className="hero__eyebrow">Mi Progreso</p>
-        <ProgressPath steps={TOTAL_STEPS} activeIndex={STEP_NUMBER[step] - 1} size="sm" />
+        <ProgressPath
+          steps={stepOffset + WIZARD_STEPS}
+          activeIndex={stepOffset + STEP_NUMBER[step] - 1}
+          size="sm"
+        />
 
         {step === 'areas' && (
           <>
