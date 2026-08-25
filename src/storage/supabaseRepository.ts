@@ -149,6 +149,8 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         done: row.done,
         order: row.order_index,
         createdAt: row.created_at,
+        startTime: row.start_time ?? undefined,
+        durationMinutes: row.duration_minutes ?? undefined,
       }))
 
       const routines: Routine[] = (routinesRes.data ?? []).map((row) => ({

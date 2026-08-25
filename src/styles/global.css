@@ -756,6 +756,119 @@ main { flex: 1; padding: 28px 0 72px; }
   min-width: 0;
 }
 
+/* ---------- Agenda: vista diaria (timeline) ---------- */
+.timeline-untimed {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.timeline {
+  display: flex;
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.timeline__hours {
+  width: 52px;
+  flex: none;
+  border-right: 1px solid var(--border);
+}
+
+.timeline__hour { position: relative; }
+
+.timeline__hour-label {
+  position: absolute;
+  top: -7px;
+  right: 8px;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  background: var(--surface-2);
+  padding: 0 2px;
+}
+
+.timeline__track {
+  flex: 1;
+  position: relative;
+}
+
+.timeline__line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border);
+}
+
+.timeline__now {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--band-low);
+  z-index: 5;
+}
+
+.timeline-item {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 4px 6px;
+  cursor: grab;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+
+.timeline-item--done .timeline-item__title {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 255, 255, 0.25);
+}
+
+.timeline-item__body { flex: 1; min-width: 0; }
+
+.timeline-item__title {
+  font-size: 0.8rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timeline-item__time {
+  width: 100%;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  margin: 0;
+}
+
+.timeline-item__actions {
+  display: flex;
+  gap: 2px;
+  flex: none;
+}
+
+.timeline-item__resize {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 8px;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
 /* ---------- Calendario ---------- */
 .calendar__head {
   display: flex;

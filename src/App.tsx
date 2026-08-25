@@ -6,6 +6,7 @@ import { LoadingScreen } from './components/LoadingScreen'
 import { SectionLayout } from './components/SectionLayout'
 import { formatLongDate } from './domain/date'
 import { CalendarPage } from './pages/CalendarPage'
+import { DayAgendaPage } from './pages/DayAgendaPage'
 import { FocusPage } from './pages/FocusPage'
 import { GoalsPage } from './pages/GoalsPage'
 import { HabitsPage } from './pages/HabitsPage'
@@ -30,7 +31,8 @@ const TABS = [
 ]
 
 const AGENDA_ITEMS = [
-  { to: '/agenda', label: 'Planificador' },
+  { to: '/agenda', label: 'Día' },
+  { to: '/agenda/semana', label: 'Planificador' },
   { to: '/agenda/enfoque', label: 'Enfoque' },
 ]
 
@@ -152,7 +154,8 @@ function AppShell() {
           <Routes>
             <Route path="/" element={<TodayPage onNavigate={navigate} />} />
             <Route path="/agenda" element={<SectionLayout items={AGENDA_ITEMS} ariaLabel="Agenda" />}>
-              <Route index element={<PlannerPage />} />
+              <Route index element={<DayAgendaPage />} />
+              <Route path="semana" element={<PlannerPage />} />
               <Route path="enfoque" element={<FocusPage />} />
             </Route>
             <Route path="/objetivos" element={<SectionLayout items={OBJETIVOS_ITEMS} ariaLabel="Objetivos" />}>

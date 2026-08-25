@@ -185,7 +185,7 @@ export function TodayPage({ onNavigate }: Props) {
             <button type="button" className="btn btn--ghost" onClick={() => onNavigate('/objetivos/rutinas')}>
               Iniciar rutina
             </button>
-            <button type="button" className="btn btn--ghost" onClick={() => onNavigate('/agenda')}>
+            <button type="button" className="btn btn--ghost" onClick={() => onNavigate('/agenda/semana')}>
               Planificar semana
             </button>
             <button type="button" className="btn btn--ghost" onClick={() => onNavigate('/agenda/enfoque')}>

@@ -240,6 +240,8 @@ function normalizePlannerItems(items: AppData['plannerItems'] | undefined): AppD
     done: i.done === true,
     order: typeof i.order === 'number' ? i.order : idx,
     createdAt: i.createdAt ?? new Date(0).toISOString(),
+    startTime: typeof i.startTime === 'string' ? i.startTime : undefined,
+    durationMinutes: typeof i.durationMinutes === 'number' ? i.durationMinutes : undefined,
   }))
 }
 

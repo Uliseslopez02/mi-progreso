@@ -428,6 +428,29 @@ describe('Mi Progreso', () => {
     })
   })
 
+  it('un ítem con hora se crea desde la Agenda (vista Día) y persiste con horario', async () => {
+    const user = userEvent.setup()
+    const { repository } = renderApp()
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Agenda' }))
+    expect(await screen.findByText('Agenda del día')).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Título'), 'Entrenar')
+    fireEvent.change(screen.getByLabelText('Hora (opcional)'), { target: { value: '08:00' } })
+    await user.selectOptions(screen.getByLabelText('Duración'), '45 min')
+    await user.click(screen.getByRole('button', { name: 'Agregar' }))
+
+    expect(await screen.findByRole('checkbox', { name: 'Entrenar' })).toBeInTheDocument()
+    expect(screen.getByText('8:00–8:45')).toBeInTheDocument()
+
+    await waitFor(async () => {
+      const stored = await repository.load()
+      const item = stored?.plannerItems.find((i) => i.title === 'Entrenar')
+      expect(item).toMatchObject({ date: todayKey(), startTime: '08:00', durationMinutes: 45 })
+    })
+  })
+
   it('una rutina se crea con un paso, se puede marcar y persiste', async () => {
     const user = userEvent.setup()
     const { repository } = renderApp()

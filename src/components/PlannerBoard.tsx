@@ -10,6 +10,7 @@ import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { formatShortDate, formatWeekday, type DateKey } from '../domain/date'
+import { formatTimeRange } from '../domain/time'
 import type { PlannerItem } from '../domain/types'
 
 const PRIORITY_COLOR: Record<PlannerItem['priority'], string> = {
@@ -68,6 +69,9 @@ function SortableRow({
         <div className="planner-item__meta">
           <span className="planner-item__dot" style={{ background: PRIORITY_COLOR[item.priority] }} />
           <span className="planner-item__tag">{CATEGORY_LABEL[item.category]}</span>
+          {item.startTime && (
+            <span className="planner-item__tag">{formatTimeRange(item.startTime, item.durationMinutes ?? 30)}</span>
+          )}
         </div>
       </div>
       <button

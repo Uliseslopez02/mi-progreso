@@ -13,6 +13,8 @@ export function PlannerPage() {
   const [newType, setNewType] = useState<PlannerItemType>('task')
   const [newCategory, setNewCategory] = useState<PlannerCategory>('personal')
   const [newPriority, setNewPriority] = useState<PlannerPriority>('medium')
+  const [newTime, setNewTime] = useState('')
+  const [newDuration, setNewDuration] = useState(30)
 
   const days = useMemo(() => weekDays(weekStart), [weekStart])
 
@@ -32,7 +34,17 @@ export function PlannerPage() {
     return map
   }, [data.plannerItems])
 
-  const addItem = (date: DateKey, title: string, opts?: Partial<{ type: PlannerItemType; category: PlannerCategory; priority: PlannerPriority }>) => {
+  const addItem = (
+    date: DateKey,
+    title: string,
+    opts?: Partial<{
+      type: PlannerItemType
+      category: PlannerCategory
+      priority: PlannerPriority
+      startTime: string
+      durationMinutes: number
+    }>,
+  ) => {
     const trimmed = title.trim()
     if (!trimmed) return
     const order = (itemsByDay[date]?.length ?? 0)
@@ -48,13 +60,22 @@ export function PlannerPage() {
         done: false,
         order,
         createdAt: new Date().toISOString(),
+        startTime: opts?.startTime,
+        durationMinutes: opts?.startTime ? opts?.durationMinutes : undefined,
       },
     })
   }
 
   const addFromTopForm = () => {
-    addItem(newDate, newTitle, { type: newType, category: newCategory, priority: newPriority })
+    addItem(newDate, newTitle, {
+      type: newType,
+      category: newCategory,
+      priority: newPriority,
+      startTime: newTime || undefined,
+      durationMinutes: newDuration,
+    })
     setNewTitle('')
+    setNewTime('')
   }
 
   return (
@@ -130,6 +151,37 @@ export function PlannerPage() {
               ))}
             </select>
           </div>
+          <div className="field" style={{ flex: '1 1 110px' }}>
+            <label className="field__label" htmlFor="planner-time">
+              Hora (opcional)
+            </label>
+            <input
+              id="planner-time"
+              type="time"
+              className="input"
+              value={newTime}
+              onChange={(e) => setNewTime(e.target.value)}
+            />
+          </div>
+          {newTime && (
+            <div className="field" style={{ flex: '1 1 120px' }}>
+              <label className="field__label" htmlFor="planner-duration">
+                Duración
+              </label>
+              <select
+                id="planner-duration"
+                className="select"
+                value={newDuration}
+                onChange={(e) => setNewDuration(Number(e.target.value))}
+              >
+                {[15, 30, 45, 60, 90, 120].map((minutes) => (
+                  <option key={minutes} value={minutes}>
+                    {minutes} min
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="field" style={{ flex: '1 1 120px' }}>
             <label className="field__label" htmlFor="planner-type">
               Tipo

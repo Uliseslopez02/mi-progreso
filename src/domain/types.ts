@@ -157,6 +157,10 @@ export interface PlannerItem {
   done: boolean
   order: number
   createdAt: string
+  /** Hora local "HH:MM". Sin valor = tarea sin horario fijo (no aparece en la grilla del día). */
+  startTime?: string
+  /** Sólo tiene sentido si `startTime` está definido. */
+  durationMinutes?: number
 }
 
 export type RoutineCategory = 'morning' | 'evening' | 'workout' | 'work' | 'custom'
