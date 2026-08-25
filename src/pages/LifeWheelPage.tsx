@@ -1,8 +1,17 @@
 import { useMemo, useState } from 'react'
 import { LifeWheelChart } from '../components/LifeWheelChart'
+import { Stat } from '../components/Stat'
 import { formatLongDate } from '../domain/date'
 import { createId } from '../domain/id'
-import { averageScore, compareSnapshots, strongestArea, weakestArea } from '../domain/lifeWheel'
+import {
+  averageScore,
+  bandDescription,
+  compareSnapshots,
+  mostImprovedArea,
+  strongestArea,
+  weakestArea,
+} from '../domain/lifeWheel'
+import { areaDetail } from '../domain/lifeWheelInsights'
 import { useAppData } from '../state/context'
 
 const DEFAULT_SCORE = 5
@@ -12,6 +21,7 @@ export function LifeWheelPage() {
   const { data, today, dispatch } = useAppData()
   const [draftScores, setDraftScores] = useState<Record<string, number>>({})
   const [notes, setNotes] = useState('')
+  const [selectedAreaIndex, setSelectedAreaIndex] = useState<number | null>(null)
 
   const sortedCategories = useMemo(
     () => [...data.categories].sort((a, b) => a.order - b.order),
@@ -27,6 +37,16 @@ export function LifeWheelPage() {
 
   const scoreFor = (categoryId: string) => draftScores[categoryId] ?? DEFAULT_SCORE
 
+  const previewAreas = useMemo(
+    () =>
+      sortedCategories.map((c) => ({
+        categoryId: c.id,
+        categoryName: c.name,
+        score: draftScores[c.id] ?? DEFAULT_SCORE,
+      })),
+    [sortedCategories, draftScores],
+  )
+
   const saveSnapshot = () => {
     if (sortedCategories.length === 0) return
     dispatch({
@@ -34,11 +54,7 @@ export function LifeWheelPage() {
       snapshot: {
         id: createId('rueda'),
         date: today,
-        areas: sortedCategories.map((c) => ({
-          categoryId: c.id,
-          categoryName: c.name,
-          score: scoreFor(c.id),
-        })),
+        areas: previewAreas,
         notes: notes.trim() || undefined,
         createdAt: new Date().toISOString(),
       },
@@ -50,8 +66,12 @@ export function LifeWheelPage() {
   const weakest = latest ? weakestArea(latest) : null
   const strongest = latest ? strongestArea(latest) : null
   const deltas = latest && previous ? compareSnapshots(latest, previous) : []
-  const improved = deltas.filter((d) => d.delta > 0).sort((a, b) => b.delta - a.delta)
-  const worsened = deltas.filter((d) => d.delta < 0).sort((a, b) => a.delta - b.delta)
+  const topImprovement = mostImprovedArea(deltas)
+
+  const selectedArea = latest && selectedAreaIndex !== null ? latest.areas[selectedAreaIndex] : null
+  const selectedDetail = selectedArea
+    ? areaDetail(selectedArea.categoryId, selectedArea.score, data.goals, data.lifeGoals, data.days, today)
+    : null
 
   return (
     <div className="stack">
@@ -67,29 +87,78 @@ export function LifeWheelPage() {
           </p>
         ) : (
           <>
-            <LifeWheelChart areas={latest.areas} previousAreas={previous?.areas} />
-            <p style={{ marginTop: 12 }}>
-              Promedio <strong className="numeric">{averageScore(latest)}</strong>
+            <LifeWheelChart
+              areas={latest.areas}
+              previousAreas={previous?.areas}
+              selectedIndex={selectedAreaIndex}
+              onSelectArea={(i) => setSelectedAreaIndex((current) => (current === i ? null : i))}
+            />
+            <div className="stat-grid" style={{ marginTop: 12 }}>
+              <Stat label="Promedio" value={averageScore(latest)} />
+              {strongest && (
+                <Stat label="Área más fuerte" value={`${strongest.score}/10`} hint={strongest.categoryName} />
+              )}
+              {topImprovement && (
+                <Stat
+                  label="Área con mayor mejora"
+                  value={`+${topImprovement.delta}`}
+                  hint={topImprovement.categoryName}
+                />
+              )}
               {weakest && (
-                <>
-                  {' '}· Área más floja <strong>{weakest.categoryName}</strong> ({weakest.score})
-                </>
+                <Stat
+                  label="Área que necesita atención"
+                  value={`${weakest.score}/10`}
+                  hint={weakest.categoryName}
+                />
               )}
-              {strongest && strongest.categoryId !== weakest?.categoryId && (
-                <>
-                  {' '}· Área más fuerte <strong>{strongest.categoryName}</strong> ({strongest.score})
-                </>
-              )}
-            </p>
-            {(improved.length > 0 || worsened.length > 0) && (
-              <p className="card__hint">
-                {improved.length > 0 &&
-                  `Mejoraste en ${improved.map((d) => `${d.categoryName} (+${d.delta})`).join(', ')}. `}
-                {worsened.length > 0 &&
-                  `Bajaste en ${worsened.map((d) => `${d.categoryName} (${d.delta})`).join(', ')}.`}
+            </div>
+            {latest.notes && (
+              <p className="card__hint" style={{ marginTop: 12 }}>
+                "{latest.notes}"
               </p>
             )}
-            {latest.notes && <p className="card__hint">"{latest.notes}"</p>}
+
+            {selectedArea && selectedDetail && (
+              <div className="card" style={{ marginTop: 12, background: 'var(--surface-2)' }}>
+                <div className="card__header">
+                  <h3 className="card__title">
+                    {selectedArea.categoryName} · <span className="numeric">{selectedArea.score}/10</span>
+                  </h3>
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    aria-label="Cerrar detalle"
+                    onClick={() => setSelectedAreaIndex(null)}
+                  >
+                    ×
+                  </button>
+                </div>
+                <p className="card__hint">{bandDescription(selectedArea.score)}</p>
+
+                {selectedDetail.habits.length > 0 && (
+                  <ul className="subgoal-list" style={{ marginTop: 10 }}>
+                    {selectedDetail.habits.map((h) => (
+                      <li className="subgoal" key={h.id}>
+                        <span aria-hidden="true">{h.doneToday ? '✓' : '✗'}</span>
+                        <span>{h.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {selectedDetail.goalsProgress !== null && (
+                  <p style={{ marginTop: 10 }}>
+                    Progreso en objetivos de esta área{' '}
+                    <strong className="numeric">{selectedDetail.goalsProgress}%</strong>
+                  </p>
+                )}
+
+                <p className="card__hint" style={{ marginTop: 10 }}>
+                  {selectedDetail.suggestion}
+                </p>
+              </div>
+            )}
           </>
         )}
       </section>
@@ -102,6 +171,10 @@ export function LifeWheelPage() {
           <p className="empty">Necesitás al menos una categoría (Ajustes) para puntuar la rueda.</p>
         ) : (
           <>
+            <div style={{ marginBottom: 16 }}>
+              <LifeWheelChart areas={previewAreas} previousAreas={latest?.areas} />
+            </div>
+
             {sortedCategories.map((c) => (
               <div key={c.id} className="field" style={{ marginBottom: 14 }}>
                 <div className="field__label" style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -119,6 +192,9 @@ export function LifeWheelPage() {
                   }
                   style={{ width: '100%' }}
                 />
+                <p className="card__hint" style={{ marginTop: 4 }}>
+                  {bandDescription(scoreFor(c.id))}
+                </p>
               </div>
             ))}
             <div className="field" style={{ marginBottom: 14 }}>

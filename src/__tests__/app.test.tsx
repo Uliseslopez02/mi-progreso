@@ -653,6 +653,31 @@ describe('Mi Progreso', () => {
     })
   })
 
+  it('hacer click en un área de la Rueda muestra el detalle con sus hábitos de hoy', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
+    await user.type(screen.getByLabelText('Nuevo hábito'), 'Meditar')
+    await user.click(screen.getByRole('button', { name: 'Agregar hábito' }))
+
+    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.click(screen.getByRole('button', { name: 'Rueda de la vida' }))
+    fireEvent.change(screen.getByLabelText('Salud'), { target: { value: '8' } })
+    await user.click(screen.getByRole('button', { name: 'Guardar snapshot' }))
+
+    await screen.findByText(/Promedio/)
+    await user.click(screen.getByRole('button', { name: 'Ver detalle de Salud' }))
+
+    expect(await screen.findByRole('heading', { name: /Salud/ })).toBeInTheDocument()
+    expect(screen.getByText('Meditar')).toBeInTheDocument()
+    expect(screen.getByText('✗')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Cerrar detalle' }))
+    expect(screen.queryByText('Meditar')).not.toBeInTheDocument()
+  })
+
   // Momento Mori se sacó de la navegación comercial (Fase 1 del roadmap de producto);
   // `MomentoMoriPage`/`domain/momentoMori.ts` siguen en el repo sin ruta que los monte,
   // ver plan `drifting-hugging-crystal.md`. Cobertura de esa pantalla queda sin test

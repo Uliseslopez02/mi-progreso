@@ -53,3 +53,18 @@ export function compareSnapshots(
   }
   return deltas
 }
+
+/** El área con el mayor avance positivo contra el snapshot anterior, o `null` si ninguna mejoró. */
+export function mostImprovedArea(deltas: LifeWheelAreaDelta[]): LifeWheelAreaDelta | null {
+  const improved = deltas.filter((d) => d.delta > 0)
+  if (improved.length === 0) return null
+  return [...improved].sort((a, b) => b.delta - a.delta)[0]
+}
+
+/** Texto del significado de cada franja de puntaje (1-10), tal cual el criterio del producto. */
+export function bandDescription(score: number): string {
+  if (score >= 9) return 'Área muy fortalecida'
+  if (score >= 7) return 'Vas por buen camino'
+  if (score >= 4) return 'Hay margen de mejora'
+  return 'Necesita atención'
+}
