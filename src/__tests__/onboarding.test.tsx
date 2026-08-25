@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { App } from '../App'
+import { ENTRY_INTENT_KEY } from '../auth/entryIntent'
 import { createInitialData } from '../domain/defaults'
 import { AppProvider } from '../state/AppProvider'
 import { createLocalStorageRepository } from '../storage/localStorageRepository'
@@ -215,5 +216,36 @@ describe('Onboarding', () => {
 
     expect(await screen.findByText('Objetivos de hoy')).toBeInTheDocument()
     expect(screen.getAllByRole('checkbox')).toHaveLength(11)
+  })
+
+  it('elegir "explorar por mi cuenta" en el registro saltea intro y wizard, entra directo', async () => {
+    window.localStorage.setItem(ENTRY_INTENT_KEY, 'explore')
+    renderFreshApp()
+
+    expect(await screen.findByRole('button', { name: 'Hoy' })).toBeInTheDocument()
+    expect(screen.queryByText('Esto no se trata de hacerlo todo.')).not.toBeInTheDocument()
+    expect(screen.queryByText('¿Qué querés mejorar?')).not.toBeInTheDocument()
+    expect(window.localStorage.getItem(ENTRY_INTENT_KEY)).toBeNull() // se consume una sola vez
+  })
+
+  it('elegir "crear mi primer hábito" en el registro saltea la intro, va directo al wizard', async () => {
+    window.localStorage.setItem(ENTRY_INTENT_KEY, 'createHabit')
+    renderFreshApp()
+
+    expect(await screen.findByText('¿Qué querés mejorar?')).toBeInTheDocument()
+    expect(screen.queryByText('Esto no se trata de hacerlo todo.')).not.toBeInTheDocument()
+  })
+
+  it('"explorar por mi cuenta" no vuelve a mostrar el wizard solo (cuenta arranca vacía a propósito)', async () => {
+    // Regresión: el efecto que re-arma el wizard cuando los datos "se vacían"
+    // no debe confundir una cuenta que arrancó vacía a propósito con una que
+    // tenía datos y los perdió — si no, el skip de arriba quedaría roto.
+    window.localStorage.setItem(ENTRY_INTENT_KEY, 'explore')
+    renderFreshApp()
+
+    await screen.findByRole('button', { name: 'Hoy' })
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(screen.getByRole('button', { name: 'Hoy' })).toBeInTheDocument()
+    expect(screen.queryByText('¿Qué querés mejorar?')).not.toBeInTheDocument()
   })
 })

@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { consumeEntryIntent } from './auth/entryIntent'
 import { signOut } from './auth/supabaseAuth'
 import { ErrorScreen } from './components/ErrorScreen'
 import { LoadingScreen } from './components/LoadingScreen'
@@ -69,8 +70,11 @@ export function App() {
 
 function AppShell() {
   const { state, retryHydrate, saveStatus } = useAppContext()
+  // Se lee y consume una sola vez (localStorage, ver entryIntent.ts): qué tan
+  // directo entrar eligió la persona en la pantalla final del registro.
+  const [entryIntent] = useState(() => consumeEntryIntent())
   const [onboarding, setOnboarding] = useState<OnboardingFlag>(null)
-  const [introSeen, setIntroSeen] = useState(false)
+  const [introSeen, setIntroSeen] = useState(() => entryIntent === 'createHabit')
   const appName = state.data?.settings.appName ?? 'Mi Progreso'
   const location = useLocation()
   const navigate = useNavigate()
@@ -84,14 +88,23 @@ function AppShell() {
   // usuario del wizard a mitad de camino (categories/goals dejarían de estar vacíos).
   const isEmpty = state.data ? state.data.categories.length === 0 && state.data.goals.length === 0 : false
   if (state.status === 'ready' && state.data && onboarding === null) {
-    setOnboarding(isEmpty)
+    setOnboarding(entryIntent === 'explore' ? false : isEmpty)
   }
 
-  // Re-arma el wizard si los datos vuelven a quedar vacíos más adelante
-  // (p. ej. "Borrar todos los datos" en Ajustes).
+  // Re-arma el wizard si los datos vuelven a quedar vacíos más adelante (p. ej.
+  // "Borrar todos los datos" en Ajustes) — pero sólo ante una transición real de
+  // "tenía datos" a "se vació", nunca si ya empezó vacío (cuenta nueva que
+  // saltea el onboarding a propósito, desde FirstTimeIntro o desde el registro).
+  // `null` = todavía no se observó ningún estado "ready": si se inicializara con
+  // el `isEmpty` del primer render (que siempre es `false`, antes de que carguen
+  // los datos) una cuenta nueva vacía parecería "transicionar" a vacía apenas
+  // carga, re-armando el wizard aunque se haya elegido saltearlo a propósito.
+  const wasEmptyRef = useRef<boolean | null>(null)
   useEffect(() => {
-    if (onboarding === false && isEmpty) setOnboarding(true)
-  }, [onboarding, isEmpty])
+    if (state.status !== 'ready') return
+    if (wasEmptyRef.current === false && isEmpty && onboarding === false) setOnboarding(true)
+    wasEmptyRef.current = isEmpty
+  }, [state.status, onboarding, isEmpty])
 
   if (state.status === 'error') {
     return (

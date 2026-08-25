@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { FOCUS_OPTIONS, saveFocusIntent } from './focusIntent'
+import { saveEntryIntent } from './entryIntent'
 import { describeAuthError } from './authErrors'
 import { signUp } from './supabaseAuth'
 import { isValidEmail, passwordMeetsRequirements } from './validation'
@@ -317,10 +318,34 @@ export function SignUpWizard({ onSwitchToSignIn, onGoToReset, onEnterApp }: Prop
             <h1 className="card__title" ref={headingRef} tabIndex={-1}>
               {firstName ? `¡Listo, ${firstName}!` : '¡Listo!'}
             </h1>
-            <p className="card__hint auth-card__subtitle">Este es tu punto de partida.</p>
-            <button type="button" className="btn btn--primary" onClick={onEnterApp}>
-              Empezar a explorar
-            </button>
+            <p className="card__hint auth-card__subtitle">Este es tu punto de partida. ¿Cómo querés arrancar?</p>
+            <div className="auth-card__links">
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => {
+                  saveEntryIntent('createHabit')
+                  onEnterApp()
+                }}
+              >
+                Crear mi primer hábito
+              </button>
+              <button type="button" className="btn btn--ghost" onClick={onEnterApp}>
+                Conocer mi espacio
+              </button>
+            </div>
+            <div className="auth-card__links auth-card__links--center">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => {
+                  saveEntryIntent('explore')
+                  onEnterApp()
+                }}
+              >
+                Prefiero explorar por mi cuenta
+              </button>
+            </div>
           </>
         )}
       </div>
