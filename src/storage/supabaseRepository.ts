@@ -137,6 +137,11 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         linkedHabitIds: row.linked_habit_ids ?? [],
         order: row.order_index,
         createdAt: row.created_at,
+        kind: row.kind ?? undefined,
+        currentValue: row.current_value ?? undefined,
+        targetValue: row.target_value ?? undefined,
+        unit: row.unit ?? undefined,
+        milestones: row.milestones ?? [],
       }))
 
       const plannerItems: PlannerItem[] = (plannerItemsRes.data ?? []).map((row) => ({

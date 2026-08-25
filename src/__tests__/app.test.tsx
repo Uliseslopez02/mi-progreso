@@ -399,6 +399,62 @@ describe('Mi Progreso', () => {
     })
   })
 
+  it('una meta tipo Dinero deriva el progreso de Actual/Meta y persiste', async () => {
+    const user = userEvent.setup()
+    const { repository } = renderApp()
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.click(screen.getByRole('button', { name: 'Metas' }))
+    await user.type(screen.getByLabelText('Nombre'), 'Ahorrar para el viaje')
+    await user.selectOptions(screen.getByLabelText('Tipo'), 'Dinero')
+    fireEvent.change(screen.getByLabelText('Meta'), { target: { value: '10000' } })
+    await user.click(screen.getByRole('button', { name: 'Crear meta' }))
+
+    await screen.findByDisplayValue('Ahorrar para el viaje')
+    fireEvent.change(screen.getByLabelText('Actual'), { target: { value: '6500' } })
+    expect(screen.getByText('65%')).toBeInTheDocument()
+
+    await waitFor(async () => {
+      const stored = await repository.load()
+      const goal = stored?.lifeGoals.find((g) => g.name === 'Ahorrar para el viaje')
+      expect(goal).toMatchObject({ kind: 'money', currentValue: 6500, targetValue: 10000, progress: 65 })
+    })
+  })
+
+  it('una meta tipo Hitos deriva el progreso de los hitos cumplidos y persiste', async () => {
+    const user = userEvent.setup()
+    const { repository } = renderApp()
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.click(screen.getByRole('button', { name: 'Metas' }))
+    await user.type(screen.getByLabelText('Nombre'), 'Lanzar el sitio web')
+    await user.selectOptions(screen.getByLabelText('Tipo'), 'Hitos')
+    await user.click(screen.getByRole('button', { name: 'Crear meta' }))
+
+    await screen.findByDisplayValue('Lanzar el sitio web')
+    await user.type(screen.getByLabelText('Nuevo hito'), 'Diseño aprobado')
+    await user.click(screen.getByRole('button', { name: 'Agregar hito' }))
+    await user.type(screen.getByLabelText('Nuevo hito'), 'Publicado')
+    await user.click(screen.getByRole('button', { name: 'Agregar hito' }))
+
+    const primerHito = await screen.findByRole('checkbox', { name: 'Diseño aprobado' })
+    await user.click(primerHito)
+    expect(screen.getByText('50%')).toBeInTheDocument()
+    expect(screen.getByText('Próximo hito: Publicado')).toBeInTheDocument()
+
+    await waitFor(async () => {
+      const stored = await repository.load()
+      const goal = stored?.lifeGoals.find((g) => g.name === 'Lanzar el sitio web')
+      expect(goal?.progress).toBe(50)
+      expect(goal?.milestones).toEqual([
+        { id: expect.any(String), name: 'Diseño aprobado', done: true },
+        { id: expect.any(String), name: 'Publicado', done: false },
+      ])
+    })
+  })
+
   it('una tarea se crea desde el Planificador, se puede marcar y persiste', async () => {
     const user = userEvent.setup()
     const { repository } = renderApp()

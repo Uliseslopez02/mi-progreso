@@ -268,6 +268,18 @@ function normalizeLifeGoals(lifeGoals: AppData['lifeGoals'] | undefined): AppDat
     linkedHabitIds: Array.isArray(g.linkedHabitIds) ? g.linkedHabitIds.map(String) : [],
     order: typeof g.order === 'number' ? g.order : i,
     createdAt: g.createdAt ?? new Date(0).toISOString(),
+    kind: g.kind,
+    currentValue: typeof g.currentValue === 'number' ? g.currentValue : undefined,
+    targetValue: typeof g.targetValue === 'number' ? g.targetValue : undefined,
+    unit: g.unit,
+    milestones: Array.isArray(g.milestones)
+      ? g.milestones.map((m) => ({
+          id: String(m.id),
+          name: String(m.name),
+          targetDate: m.targetDate,
+          done: m.done === true,
+        }))
+      : [],
   }))
 }
 

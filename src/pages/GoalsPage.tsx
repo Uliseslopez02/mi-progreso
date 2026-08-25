@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { LifeGoalCard } from '../components/LifeGoalCard'
 import { createId } from '../domain/id'
-import type { LifeGoalPriority, LifeGoalScope } from '../domain/types'
+import type { LifeGoalKind, LifeGoalPriority, LifeGoalScope } from '../domain/types'
 import { useAppData } from '../state/context'
 
 type ScopeFilter = 'all' | LifeGoalScope
@@ -12,13 +12,28 @@ const SCOPE_FILTER_LABEL: Record<ScopeFilter, string> = {
   professional: 'Profesionales',
 }
 
+const KIND_LABEL: Record<LifeGoalKind, string> = {
+  percentage: 'Porcentaje',
+  quantity: 'Cantidad',
+  money: 'Dinero',
+  hours: 'Horas',
+  sessions: 'Sesiones',
+  checklist: 'Checklist',
+  milestones: 'Hitos',
+}
+
+const VALUE_KINDS: LifeGoalKind[] = ['quantity', 'money', 'hours', 'sessions']
+
 /** Objetivos y metas: visión de largo plazo, separada de los objetivos diarios. */
 export function GoalsPage() {
-  const { data, dispatch } = useAppData()
+  const { data, today, dispatch } = useAppData()
   const [filter, setFilter] = useState<ScopeFilter>('all')
   const [newName, setNewName] = useState('')
   const [newScope, setNewScope] = useState<LifeGoalScope>('personal')
   const [newPriority, setNewPriority] = useState<LifeGoalPriority>('medium')
+  const [newKind, setNewKind] = useState<LifeGoalKind>('percentage')
+  const [newTargetValue, setNewTargetValue] = useState(10)
+  const [newUnit, setNewUnit] = useState('')
 
   const habits = useMemo(
     () => data.goals.filter((g) => g.trackingKind === 'habit' && g.active),
@@ -49,10 +64,15 @@ export function GoalsPage() {
         linkedHabitIds: [],
         order: data.lifeGoals.length,
         createdAt: new Date().toISOString(),
+        kind: newKind,
+        targetValue: VALUE_KINDS.includes(newKind) ? newTargetValue : undefined,
+        unit: newKind === 'quantity' ? newUnit || undefined : undefined,
       },
     })
     setNewName('')
     setNewPriority('medium')
+    setNewKind('percentage')
+    setNewUnit('')
   }
 
   const move = (id: string, direction: -1 | 1) => dispatch({ type: 'moveLifeGoal', id, direction })
@@ -94,6 +114,7 @@ export function GoalsPage() {
               goal={goal}
               categories={data.categories}
               habits={habits}
+              today={today}
               onUpdate={(patch) => dispatch({ type: 'updateLifeGoal', id: goal.id, patch })}
               onRemove={() => dispatch({ type: 'removeLifeGoal', id: goal.id })}
               onMoveUp={() => move(goal.id, -1)}
@@ -152,6 +173,51 @@ export function GoalsPage() {
               <option value="high">Alta</option>
             </select>
           </div>
+          <div className="field" style={{ flex: '1 1 150px' }}>
+            <label className="field__label" htmlFor="new-lifegoal-kind">
+              Tipo
+            </label>
+            <select
+              id="new-lifegoal-kind"
+              className="select"
+              value={newKind}
+              onChange={(e) => setNewKind(e.target.value as LifeGoalKind)}
+            >
+              {(Object.keys(KIND_LABEL) as LifeGoalKind[]).map((k) => (
+                <option key={k} value={k}>
+                  {KIND_LABEL[k]}
+                </option>
+              ))}
+            </select>
+          </div>
+          {VALUE_KINDS.includes(newKind) && (
+            <div className="field" style={{ flex: '1 1 100px' }}>
+              <label className="field__label" htmlFor="new-lifegoal-target">
+                Meta
+              </label>
+              <input
+                id="new-lifegoal-target"
+                className="input"
+                type="number"
+                value={newTargetValue}
+                onChange={(e) => setNewTargetValue(Number(e.target.value))}
+              />
+            </div>
+          )}
+          {newKind === 'quantity' && (
+            <div className="field" style={{ flex: '1 1 100px' }}>
+              <label className="field__label" htmlFor="new-lifegoal-unit">
+                Unidad
+              </label>
+              <input
+                id="new-lifegoal-unit"
+                className="input"
+                placeholder="Ej. libros"
+                value={newUnit}
+                onChange={(e) => setNewUnit(e.target.value)}
+              />
+            </div>
+          )}
           <button type="button" className="btn btn--primary" onClick={addGoal}>
             Crear meta
           </button>

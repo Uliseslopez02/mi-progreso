@@ -111,13 +111,34 @@ export interface SubGoal {
   done: boolean
 }
 
+export type LifeGoalKind =
+  | 'percentage'
+  | 'quantity'
+  | 'money'
+  | 'hours'
+  | 'sessions'
+  | 'checklist'
+  | 'milestones'
+
+export interface Milestone {
+  id: string
+  name: string
+  /** Fecha en formato YYYY-MM-DD (DateKey), opcional. */
+  targetDate?: string
+  done: boolean
+}
+
 /**
  * Meta de largo plazo — distinto de `Goal` (objetivo diario puntuable) a
  * propósito, para no mezclar "algo que cumplo hoy" con "algo hacia lo que
- * voy". `progress` es manual (0–100): no se deriva de `subGoals` porque un
- * subobjetivo cumplido no necesariamente vale lo mismo que otro.
- * `linkedHabitIds` son referencias por id a hábitos (`Goal.trackingKind ===
- * 'habit'`), sin denormalizar nombre/estado — se resuelven en la UI.
+ * voy". `linkedHabitIds` son referencias por id a hábitos (`Goal.trackingKind
+ * === 'habit'`), sin denormalizar nombre/estado — se resuelven en la UI.
+ *
+ * `progress` (0–100) es siempre el número guardado y consumido por el resto
+ * de la app (salud de metas, filtros) — pero según `kind` puede ser manual
+ * (`'percentage'`, sin valor = comportamiento de siempre) o derivado y
+ * recalculado por el reducer a partir de `currentValue`/`targetValue`,
+ * `subGoals` o `milestones`. Ver `domain/lifeGoalProgress.ts`.
  */
 export interface LifeGoal {
   id: string
@@ -134,6 +155,15 @@ export interface LifeGoal {
   linkedHabitIds: string[]
   order: number
   createdAt: string
+  /** Sin valor = 'percentage' (comportamiento original: `progress` manual). */
+  kind?: LifeGoalKind
+  /** Usados por 'quantity'/'money'/'hours'/'sessions'. */
+  currentValue?: number
+  targetValue?: number
+  /** Unidad libre, sólo relevante para 'quantity' (money/hours/sessions tienen unidad fija). */
+  unit?: string
+  /** Usado por 'milestones'. */
+  milestones?: Milestone[]
 }
 
 export type PlannerItemType = 'task' | 'event'

@@ -1,5 +1,6 @@
 import { closePastDays, ensureDay, toggleGoal } from '../domain/day'
 import type { DateKey } from '../domain/date'
+import { computeLifeGoalProgress } from '../domain/lifeGoalProgress'
 import { closePastPeriods, ensurePeriod, periodKey, periodStartFor, togglePeriodGoal } from '../domain/period'
 import { routineRunKey } from '../domain/routine'
 import type {
@@ -238,13 +239,19 @@ export function reducer(state: AppState, action: Action): AppState {
     case 'updateSettings':
       return withData(state, { ...data, settings: { ...data.settings, ...action.patch } })
 
-    case 'addLifeGoal':
-      return withData(state, { ...data, lifeGoals: [...data.lifeGoals, action.goal] })
+    case 'addLifeGoal': {
+      const goal = { ...action.goal, progress: computeLifeGoalProgress(action.goal) }
+      return withData(state, { ...data, lifeGoals: [...data.lifeGoals, goal] })
+    }
 
     case 'updateLifeGoal':
       return withData(state, {
         ...data,
-        lifeGoals: data.lifeGoals.map((g) => (g.id === action.id ? { ...g, ...action.patch } : g)),
+        lifeGoals: data.lifeGoals.map((g) => {
+          if (g.id !== action.id) return g
+          const merged = { ...g, ...action.patch }
+          return { ...merged, progress: computeLifeGoalProgress(merged) }
+        }),
       })
 
     case 'removeLifeGoal':
