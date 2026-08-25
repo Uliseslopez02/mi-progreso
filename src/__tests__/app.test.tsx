@@ -451,6 +451,67 @@ describe('Mi Progreso', () => {
     })
   })
 
+  it('un ítem con Repetir "Semanal" crea 8 instancias', async () => {
+    const user = userEvent.setup()
+    const { repository } = renderApp()
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Agenda' }))
+    await user.type(screen.getByLabelText('Título'), 'Reunión semanal')
+    await user.selectOptions(screen.getByLabelText('Repetir'), 'Semanal (8 semanas)')
+    await user.click(screen.getByRole('button', { name: 'Agregar' }))
+
+    await waitFor(async () => {
+      const stored = await repository.load()
+      const matches = stored?.plannerItems.filter((i) => i.title === 'Reunión semanal') ?? []
+      expect(matches).toHaveLength(8)
+    })
+  })
+
+  it('un ítem vinculado a un hábito en modo Auto lo marca cumplido al completarlo', async () => {
+    const user = userEvent.setup()
+    const { repository } = renderApp()
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
+    await user.type(screen.getByLabelText('Nuevo hábito'), 'Meditar')
+    await user.click(screen.getByRole('button', { name: 'Agregar hábito' }))
+
+    await user.click(screen.getByRole('button', { name: 'Agenda' }))
+    await user.type(screen.getByLabelText('Título'), 'Sesión de meditación')
+    await user.selectOptions(screen.getByLabelText('Vincular a hábito'), 'Meditar')
+    await user.click(screen.getByRole('button', { name: 'Agregar' }))
+
+    const checkbox = await screen.findByRole('checkbox', { name: 'Sesión de meditación' })
+    await user.click(checkbox)
+
+    await waitFor(async () => {
+      const stored = await repository.load()
+      const habit = stored?.goals.find((g) => g.name === 'Meditar')
+      expect(habit).toBeTruthy()
+      expect(stored?.days[todayKey()].goalProgress[habit!.id]).toBe(true)
+    })
+  })
+
+  it('la vista Mes de la Agenda navega a un día con ítems', async () => {
+    const user = userEvent.setup()
+    const { container } = renderApp()
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Agenda' }))
+    await user.type(screen.getByLabelText('Título'), 'Ver mes')
+    await user.click(screen.getByRole('button', { name: 'Agregar' }))
+    await screen.findByRole('checkbox', { name: 'Ver mes' })
+
+    await user.click(screen.getByRole('button', { name: 'Mes' }))
+    const todayCell = container.querySelector('.calendar__day--today')
+    expect(todayCell).toBeTruthy()
+    await user.click(todayCell as HTMLElement)
+
+    expect(await screen.findByText('Agenda del día')).toBeInTheDocument()
+    expect(await screen.findByRole('checkbox', { name: 'Ver mes' })).toBeInTheDocument()
+  })
+
   it('una rutina se crea con un paso, se puede marcar y persiste', async () => {
     const user = userEvent.setup()
     const { repository } = renderApp()

@@ -13,6 +13,7 @@ import { HabitsPage } from './pages/HabitsPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { InformesPage } from './pages/InformesPage'
 import { LifeWheelPage } from './pages/LifeWheelPage'
+import { MonthAgendaPage } from './pages/MonthAgendaPage'
 import { PlannerPage } from './pages/PlannerPage'
 import { RoutinesPage } from './pages/RoutinesPage'
 import { SettingsPage } from './pages/SettingsPage'
@@ -33,6 +34,7 @@ const TABS = [
 const AGENDA_ITEMS = [
   { to: '/agenda', label: 'Día' },
   { to: '/agenda/semana', label: 'Planificador' },
+  { to: '/agenda/mes', label: 'Mes' },
   { to: '/agenda/enfoque', label: 'Enfoque' },
 ]
 
@@ -156,6 +158,7 @@ function AppShell() {
             <Route path="/agenda" element={<SectionLayout items={AGENDA_ITEMS} ariaLabel="Agenda" />}>
               <Route index element={<DayAgendaPage />} />
               <Route path="semana" element={<PlannerPage />} />
+              <Route path="mes" element={<MonthAgendaPage />} />
               <Route path="enfoque" element={<FocusPage />} />
             </Route>
             <Route path="/objetivos" element={<SectionLayout items={OBJETIVOS_ITEMS} ariaLabel="Objetivos" />}>

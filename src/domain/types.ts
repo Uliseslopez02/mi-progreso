@@ -139,6 +139,7 @@ export interface LifeGoal {
 export type PlannerItemType = 'task' | 'event'
 export type PlannerCategory = 'personal' | 'professional'
 export type PlannerPriority = 'low' | 'medium' | 'high'
+export type HabitCompletionMode = 'auto' | 'confirm' | 'reminder'
 
 /**
  * Ítem del planificador semanal: una tarea o evento anclado a un día
@@ -161,6 +162,10 @@ export interface PlannerItem {
   startTime?: string
   /** Sólo tiene sentido si `startTime` está definido. */
   durationMinutes?: number
+  /** Referencia por id a un `Goal` con `trackingKind === 'habit'`, sin denormalizar. */
+  linkedHabitId?: string
+  /** Sin valor = 'auto' si hay `linkedHabitId`. Ver `DayAgendaPage`. */
+  habitCompletionMode?: HabitCompletionMode
 }
 
 export type RoutineCategory = 'morning' | 'evening' | 'workout' | 'work' | 'custom'

@@ -6,6 +6,7 @@ import { WeekCard } from '../components/WeekCard'
 import { goalCompletionOn } from '../domain/consistency'
 import {
   activeRoutineToday,
+  agendaCompletionToday,
   greetingForHour,
   mainPriorityToday,
   nextEventToday,
@@ -66,6 +67,10 @@ export function TodayPage({ onNavigate }: Props) {
   const streaks = useMemo(
     () => topActiveStreaks(data.goals, data.days, today),
     [data.goals, data.days, today],
+  )
+  const agenda = useMemo(
+    () => agendaCompletionToday(data.plannerItems, today),
+    [data.plannerItems, today],
   )
 
   return (
@@ -139,6 +144,12 @@ export function TodayPage({ onNavigate }: Props) {
             <li>
               <span>Próximo evento</span>
               <span>{nextEvent ? nextEvent.title : 'Sin eventos hoy'}</span>
+            </li>
+            <li>
+              <span>Agenda de hoy</span>
+              <span className="numeric">
+                {agenda.planned === 0 ? 'Sin planificar' : `${agenda.done}/${agenda.planned} · ${agenda.percent}%`}
+              </span>
             </li>
           </ul>
         </section>

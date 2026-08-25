@@ -242,6 +242,11 @@ function normalizePlannerItems(items: AppData['plannerItems'] | undefined): AppD
     createdAt: i.createdAt ?? new Date(0).toISOString(),
     startTime: typeof i.startTime === 'string' ? i.startTime : undefined,
     durationMinutes: typeof i.durationMinutes === 'number' ? i.durationMinutes : undefined,
+    linkedHabitId: typeof i.linkedHabitId === 'string' ? i.linkedHabitId : undefined,
+    habitCompletionMode:
+      i.habitCompletionMode === 'auto' || i.habitCompletionMode === 'confirm' || i.habitCompletionMode === 'reminder'
+        ? i.habitCompletionMode
+        : undefined,
   }))
 }
 

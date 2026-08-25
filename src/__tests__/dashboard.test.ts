@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   activeRoutineToday,
+  agendaCompletionToday,
   greetingForHour,
   mainPriorityToday,
   nextEventToday,
@@ -111,6 +112,34 @@ describe('mainPriorityToday / nextEventToday', () => {
     const primero = item({ id: 'p', title: 'Primero', type: 'event', order: 1 })
     const result = nextEventToday([segundo, primero], today)
     expect(result?.id).toBe('p')
+  })
+})
+
+describe('agendaCompletionToday', () => {
+  function item(overrides: Partial<PlannerItem> & Pick<PlannerItem, 'id' | 'title'>): PlannerItem {
+    return {
+      date: today,
+      type: 'task',
+      category: 'personal',
+      priority: 'medium',
+      done: false,
+      order: 0,
+      createdAt: '2026-08-01T00:00:00.000Z',
+      ...overrides,
+    }
+  }
+
+  it('cuenta planificado/realizado sólo de hoy', () => {
+    const items = [
+      item({ id: 'a', title: 'A', done: true }),
+      item({ id: 'b', title: 'B', done: false }),
+      item({ id: 'c', title: 'C', done: true, date: '2026-08-20' }),
+    ]
+    expect(agendaCompletionToday(items, today)).toEqual({ planned: 2, done: 1, percent: 50 })
+  })
+
+  it('sin ítems hoy devuelve 0/0 sin dividir por cero', () => {
+    expect(agendaCompletionToday([], today)).toEqual({ planned: 0, done: 0, percent: 0 })
   })
 })
 

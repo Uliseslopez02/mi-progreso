@@ -1,21 +1,57 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { DayTimeline } from '../components/DayTimeline'
 import { addDays, formatLongDate, type DateKey } from '../domain/date'
 import { createId } from '../domain/id'
-import type { PlannerCategory, PlannerItem, PlannerItemType, PlannerPriority } from '../domain/types'
+import { recurrenceDates, type RecurrencePattern } from '../domain/recurrence'
+import type {
+  HabitCompletionMode,
+  PlannerCategory,
+  PlannerItem,
+  PlannerItemType,
+  PlannerPriority,
+} from '../domain/types'
 import { useAppData } from '../state/context'
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120]
 
+const REPEAT_LABEL: Record<RecurrencePattern, string> = {
+  none: 'No repetir',
+  daily: 'Todos los días (8 semanas)',
+  weekdays: 'Lunes a viernes (8 semanas)',
+  weekly: 'Semanal (8 semanas)',
+}
+
+const HABIT_MODE_LABEL: Record<HabitCompletionMode, string> = {
+  auto: 'Auto-completar',
+  confirm: 'Confirmar',
+  reminder: 'Sólo recordatorio',
+}
+
 export function DayAgendaPage() {
   const { data, today, dispatch } = useAppData()
-  const [date, setDate] = useState<DateKey>(today)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const date = (searchParams.get('date') as DateKey | null) ?? today
+  const setDate = (next: DateKey) => setSearchParams(next === today ? {} : { date: next })
+
   const [newTitle, setNewTitle] = useState('')
   const [newTime, setNewTime] = useState('')
   const [newDuration, setNewDuration] = useState(30)
   const [newType, setNewType] = useState<PlannerItemType>('task')
   const [newCategory, setNewCategory] = useState<PlannerCategory>('personal')
   const [newPriority, setNewPriority] = useState<PlannerPriority>('medium')
+  const [newRepeat, setNewRepeat] = useState<RecurrencePattern>('none')
+  const [newLinkedHabitId, setNewLinkedHabitId] = useState('')
+  const [newHabitMode, setNewHabitMode] = useState<HabitCompletionMode>('auto')
+
+  const habits = useMemo(
+    () => data.goals.filter((g) => g.trackingKind === 'habit' && g.active),
+    [data.goals],
+  )
+  const habitNameById = useMemo(
+    () => Object.fromEntries(habits.map((h) => [h.id, h.name])),
+    [habits],
+  )
 
   const items = useMemo(
     () => data.plannerItems.filter((i) => i.date === date).sort((a, b) => a.order - b.order),
@@ -34,24 +70,33 @@ export function DayAgendaPage() {
   const addItem = () => {
     const trimmed = newTitle.trim()
     if (!trimmed) return
-    dispatch({
-      type: 'addPlannerItem',
-      item: {
-        id: createId('task'),
-        date,
-        title: trimmed,
-        type: newType,
-        category: newCategory,
-        priority: newPriority,
-        done: false,
-        order: items.length,
-        createdAt: new Date().toISOString(),
-        startTime: newTime || undefined,
-        durationMinutes: newTime ? newDuration : undefined,
-      },
-    })
+    const linkedHabitId = newLinkedHabitId || undefined
+    for (const d of recurrenceDates(date, newRepeat)) {
+      const order = data.plannerItems.filter((i) => i.date === d).length
+      dispatch({
+        type: 'addPlannerItem',
+        item: {
+          id: createId('task'),
+          date: d,
+          title: trimmed,
+          type: newType,
+          category: newCategory,
+          priority: newPriority,
+          done: false,
+          order,
+          createdAt: new Date().toISOString(),
+          startTime: newTime || undefined,
+          durationMinutes: newTime ? newDuration : undefined,
+          linkedHabitId,
+          habitCompletionMode: linkedHabitId ? newHabitMode : undefined,
+        },
+      })
+    }
     setNewTitle('')
     setNewTime('')
+    setNewRepeat('none')
+    setNewLinkedHabitId('')
+    setNewHabitMode('auto')
   }
 
   const duplicateItem = (id: string) => {
@@ -61,6 +106,35 @@ export function DayAgendaPage() {
       type: 'addPlannerItem',
       item: { ...item, id: createId('task'), done: false, order: items.length, createdAt: new Date().toISOString() },
     })
+  }
+
+  /** Además de marcar el ítem, si está vinculado a un hábito actualiza su progreso de hoy
+   * según el modo elegido — reusa `setGoalProgress`, que ya sabe si el día es editable. */
+  const toggleItem = (id: string) => {
+    const item = data.plannerItems.find((i) => i.id === id)
+    if (!item) return
+    const next = !item.done
+    patchItem(id, { done: next })
+
+    if (!item.linkedHabitId) return
+    const mode = item.habitCompletionMode ?? 'auto'
+    if (mode === 'reminder') return
+
+    const habit = data.goals.find((g) => g.id === item.linkedHabitId)
+    if (!habit) return
+
+    if (mode === 'confirm' && next && !window.confirm(`¿Marcar "${habit.name}" como cumplido hoy?`)) {
+      return
+    }
+
+    const value = next
+      ? habit.kind === 'boolean'
+        ? true
+        : (habit.targetValue ?? 1)
+      : habit.kind === 'boolean'
+        ? false
+        : 0
+    dispatch({ type: 'setGoalProgress', date: item.date, goalId: habit.id, value })
   }
 
   return (
@@ -88,10 +162,8 @@ export function DayAgendaPage() {
         <DayTimeline
           items={items}
           nowMinutes={nowMinutes}
-          onToggle={(id) => {
-            const item = data.plannerItems.find((i) => i.id === id)
-            if (item) patchItem(id, { done: !item.done })
-          }}
+          habitNameById={habitNameById}
+          onToggle={toggleItem}
           onRemove={(id) => dispatch({ type: 'removePlannerItem', id })}
           onDuplicate={duplicateItem}
           onPostpone={(id) => {
@@ -198,6 +270,62 @@ export function DayAgendaPage() {
               <option value="high">Alta</option>
             </select>
           </div>
+          <div className="field" style={{ flex: '1 1 170px' }}>
+            <label className="field__label" htmlFor="day-repeat">
+              Repetir
+            </label>
+            <select
+              id="day-repeat"
+              className="select"
+              value={newRepeat}
+              onChange={(e) => setNewRepeat(e.target.value as RecurrencePattern)}
+            >
+              {(Object.keys(REPEAT_LABEL) as RecurrencePattern[]).map((pattern) => (
+                <option key={pattern} value={pattern}>
+                  {REPEAT_LABEL[pattern]}
+                </option>
+              ))}
+            </select>
+          </div>
+          {habits.length > 0 && (
+            <div className="field" style={{ flex: '1 1 160px' }}>
+              <label className="field__label" htmlFor="day-habit">
+                Vincular a hábito
+              </label>
+              <select
+                id="day-habit"
+                className="select"
+                value={newLinkedHabitId}
+                onChange={(e) => setNewLinkedHabitId(e.target.value)}
+              >
+                <option value="">Ninguno</option>
+                {habits.map((h) => (
+                  <option key={h.id} value={h.id}>
+                    {h.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {newLinkedHabitId && (
+            <div className="field" style={{ flex: '1 1 150px' }}>
+              <label className="field__label" htmlFor="day-habit-mode">
+                Modo
+              </label>
+              <select
+                id="day-habit-mode"
+                className="select"
+                value={newHabitMode}
+                onChange={(e) => setNewHabitMode(e.target.value as HabitCompletionMode)}
+              >
+                {(Object.keys(HABIT_MODE_LABEL) as HabitCompletionMode[]).map((mode) => (
+                  <option key={mode} value={mode}>
+                    {HABIT_MODE_LABEL[mode]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <button type="button" className="btn btn--primary" onClick={addItem}>
             Agregar
           </button>

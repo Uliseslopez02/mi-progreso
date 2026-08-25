@@ -36,6 +36,23 @@ export function topActiveStreaks(
     .slice(0, limit)
 }
 
+export interface AgendaCompletion {
+  planned: number
+  done: number
+  percent: number
+}
+
+/** Planificado vs. realizado del día: cuántos ítems de la agenda hay hoy y cuántos ya se cumplieron. */
+export function agendaCompletionToday(plannerItems: PlannerItem[], today: DateKey): AgendaCompletion {
+  const todayItems = plannerItems.filter((i) => i.date === today)
+  const done = todayItems.filter((i) => i.done).length
+  return {
+    planned: todayItems.length,
+    done,
+    percent: todayItems.length === 0 ? 0 : Math.round((done / todayItems.length) * 100),
+  }
+}
+
 const PRIORITY_RANK: Record<PlannerItem['priority'], number> = { high: 0, medium: 1, low: 2 }
 
 /** Tarea pendiente de hoy de mayor prioridad (alta > media > baja, después por orden). */

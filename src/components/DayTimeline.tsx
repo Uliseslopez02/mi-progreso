@@ -17,6 +17,8 @@ const PRIORITY_COLOR: Record<PlannerItem['priority'], string> = {
 interface Props {
   items: PlannerItem[]
   nowMinutes: number | null
+  /** Nombre del hábito por id, para el badge de los ítems vinculados (`item.linkedHabitId`). */
+  habitNameById: Record<string, string>
   onToggle: (id: string) => void
   onRemove: (id: string) => void
   onDuplicate: (id: string) => void
@@ -31,12 +33,14 @@ function clampStart(startMin: number, durationMin: number): number {
 
 function ItemActions({
   item,
+  habitName,
   onToggle,
   onRemove,
   onDuplicate,
   onPostpone,
 }: {
   item: PlannerItem
+  habitName?: string
   onToggle: (id: string) => void
   onRemove: (id: string) => void
   onDuplicate: (id: string) => void
@@ -59,6 +63,7 @@ function ItemActions({
         </p>
         <div className="planner-item__meta">
           <span className="planner-item__dot" style={{ background: PRIORITY_COLOR[item.priority] }} />
+          {habitName && <span className="planner-item__tag">🔗 {habitName}</span>}
         </div>
       </div>
       <div className="timeline-item__actions">
@@ -96,6 +101,7 @@ function ItemActions({
 
 function TimedBlock({
   item,
+  habitNameById,
   onToggle,
   onRemove,
   onDuplicate,
@@ -104,6 +110,7 @@ function TimedBlock({
   onResize,
 }: {
   item: PlannerItem & { startTime: string }
+  habitNameById: Record<string, string>
   onToggle: (id: string) => void
   onRemove: (id: string) => void
   onDuplicate: (id: string) => void
@@ -188,6 +195,7 @@ function TimedBlock({
     >
       <ItemActions
         item={item}
+        habitName={item.linkedHabitId ? habitNameById[item.linkedHabitId] : undefined}
         onToggle={onToggle}
         onRemove={onRemove}
         onDuplicate={onDuplicate}
@@ -209,6 +217,7 @@ function TimedBlock({
 export function DayTimeline({
   items,
   nowMinutes,
+  habitNameById,
   onToggle,
   onRemove,
   onDuplicate,
@@ -235,6 +244,7 @@ export function DayTimeline({
             <li key={item.id} className={`planner-item${item.done ? ' planner-item--done' : ''}`}>
               <ItemActions
                 item={item}
+                habitName={item.linkedHabitId ? habitNameById[item.linkedHabitId] : undefined}
                 onToggle={onToggle}
                 onRemove={onRemove}
                 onDuplicate={onDuplicate}
@@ -265,6 +275,7 @@ export function DayTimeline({
             <TimedBlock
               key={item.id}
               item={item}
+              habitNameById={habitNameById}
               onToggle={onToggle}
               onRemove={onRemove}
               onDuplicate={onDuplicate}
