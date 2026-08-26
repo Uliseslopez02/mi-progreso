@@ -9,6 +9,7 @@ import type {
   GoalPeriod,
   LifeGoal,
   LifeWheelSnapshot,
+  Note,
   PeriodRecord,
   PlannerItem,
   Project,
@@ -44,6 +45,7 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         reflectionsRes,
         projectsRes,
         projectTasksRes,
+        notesRes,
       ] = await Promise.all([
         client.from('user_settings').select('*').maybeSingle(),
         client.from('categories').select('*').order('order_index'),
@@ -58,6 +60,7 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         client.from('reflections').select('*').order('date'),
         client.from('projects').select('*').order('order_index'),
         client.from('project_tasks').select('*').order('order_index'),
+        client.from('notes').select('*').order('date', { ascending: false }),
       ])
 
       for (const res of [
@@ -74,6 +77,7 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         reflectionsRes,
         projectsRes,
         projectTasksRes,
+        notesRes,
       ]) {
         if (res.error) throw res.error
       }
@@ -222,6 +226,14 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         createdAt: row.created_at,
       }))
 
+      const notes: Note[] = (notesRes.data ?? []).map((row) => ({
+        id: row.id,
+        date: row.date,
+        title: row.title ?? undefined,
+        body: row.body,
+        createdAt: row.created_at,
+      }))
+
       return {
         version: SCHEMA_VERSION,
         settings: {
@@ -243,6 +255,7 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         reflections,
         projects,
         projectTasks,
+        notes,
       }
     },
 

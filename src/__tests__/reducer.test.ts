@@ -248,3 +248,30 @@ describe('reducer: proyectos', () => {
     expect(byId.get(otherTask)).toMatchObject({ status: 'todo', order: 0 })
   })
 })
+
+describe('reducer: notas', () => {
+  const CREATED_AT = '2026-08-18T10:00:00.000Z'
+
+  function withNote(state: AppState, body = 'Primera nota') {
+    return reducer(state, {
+      type: 'addNote',
+      note: { id: createId('nota'), date: TODAY, title: undefined, body, createdAt: CREATED_AT },
+    })
+  }
+
+  it('addNote agrega a data.notes', () => {
+    const state = withNote(hydrated())
+    expect(state.data?.notes.map((n) => n.body)).toEqual(['Primera nota'])
+  })
+
+  it('updateNote actualiza título y cuerpo por id', () => {
+    let state = withNote(hydrated())
+    const id = state.data!.notes[0].id
+    state = reducer(state, { type: 'updateNote', id, patch: { title: 'Editado', body: 'Cuerpo nuevo' } })
+    expect(state.data?.notes[0]).toMatchObject({ title: 'Editado', body: 'Cuerpo nuevo' })
+  })
+
+  it('removeNote elimina la nota por id, sin tocar otras', () => {
+    let state = withNote(hydrated())
+    state = withNote(state, 'Segunda nota')
+    const idToRemove = state.data!.notes[0].id

@@ -9,6 +9,7 @@ import type {
   Goal,
   LifeGoal,
   LifeWheelSnapshot,
+  Note,
   PlannerItem,
   Project,
   ProjectTask,
@@ -75,6 +76,9 @@ export type Action =
   | { type: 'removeLifeWheelSnapshot'; id: string }
   | { type: 'addReflection'; reflection: Reflection }
   | { type: 'removeReflection'; id: string }
+  | { type: 'addNote'; note: Note }
+  | { type: 'updateNote'; id: string; patch: Partial<Omit<Note, 'id'>> }
+  | { type: 'removeNote'; id: string }
   | { type: 'addProject'; project: Project }
   | { type: 'updateProject'; id: string; patch: Partial<Omit<Project, 'id'>> }
   | { type: 'removeProject'; id: string }
@@ -381,6 +385,18 @@ export function reducer(state: AppState, action: Action): AppState {
         ...data,
         reflections: data.reflections.filter((r) => r.id !== action.id),
       })
+
+    case 'addNote':
+      return withData(state, { ...data, notes: [...data.notes, action.note] })
+
+    case 'updateNote':
+      return withData(state, {
+        ...data,
+        notes: data.notes.map((n) => (n.id === action.id ? { ...n, ...action.patch } : n)),
+      })
+
+    case 'removeNote':
+      return withData(state, { ...data, notes: data.notes.filter((n) => n.id !== action.id) })
 
     case 'addProject':
       return withData(state, { ...data, projects: [...data.projects, action.project] })

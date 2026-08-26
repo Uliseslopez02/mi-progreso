@@ -18,6 +18,7 @@ import { InformesPage } from './pages/InformesPage'
 import { LifeWheelPage } from './pages/LifeWheelPage'
 import { MonthAgendaPage } from './pages/MonthAgendaPage'
 import { MonthlyReviewPage } from './pages/MonthlyReviewPage'
+import { NotesPage } from './pages/NotesPage'
 import { PlannerPage } from './pages/PlannerPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { RoutinesPage } from './pages/RoutinesPage'
@@ -56,6 +57,7 @@ const HISTORIAL_ITEMS = [
   { to: '/historial', label: 'Resumen' },
   { to: '/historial/calendario', label: 'Calendario' },
   { to: '/historial/mapa-anual', label: 'Mapa anual' },
+  { to: '/historial/notas', label: 'Notas' },
 ]
 
 const INFORMES_ITEMS = [
@@ -205,6 +207,7 @@ function AppShell() {
               <Route index element={<HistoryPage />} />
               <Route path="calendario" element={<CalendarPage />} />
               <Route path="mapa-anual" element={<HabitYearMapPage />} />
+              <Route path="notas" element={<NotesPage />} />
             </Route>
             <Route path="/informes" element={<SectionLayout items={INFORMES_ITEMS} ariaLabel="Informes" />}>
               <Route index element={<InformesPage />} />

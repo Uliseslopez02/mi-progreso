@@ -339,6 +339,18 @@ export interface Reflection {
   createdAt: string
 }
 
+/** Nota libre de texto, sin consigna fija — distinta de `Reflection` (que
+ * siempre responde a una pregunta predefinida de Momento Mori o de la
+ * Revisión mensual). Editable, a diferencia de `Reflection`. */
+export interface Note {
+  id: string
+  /** Fecha local YYYY-MM-DD en la que se escribió. */
+  date: string
+  title?: string
+  body: string
+  createdAt: string
+}
+
 export interface AppData {
   /** Versión del esquema, para migraciones futuras. */
   version: number
@@ -365,9 +377,11 @@ export interface AppData {
   projects: Project[]
   /** Tarjetas de los tableros Kanban, una por proyecto. */
   projectTasks: ProjectTask[]
+  /** Notas libres de texto, sin consigna fija. */
+  notes: Note[]
 }
 
-export const SCHEMA_VERSION = 9
+export const SCHEMA_VERSION = 10
 
 /**
  * Plan comercial del usuario (`profiles.plan` en Supabase). Todavía sin cobros ni

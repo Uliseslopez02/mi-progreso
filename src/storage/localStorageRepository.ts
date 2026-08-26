@@ -161,6 +161,7 @@ export function migrate(input: unknown): AppData | null {
     reflections: normalizeReflections(raw.reflections),
     projects: normalizeProjects(raw.projects),
     projectTasks: normalizeProjectTasks(raw.projectTasks),
+    notes: normalizeNotes(raw.notes),
   }
 }
 
@@ -202,6 +203,19 @@ function normalizeReflections(reflections: AppData['reflections'] | undefined): 
       prompt: String(r.prompt ?? ''),
       answer: String(r.answer ?? ''),
       createdAt: r.createdAt ?? new Date(0).toISOString(),
+    }))
+}
+
+function normalizeNotes(notes: AppData['notes'] | undefined): AppData['notes'] {
+  if (!Array.isArray(notes)) return []
+  return notes
+    .filter((n): n is NonNullable<typeof n> => !!n && typeof n.date === 'string')
+    .map((n) => ({
+      id: String(n.id),
+      date: String(n.date),
+      title: n.title ? String(n.title) : undefined,
+      body: String(n.body ?? ''),
+      createdAt: n.createdAt ?? new Date(0).toISOString(),
     }))
 }
 

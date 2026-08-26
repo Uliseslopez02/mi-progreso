@@ -164,6 +164,7 @@ describe('createSupabaseRepository', () => {
       reflections: [],
       projects: [],
       projectTasks: [],
+      notes: [],
     }
 
     await repo.save(payload)
@@ -192,6 +193,7 @@ describe('createSupabaseRepository', () => {
         reflections: [],
         projects: [],
         projectTasks: [],
+        notes: [],
       }),
     ).rejects.toThrow('rejected by RLS')
   })

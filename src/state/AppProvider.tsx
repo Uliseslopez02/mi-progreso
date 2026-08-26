@@ -12,6 +12,7 @@ import {
   migrateV6ToV7,
   migrateV7ToV8,
   migrateV8ToV9,
+  migrateV9ToV10,
 } from '../domain/migrations'
 import type { ProgressRepository } from '../storage/repository'
 import { AppContext } from './context'
@@ -53,10 +54,12 @@ export function AppProvider({ repository, children }: Props) {
         if (cancelled) return
         const today = todayKey()
         const data = stored ?? createEmptyData(new Date().toISOString())
-        const migrated = migrateV8ToV9(
-          migrateV7ToV8(
-            migrateV6ToV7(
-              migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(data))))),
+        const migrated = migrateV9ToV10(
+          migrateV8ToV9(
+            migrateV7ToV8(
+              migrateV6ToV7(
+                migrateV5ToV6(migrateV4ToV5(migrateV3ToV4(migrateV2ToV3(migrateV1ToV2(data))))),
+              ),
             ),
           ),
         )

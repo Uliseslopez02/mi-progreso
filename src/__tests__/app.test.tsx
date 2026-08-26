@@ -828,4 +828,38 @@ describe('Mi Progreso', () => {
       expect(stored?.plannerItems.find((i) => i.title === 'Eliminar TEST')).toBeUndefined()
     })
   })
+
+  it('una nota se crea, se edita y se borra, y persiste', async () => {
+    const user = userEvent.setup()
+    const { repository } = renderApp()
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Historial' }))
+    await user.click(screen.getByRole('button', { name: 'Notas' }))
+    await user.type(screen.getByLabelText('Título (opcional)'), 'Idea')
+    await user.type(screen.getByLabelText('Nota'), 'Contenido original')
+    await user.click(screen.getByRole('button', { name: 'Guardar nota' }))
+
+    expect(await screen.findByText('Contenido original')).toBeInTheDocument()
+
+    await waitFor(async () => {
+      const stored = await repository.load()
+      expect(stored?.notes).toHaveLength(1)
+      expect(stored?.notes[0]).toMatchObject({ title: 'Idea', body: 'Contenido original' })
+    })
+
+    await user.click(screen.getByRole('button', { name: /Editar nota/ }))
+    const bodyInput = screen.getByLabelText('Cuerpo de la nota')
+    await user.clear(bodyInput)
+    await user.type(bodyInput, 'Contenido editado')
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+    expect(await screen.findByText('Contenido editado')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Eliminar nota/ }))
+    await waitFor(async () => {
+      const stored = await repository.load()
+      expect(stored?.notes).toHaveLength(0)
+    })
+  })
 })

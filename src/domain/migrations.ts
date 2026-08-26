@@ -131,3 +131,9 @@ export function migrateV8ToV9(data: AppData): AppData {
   if (data.version >= 9) return data
   return { ...data, version: 9, projects: data.projects ?? [], projectTasks: data.projectTasks ?? [] }
 }
+
+/** Migra V9 (sin `notes`) a V10: agrega la lista vacía, nada más cambia. */
+export function migrateV9ToV10(data: AppData): AppData {
+  if (data.version >= 10) return data
+  return { ...data, version: 10, notes: data.notes ?? [] }
+}
