@@ -125,3 +125,9 @@ export function migrateV7ToV8(data: AppData): AppData {
   if (data.version >= 8) return data
   return { ...data, version: 8, reflections: data.reflections ?? [] }
 }
+
+/** Migra V8 (sin `projects`/`projectTasks`) a V9: agrega las listas vacías, nada más cambia. */
+export function migrateV8ToV9(data: AppData): AppData {
+  if (data.version >= 9) return data
+  return { ...data, version: 9, projects: data.projects ?? [], projectTasks: data.projectTasks ?? [] }
+}

@@ -198,6 +198,33 @@ export interface PlannerItem {
   habitCompletionMode?: HabitCompletionMode
 }
 
+export type ProjectStatus = 'active' | 'completed' | 'archived'
+
+/** Un proyecto agrupa tareas propias, sin fecha — distinto de `PlannerItem`
+ * (tarea/evento anclado a un día concreto). Un proyecto es "qué quiero
+ * lograr", el tablero Kanban es "en qué etapa está cada parte". */
+export interface Project {
+  id: string
+  name: string
+  description?: string
+  status: ProjectStatus
+  order: number
+  createdAt: string
+}
+
+export type ProjectTaskStatus = 'todo' | 'doing' | 'done'
+
+/** Tarjeta de un tablero Kanban: pertenece a un `Project`, sin fecha propia. */
+export interface ProjectTask {
+  id: string
+  projectId: string
+  title: string
+  status: ProjectTaskStatus
+  /** Orden dentro de su columna de estado (mismo criterio que `PlannerItem.order` dentro de su `date`). */
+  order: number
+  createdAt: string
+}
+
 export type RoutineCategory = 'morning' | 'evening' | 'workout' | 'work' | 'custom'
 
 export interface RoutineStep {
@@ -334,9 +361,13 @@ export interface AppData {
   lifeWheelSnapshots: LifeWheelSnapshot[]
   /** Reflexiones (Momento Mori y futuros usos). */
   reflections: Reflection[]
+  /** Proyectos (agrupan tareas propias, sin fecha). */
+  projects: Project[]
+  /** Tarjetas de los tableros Kanban, una por proyecto. */
+  projectTasks: ProjectTask[]
 }
 
-export const SCHEMA_VERSION = 8
+export const SCHEMA_VERSION = 9
 
 /**
  * Plan comercial del usuario (`profiles.plan` en Supabase). Todavía sin cobros ni

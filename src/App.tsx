@@ -18,6 +18,7 @@ import { LifeWheelPage } from './pages/LifeWheelPage'
 import { MonthAgendaPage } from './pages/MonthAgendaPage'
 import { MonthlyReviewPage } from './pages/MonthlyReviewPage'
 import { PlannerPage } from './pages/PlannerPage'
+import { ProjectsPage } from './pages/ProjectsPage'
 import { RoutinesPage } from './pages/RoutinesPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { TodayPage } from './pages/TodayPage'
@@ -28,6 +29,7 @@ import { useAppContext } from './state/context'
 const TABS = [
   { label: 'Hoy', path: '/' },
   { label: 'Agenda', path: '/agenda' },
+  { label: 'Proyectos', path: '/proyectos' },
   { label: 'Objetivos', path: '/objetivos' },
   { label: 'Historial', path: '/historial' },
   { label: 'Informes', path: '/informes' },
@@ -189,6 +191,7 @@ function AppShell() {
               <Route path="mes" element={<MonthAgendaPage />} />
               <Route path="enfoque" element={<FocusPage />} />
             </Route>
+            <Route path="/proyectos" element={<ProjectsPage />} />
             <Route path="/objetivos" element={<SectionLayout items={OBJETIVOS_ITEMS} ariaLabel="Objetivos" />}>
               <Route index element={<HabitsPage />} />
               <Route path="metas" element={<GoalsPage />} />

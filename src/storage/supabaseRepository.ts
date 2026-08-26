@@ -11,6 +11,8 @@ import type {
   LifeWheelSnapshot,
   PeriodRecord,
   PlannerItem,
+  Project,
+  ProjectTask,
   RecurringPeriod,
   Reflection,
   Routine,
@@ -40,6 +42,8 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         routineRunsRes,
         lifeWheelSnapshotsRes,
         reflectionsRes,
+        projectsRes,
+        projectTasksRes,
       ] = await Promise.all([
         client.from('user_settings').select('*').maybeSingle(),
         client.from('categories').select('*').order('order_index'),
@@ -52,6 +56,8 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         client.from('routine_runs').select('*'),
         client.from('life_wheel_snapshots').select('*').order('date'),
         client.from('reflections').select('*').order('date'),
+        client.from('projects').select('*').order('order_index'),
+        client.from('project_tasks').select('*').order('order_index'),
       ])
 
       for (const res of [
@@ -66,6 +72,8 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         routineRunsRes,
         lifeWheelSnapshotsRes,
         reflectionsRes,
+        projectsRes,
+        projectTasksRes,
       ]) {
         if (res.error) throw res.error
       }
@@ -196,6 +204,24 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         createdAt: row.created_at,
       }))
 
+      const projects: Project[] = (projectsRes.data ?? []).map((row) => ({
+        id: row.id,
+        name: row.name,
+        description: row.description ?? undefined,
+        status: row.status,
+        order: row.order_index,
+        createdAt: row.created_at,
+      }))
+
+      const projectTasks: ProjectTask[] = (projectTasksRes.data ?? []).map((row) => ({
+        id: row.id,
+        projectId: row.project_id,
+        title: row.title,
+        status: row.status,
+        order: row.order_index,
+        createdAt: row.created_at,
+      }))
+
       return {
         version: SCHEMA_VERSION,
         settings: {
@@ -215,6 +241,8 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         routineRuns,
         lifeWheelSnapshots,
         reflections,
+        projects,
+        projectTasks,
       }
     },
 

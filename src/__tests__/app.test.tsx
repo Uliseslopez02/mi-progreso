@@ -747,4 +747,44 @@ describe('Mi Progreso', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Disciplina' })).toBeInTheDocument()
   })
+
+  it('un proyecto se crea, se abre su tablero y una tarea nueva persiste', async () => {
+    const user = userEvent.setup()
+    const { repository } = renderApp()
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Proyectos' }))
+    await user.type(screen.getByLabelText('Nombre'), 'Mudanza')
+    await user.click(screen.getByRole('button', { name: 'Crear proyecto' }))
+
+    await screen.findAllByDisplayValue('Mudanza')
+    // El proyecto activo aparece en "Proyectos activos" y en "Todos los proyectos" — dos tarjetas.
+    await user.click(screen.getAllByRole('button', { name: 'Abrir tablero' })[0])
+
+    await user.type(screen.getByLabelText('Nueva tarea'), 'Empacar cajas')
+    await user.click(screen.getByRole('button', { name: 'Agregar' }))
+
+    expect(await screen.findByText('Empacar cajas')).toBeInTheDocument()
+
+    await waitFor(async () => {
+      const stored = await repository.load()
+      expect(stored?.projects).toHaveLength(1)
+      expect(stored?.projects[0]).toMatchObject({ name: 'Mudanza', status: 'active' })
+      expect(stored?.projectTasks).toHaveLength(1)
+      expect(stored?.projectTasks[0]).toMatchObject({
+        title: 'Empacar cajas',
+        status: 'todo',
+        projectId: stored?.projects[0].id,
+      })
+    })
+
+    await user.click(screen.getByRole('button', { name: '‹ Volver' }))
+    await user.click(screen.getAllByRole('button', { name: 'Eliminar' })[0])
+
+    await waitFor(async () => {
+      const stored = await repository.load()
+      expect(stored?.projects).toHaveLength(0)
+      expect(stored?.projectTasks).toHaveLength(0)
+    })
+  })
 })

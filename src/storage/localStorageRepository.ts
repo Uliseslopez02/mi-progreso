@@ -159,7 +159,37 @@ export function migrate(input: unknown): AppData | null {
     routineRuns: normalizeRoutineRuns(raw.routineRuns),
     lifeWheelSnapshots: normalizeLifeWheelSnapshots(raw.lifeWheelSnapshots),
     reflections: normalizeReflections(raw.reflections),
+    projects: normalizeProjects(raw.projects),
+    projectTasks: normalizeProjectTasks(raw.projectTasks),
   }
+}
+
+function normalizeProjects(projects: AppData['projects'] | undefined): AppData['projects'] {
+  if (!Array.isArray(projects)) return []
+  const validStatuses = new Set(['active', 'completed', 'archived'])
+  return projects.map((p, i) => ({
+    id: String(p.id),
+    name: String(p.name),
+    description: p.description ? String(p.description) : undefined,
+    status: validStatuses.has(p.status) ? p.status : 'active',
+    order: typeof p.order === 'number' ? p.order : i,
+    createdAt: p.createdAt ?? new Date(0).toISOString(),
+  }))
+}
+
+function normalizeProjectTasks(tasks: AppData['projectTasks'] | undefined): AppData['projectTasks'] {
+  if (!Array.isArray(tasks)) return []
+  const validStatuses = new Set(['todo', 'doing', 'done'])
+  return tasks
+    .filter((t): t is NonNullable<typeof t> => !!t && typeof t.projectId === 'string')
+    .map((t, i) => ({
+      id: String(t.id),
+      projectId: String(t.projectId),
+      title: String(t.title),
+      status: validStatuses.has(t.status) ? t.status : 'todo',
+      order: typeof t.order === 'number' ? t.order : i,
+      createdAt: t.createdAt ?? new Date(0).toISOString(),
+    }))
 }
 
 function normalizeReflections(reflections: AppData['reflections'] | undefined): AppData['reflections'] {

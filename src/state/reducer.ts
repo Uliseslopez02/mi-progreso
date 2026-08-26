@@ -10,6 +10,9 @@ import type {
   LifeGoal,
   LifeWheelSnapshot,
   PlannerItem,
+  Project,
+  ProjectTask,
+  ProjectTaskStatus,
   RecurringPeriod,
   Reflection,
   Routine,
@@ -72,6 +75,14 @@ export type Action =
   | { type: 'removeLifeWheelSnapshot'; id: string }
   | { type: 'addReflection'; reflection: Reflection }
   | { type: 'removeReflection'; id: string }
+  | { type: 'addProject'; project: Project }
+  | { type: 'updateProject'; id: string; patch: Partial<Omit<Project, 'id'>> }
+  | { type: 'removeProject'; id: string }
+  | { type: 'moveProject'; id: string; direction: -1 | 1 }
+  | { type: 'addProjectTask'; task: ProjectTask }
+  | { type: 'updateProjectTask'; id: string; patch: Partial<Omit<ProjectTask, 'id'>> }
+  | { type: 'removeProjectTask'; id: string }
+  | { type: 'reorderProjectTasks'; updates: Array<{ id: string; status: ProjectTaskStatus; order: number }> }
   | { type: 'replaceData'; data: AppData }
   | { type: 'hydrateError'; message: string }
   | { type: 'hydrateRetry' }
@@ -370,6 +381,61 @@ export function reducer(state: AppState, action: Action): AppState {
         ...data,
         reflections: data.reflections.filter((r) => r.id !== action.id),
       })
+
+    case 'addProject':
+      return withData(state, { ...data, projects: [...data.projects, action.project] })
+
+    case 'updateProject':
+      return withData(state, {
+        ...data,
+        projects: data.projects.map((p) => (p.id === action.id ? { ...p, ...action.patch } : p)),
+      })
+
+    case 'removeProject':
+      return withData(state, {
+        ...data,
+        projects: data.projects.filter((p) => p.id !== action.id),
+        projectTasks: data.projectTasks.filter((t) => t.projectId !== action.id),
+      })
+
+    case 'moveProject': {
+      const ordered = [...data.projects].sort((a, b) => a.order - b.order)
+      const index = ordered.findIndex((p) => p.id === action.id)
+      const target = index + action.direction
+      if (index === -1 || target < 0 || target >= ordered.length) return state
+      const swapped = [...ordered]
+      ;[swapped[index], swapped[target]] = [swapped[target], swapped[index]]
+      return withData(state, {
+        ...data,
+        projects: swapped.map((project, order) => ({ ...project, order })),
+      })
+    }
+
+    case 'addProjectTask':
+      return withData(state, { ...data, projectTasks: [...data.projectTasks, action.task] })
+
+    case 'updateProjectTask':
+      return withData(state, {
+        ...data,
+        projectTasks: data.projectTasks.map((t) => (t.id === action.id ? { ...t, ...action.patch } : t)),
+      })
+
+    case 'removeProjectTask':
+      return withData(state, {
+        ...data,
+        projectTasks: data.projectTasks.filter((t) => t.id !== action.id),
+      })
+
+    case 'reorderProjectTasks': {
+      const patchById = new Map(action.updates.map((u) => [u.id, u]))
+      return withData(state, {
+        ...data,
+        projectTasks: data.projectTasks.map((t) => {
+          const patch = patchById.get(t.id)
+          return patch ? { ...t, status: patch.status, order: patch.order } : t
+        }),
+      })
+    }
 
     case 'replaceData':
       return withData(state, syncToday(action.data, state.today))

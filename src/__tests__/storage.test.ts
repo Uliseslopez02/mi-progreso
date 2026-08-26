@@ -109,6 +109,8 @@ describe('migrate', () => {
     expect(migrated?.settings.appName).toBe('Mi Progreso')
     expect(migrated?.days).toEqual({})
     expect(migrated?.periods).toEqual({})
+    expect(migrated?.projects).toEqual([])
+    expect(migrated?.projectTasks).toEqual([])
   })
 
   it('descarta lo que no tiene forma de datos', () => {

@@ -62,6 +62,8 @@ export function createInitialData(createdAt: string): AppData {
     routineRuns: {},
     lifeWheelSnapshots: [],
     reflections: [],
+    projects: [],
+    projectTasks: [],
   }
 }
 
@@ -84,5 +86,7 @@ export function createEmptyData(_createdAt: string): AppData {
     routineRuns: {},
     lifeWheelSnapshots: [],
     reflections: [],
+    projects: [],
+    projectTasks: [],
   }
 }

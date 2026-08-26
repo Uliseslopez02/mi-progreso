@@ -131,3 +131,120 @@ describe('reducer: error de carga inicial', () => {
     expect(state.error).toBeNull()
   })
 })
+
+describe('reducer: proyectos', () => {
+  const CREATED_AT = '2026-08-18T10:00:00.000Z'
+
+  function withProject(state: AppState, name = 'Mudanza') {
+    const order = state.data?.projects.length ?? 0
+    return reducer(state, {
+      type: 'addProject',
+      project: { id: createId('proyecto'), name, status: 'active', order, createdAt: CREATED_AT },
+    })
+  }
+
+  it('addProject agrega a data.projects', () => {
+    const state = withProject(hydrated())
+    expect(state.data?.projects.map((p) => p.name)).toEqual(['Mudanza'])
+  })
+
+  it('moveProject intercambia el order entre proyectos adyacentes', () => {
+    let state = hydrated()
+    state = withProject(state, 'Uno')
+    state = withProject(state, 'Dos')
+    const [uno, dos] = state.data!.projects
+    expect(uno.order).toBe(0)
+    expect(dos.order).toBe(1)
+
+    state = reducer(state, { type: 'moveProject', id: uno.id, direction: 1 })
+    const ordered = [...state.data!.projects].sort((a, b) => a.order - b.order)
+    expect(ordered[0].id).toBe(dos.id)
+    expect(ordered[1].id).toBe(uno.id)
+  })
+
+  it('removeProject elimina el proyecto y sus tareas, sin tocar las de otro proyecto', () => {
+    let state = withProject(hydrated())
+    const projectId = state.data!.projects[0].id
+    state = withProject(state, 'Otro proyecto')
+    const otherProjectId = state.data!.projects[1].id
+
+    state = reducer(state, {
+      type: 'addProjectTask',
+      task: { id: createId('tarea'), projectId, title: 'Empacar', status: 'todo', order: 0, createdAt: CREATED_AT },
+    })
+    state = reducer(state, {
+      type: 'addProjectTask',
+      task: {
+        id: createId('tarea'),
+        projectId: otherProjectId,
+        title: 'Ajena',
+        status: 'todo',
+        order: 0,
+        createdAt: CREATED_AT,
+      },
+    })
+
+    state = reducer(state, { type: 'removeProject', id: projectId })
+
+    expect(state.data?.projects.map((p) => p.id)).toEqual([otherProjectId])
+    expect(state.data?.projectTasks.map((t) => t.title)).toEqual(['Ajena'])
+  })
+
+  it('addProjectTask/updateProjectTask/removeProjectTask operan sobre data.projectTasks', () => {
+    let state = withProject(hydrated())
+    const projectId = state.data!.projects[0].id
+    const taskId = createId('tarea')
+
+    state = reducer(state, {
+      type: 'addProjectTask',
+      task: { id: taskId, projectId, title: 'Empacar', status: 'todo', order: 0, createdAt: CREATED_AT },
+    })
+    expect(state.data?.projectTasks[0]).toMatchObject({ title: 'Empacar', status: 'todo' })
+
+    state = reducer(state, { type: 'updateProjectTask', id: taskId, patch: { title: 'Empacar cajas' } })
+    expect(state.data?.projectTasks[0].title).toBe('Empacar cajas')
+
+    state = reducer(state, { type: 'removeProjectTask', id: taskId })
+    expect(state.data?.projectTasks).toHaveLength(0)
+  })
+
+  it('reorderProjectTasks mueve una tarea de columna sin afectar tareas de otros proyectos ni ids ausentes', () => {
+    let state = withProject(hydrated())
+    const projectId = state.data!.projects[0].id
+    state = withProject(state, 'Otro proyecto')
+    const otherProjectId = state.data!.projects[1].id
+
+    const taskA = createId('tarea')
+    const taskB = createId('tarea')
+    const otherTask = createId('tarea')
+    state = reducer(state, {
+      type: 'addProjectTask',
+      task: { id: taskA, projectId, title: 'A', status: 'todo', order: 0, createdAt: CREATED_AT },
+    })
+    state = reducer(state, {
+      type: 'addProjectTask',
+      task: { id: taskB, projectId, title: 'B', status: 'todo', order: 1, createdAt: CREATED_AT },
+    })
+    state = reducer(state, {
+      type: 'addProjectTask',
+      task: {
+        id: otherTask,
+        projectId: otherProjectId,
+        title: 'Ajena',
+        status: 'todo',
+        order: 0,
+        createdAt: CREATED_AT,
+      },
+    })
+
+    state = reducer(state, {
+      type: 'reorderProjectTasks',
+      updates: [{ id: taskA, status: 'doing', order: 0 }],
+    })
+
+    const byId = new Map(state.data!.projectTasks.map((t) => [t.id, t]))
+    expect(byId.get(taskA)).toMatchObject({ status: 'doing', order: 0 })
+    expect(byId.get(taskB)).toMatchObject({ status: 'todo', order: 1 })
+    expect(byId.get(otherTask)).toMatchObject({ status: 'todo', order: 0 })
+  })
+})
