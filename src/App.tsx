@@ -15,6 +15,7 @@ import { HistoryPage } from './pages/HistoryPage'
 import { InformesPage } from './pages/InformesPage'
 import { LifeWheelPage } from './pages/LifeWheelPage'
 import { MonthAgendaPage } from './pages/MonthAgendaPage'
+import { MonthlyReviewPage } from './pages/MonthlyReviewPage'
 import { PlannerPage } from './pages/PlannerPage'
 import { RoutinesPage } from './pages/RoutinesPage'
 import { SettingsPage } from './pages/SettingsPage'
@@ -49,6 +50,11 @@ const OBJETIVOS_ITEMS = [
 const HISTORIAL_ITEMS = [
   { to: '/historial', label: 'Resumen' },
   { to: '/historial/calendario', label: 'Calendario' },
+]
+
+const INFORMES_ITEMS = [
+  { to: '/informes', label: 'Resumen' },
+  { to: '/informes/revision', label: 'Revisión mensual' },
 ]
 
 /** true si `pathname` es exactamente `base` o una sub-ruta de `base` ('/' sólo matchea la raíz). */
@@ -191,7 +197,10 @@ function AppShell() {
               <Route index element={<HistoryPage />} />
               <Route path="calendario" element={<CalendarPage />} />
             </Route>
-            <Route path="/informes" element={<InformesPage />} />
+            <Route path="/informes" element={<SectionLayout items={INFORMES_ITEMS} ariaLabel="Informes" />}>
+              <Route index element={<InformesPage />} />
+              <Route path="revision" element={<MonthlyReviewPage />} />
+            </Route>
             <Route path="/ajustes" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
