@@ -8,6 +8,7 @@ import { SectionLayout } from './components/SectionLayout'
 import { formatLongDate } from './domain/date'
 import { CalendarPage } from './pages/CalendarPage'
 import { DayAgendaPage } from './pages/DayAgendaPage'
+import { EisenhowerPage } from './pages/EisenhowerPage'
 import { FocusPage } from './pages/FocusPage'
 import { GoalsPage } from './pages/GoalsPage'
 import { HabitsPage } from './pages/HabitsPage'
@@ -41,6 +42,7 @@ const AGENDA_ITEMS = [
   { to: '/agenda/semana', label: 'Planificador' },
   { to: '/agenda/mes', label: 'Mes' },
   { to: '/agenda/enfoque', label: 'Enfoque' },
+  { to: '/agenda/matriz', label: 'Matriz' },
 ]
 
 const OBJETIVOS_ITEMS = [
@@ -190,6 +192,7 @@ function AppShell() {
               <Route path="semana" element={<PlannerPage />} />
               <Route path="mes" element={<MonthAgendaPage />} />
               <Route path="enfoque" element={<FocusPage />} />
+              <Route path="matriz" element={<EisenhowerPage />} />
             </Route>
             <Route path="/proyectos" element={<ProjectsPage />} />
             <Route path="/objetivos" element={<SectionLayout items={OBJETIVOS_ITEMS} ariaLabel="Objetivos" />}>

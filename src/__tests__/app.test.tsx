@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { App } from '../App'
 import * as supabaseAuth from '../auth/supabaseAuth'
-import { todayKey } from '../domain/date'
+import { addDays, formatShortDate, todayKey } from '../domain/date'
 import { createInitialData } from '../domain/defaults'
 import { AppProvider } from '../state/AppProvider'
 import { serializeBackup } from '../storage/backup'
@@ -785,6 +785,47 @@ describe('Mi Progreso', () => {
       const stored = await repository.load()
       expect(stored?.projects).toHaveLength(0)
       expect(stored?.projectTasks).toHaveLength(0)
+    })
+  })
+
+  it('la matriz Eisenhower clasifica las tareas de Agenda por urgencia/importancia', async () => {
+    const user = userEvent.setup()
+    const { repository } = renderApp()
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Agenda' }))
+    await user.click(screen.getByRole('button', { name: 'Planificador' }))
+
+    await user.type(screen.getByLabelText('Título'), 'Hacer ahora TEST')
+    await user.selectOptions(screen.getByLabelText('Prioridad'), 'Alta')
+    await user.click(screen.getByRole('button', { name: 'Agregar' }))
+
+    const tomorrow = addDays(todayKey(), 1)
+    await user.type(screen.getByLabelText('Título'), 'Eliminar TEST')
+    await user.selectOptions(screen.getByLabelText('Día'), formatShortDate(tomorrow))
+    await user.selectOptions(screen.getByLabelText('Prioridad'), 'Baja')
+    await user.click(screen.getByRole('button', { name: 'Agregar' }))
+
+    await user.click(screen.getByRole('button', { name: 'Matriz' }))
+
+    const doQuadrant = screen.getByText('Hacer ahora').closest('.card') as HTMLElement
+    expect(within(doQuadrant).getByText('Hacer ahora TEST')).toBeInTheDocument()
+    const eliminateQuadrant = screen.getByText('Eliminar').closest('.card') as HTMLElement
+    expect(within(eliminateQuadrant).getByText('Eliminar TEST')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('checkbox', { name: 'Hacer ahora TEST' }))
+    expect(screen.queryByText('Hacer ahora TEST')).not.toBeInTheDocument()
+
+    await waitFor(async () => {
+      const stored = await repository.load()
+      const done = stored?.plannerItems.find((i) => i.title === 'Hacer ahora TEST')
+      expect(done?.done).toBe(true)
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Eliminar Eliminar TEST' }))
+    await waitFor(async () => {
+      const stored = await repository.load()
+      expect(stored?.plannerItems.find((i) => i.title === 'Eliminar TEST')).toBeUndefined()
     })
   })
 })
