@@ -479,6 +479,65 @@ main { flex: 1; padding: 28px 0 72px; }
   flex: 0 0 auto;
 }
 
+/* ---------- Mapa anual ---------- */
+.year-heatmap__scroll {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.year-heatmap__months {
+  display: flex;
+  gap: 3px;
+}
+
+.year-heatmap__month-label {
+  flex: 0 0 11px;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.year-heatmap__body {
+  display: flex;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.year-heatmap__dow {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 0 0 auto;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.year-heatmap__dow span {
+  width: 11px;
+  height: 11px;
+  line-height: 11px;
+}
+
+.year-heatmap__week {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 0 0 auto;
+}
+
+.year-heatmap__cell {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+}
+
+.year-heatmap__cell--future {
+  background: transparent;
+  border: 1px dashed var(--border);
+}
+
 /* ---------- Metas (objetivos de largo plazo) ---------- */
 .pill {
   display: inline-flex;

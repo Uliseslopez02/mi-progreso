@@ -1,9 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { HabitYearHeatmap } from '../components/HabitYearHeatmap'
 import { LineChart } from '../components/LineChart'
 import { MonthCalendar } from '../components/MonthCalendar'
 import { ProgressRing } from '../components/ProgressRing'
+import type { YearMapWeek } from '../domain/habitYearMap'
 import type { DayRecord } from '../domain/types'
 
 describe('ProgressRing', () => {
@@ -101,5 +103,55 @@ describe('MonthCalendar', () => {
 
     await user.click(screen.getByRole('button', { name: '5 — 90%' }))
     expect(onSelect).toHaveBeenCalledWith('2026-08-05')
+  })
+})
+
+describe('HabitYearHeatmap', () => {
+  const weeks: YearMapWeek[] = [
+    {
+      mondayKey: '2026-08-10',
+      cells: [
+        { date: '2026-08-10', status: 'done' },
+        { date: '2026-08-11', status: 'missed' },
+        { date: '2026-08-12', status: 'no-record' },
+        { date: '2026-08-13', status: 'done' },
+        { date: '2026-08-14', status: 'missed' },
+        { date: '2026-08-15', status: 'no-record' },
+        { date: '2026-08-16', status: 'done' },
+      ],
+    },
+    {
+      mondayKey: '2026-08-17',
+      cells: [
+        { date: '2026-08-17', status: 'no-record' },
+        { date: '2026-08-18', status: 'no-record' },
+        { date: '2026-08-19', status: 'no-record' },
+        { date: '2026-08-20', status: 'future' },
+        { date: '2026-08-21', status: 'future' },
+        { date: '2026-08-22', status: 'future' },
+        { date: '2026-08-23', status: 'future' },
+      ],
+    },
+  ]
+
+  it('renderiza una celda por día y las colorea según su estado', () => {
+    const { container } = render(<HabitYearHeatmap weeks={weeks} />)
+
+    const cells = container.querySelectorAll('.year-heatmap__cell')
+    expect(cells).toHaveLength(14)
+
+    const doneCell = screen.getByTitle('10/08 — cumplido')
+    expect(doneCell).toHaveStyle({ background: 'var(--band-top)' })
+
+    const noRecordCell = screen.getByTitle('12/08 — sin registro')
+    expect(noRecordCell).toHaveStyle({ background: 'var(--band-none)' })
+  })
+
+  it('marca las celdas futuras sin color de banda', () => {
+    render(<HabitYearHeatmap weeks={weeks} />)
+
+    const futureCell = screen.getByTitle('20/08 — todavía no llegó')
+    expect(futureCell).toHaveClass('year-heatmap__cell--future')
+    expect(futureCell).not.toHaveAttribute('style')
   })
 })

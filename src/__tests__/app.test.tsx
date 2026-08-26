@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { App } from '../App'
@@ -676,6 +676,38 @@ describe('Mi Progreso', () => {
 
     await user.click(screen.getByRole('button', { name: 'Cerrar detalle' }))
     expect(screen.queryByText('Meditar')).not.toBeInTheDocument()
+  })
+
+  it('el mapa anual de un hábito muestra su cumplimiento y se puede filtrar por categoría', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
+    await user.type(screen.getByLabelText('Nuevo hábito'), 'Meditar')
+    await user.click(screen.getByRole('button', { name: 'Agregar hábito' }))
+
+    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Meditar' }))
+
+    await user.click(screen.getByRole('button', { name: 'Historial' }))
+    await user.click(screen.getByRole('button', { name: 'Mapa anual' }))
+
+    const habitSelect = await screen.findByRole('combobox', { name: 'Hábito' })
+    expect(within(habitSelect).getByRole('option', { name: 'Meditar' })).toBeInTheDocument()
+
+    const completedStat = screen.getByText('Días cumplidos').closest('.stat') as HTMLElement
+    expect(within(completedStat).getByText('1')).toBeInTheDocument()
+    const presentStat = screen.getByText('Días con registro').closest('.stat') as HTMLElement
+    expect(within(presentStat).getByText('1')).toBeInTheDocument()
+
+    const categorySelect = screen.getByRole('combobox', { name: 'Categoría' })
+    const specificCategory = within(categorySelect)
+      .getAllByRole('option')
+      .find((o) => o.textContent !== 'Todas las categorías')!.textContent!
+    await user.selectOptions(categorySelect, specificCategory)
+
+    expect(within(habitSelect).getByRole('option', { name: 'Meditar' })).toBeInTheDocument()
   })
 
   // Momento Mori se sacó de la navegación comercial (Fase 1 del roadmap de producto);

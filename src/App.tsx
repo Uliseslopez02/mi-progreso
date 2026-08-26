@@ -11,6 +11,7 @@ import { DayAgendaPage } from './pages/DayAgendaPage'
 import { FocusPage } from './pages/FocusPage'
 import { GoalsPage } from './pages/GoalsPage'
 import { HabitsPage } from './pages/HabitsPage'
+import { HabitYearMapPage } from './pages/HabitYearMapPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { InformesPage } from './pages/InformesPage'
 import { LifeWheelPage } from './pages/LifeWheelPage'
@@ -50,6 +51,7 @@ const OBJETIVOS_ITEMS = [
 const HISTORIAL_ITEMS = [
   { to: '/historial', label: 'Resumen' },
   { to: '/historial/calendario', label: 'Calendario' },
+  { to: '/historial/mapa-anual', label: 'Mapa anual' },
 ]
 
 const INFORMES_ITEMS = [
@@ -196,6 +198,7 @@ function AppShell() {
             <Route path="/historial" element={<SectionLayout items={HISTORIAL_ITEMS} ariaLabel="Historial" />}>
               <Route index element={<HistoryPage />} />
               <Route path="calendario" element={<CalendarPage />} />
+              <Route path="mapa-anual" element={<HabitYearMapPage />} />
             </Route>
             <Route path="/informes" element={<SectionLayout items={INFORMES_ITEMS} ariaLabel="Informes" />}>
               <Route index element={<InformesPage />} />
