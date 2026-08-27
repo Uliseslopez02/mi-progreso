@@ -6,6 +6,10 @@ interface Props {
   onToggle: (goalId: string) => void
   onProgressChange?: (goalId: string, value: number) => void
   disabled?: boolean
+  /** Estado vacío por defecto: "No hay objetivos activos. Agregá los tuyos en Ajustes." */
+  emptyMessage?: string
+  /** Si se pasa, reemplaza el texto de estado vacío por un botón de creación directa. */
+  emptyAction?: { label: string; onClick: () => void }
 }
 
 interface Group {
@@ -28,9 +32,27 @@ function groupByCategory(goals: GoalSnapshot[]): Group[] {
 }
 
 /** Lista de objetivos agrupada por categoría. Un click = un objetivo marcado. */
-export function GoalList({ goals, goalProgress, onToggle, onProgressChange, disabled = false }: Props) {
+export function GoalList({
+  goals,
+  goalProgress,
+  onToggle,
+  onProgressChange,
+  disabled = false,
+  emptyMessage = 'No hay objetivos activos. Agregá los tuyos en Ajustes.',
+  emptyAction,
+}: Props) {
   if (goals.length === 0) {
-    return <p className="empty">No hay objetivos activos. Agregá los tuyos en Ajustes.</p>
+    if (emptyAction) {
+      return (
+        <div className="empty-state">
+          <p className="empty">{emptyMessage}</p>
+          <button type="button" className="btn btn--primary" onClick={emptyAction.onClick}>
+            {emptyAction.label}
+          </button>
+        </div>
+      )
+    }
+    return <p className="empty">{emptyMessage}</p>
   }
 
   const getIsDone = (goal: GoalSnapshot): boolean => {

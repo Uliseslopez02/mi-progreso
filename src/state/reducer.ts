@@ -83,6 +83,7 @@ export type Action =
   | { type: 'updateProject'; id: string; patch: Partial<Omit<Project, 'id'>> }
   | { type: 'removeProject'; id: string }
   | { type: 'moveProject'; id: string; direction: -1 | 1 }
+  | { type: 'reorderProjects'; updates: Array<{ id: string; order: number }> }
   | { type: 'addProjectTask'; task: ProjectTask }
   | { type: 'updateProjectTask'; id: string; patch: Partial<Omit<ProjectTask, 'id'>> }
   | { type: 'removeProjectTask'; id: string }
@@ -124,10 +125,8 @@ export function reducer(state: AppState, action: Action): AppState {
       if (!record) return state
       const editable = action.date === state.today || data.settings.allowEditingPastDays
       if (!editable) return state
-      return withData(state, {
-        ...data,
-        days: { ...data.days, [action.date]: toggleGoal(record, action.goalId) },
-      })
+      const days = { ...data.days, [action.date]: toggleGoal(record, action.goalId) }
+      return withData(state, recomputeHabitLinkedGoals({ ...data, days }, action.goalId, state.today))
     }
 
     case 'setGoalProgress': {
@@ -135,19 +134,17 @@ export function reducer(state: AppState, action: Action): AppState {
       if (!record) return state
       const editable = action.date === state.today || data.settings.allowEditingPastDays
       if (!editable) return state
-      return withData(state, {
-        ...data,
-        days: {
-          ...data.days,
-          [action.date]: {
-            ...record,
-            goalProgress: {
-              ...record.goalProgress,
-              [action.goalId]: action.value,
-            },
+      const days = {
+        ...data.days,
+        [action.date]: {
+          ...record,
+          goalProgress: {
+            ...record.goalProgress,
+            [action.goalId]: action.value,
           },
         },
-      })
+      }
+      return withData(state, recomputeHabitLinkedGoals({ ...data, days }, action.goalId, state.today))
     }
 
     case 'togglePeriodGoal': {
@@ -197,7 +194,15 @@ export function reducer(state: AppState, action: Action): AppState {
     }
 
     case 'removeGoal': {
-      const next = { ...data, goals: data.goals.filter((g) => g.id !== action.id) }
+      // Si el objetivo borrado era un hábito vinculado a alguna meta, se
+      // desvincula acá (evita una referencia huérfana en `linkedHabitIds`) y
+      // se recalcula el progreso de esa meta si dependía de él (`kind: 'habits'`).
+      const lifeGoals = data.lifeGoals.map((g) => {
+        if (!g.linkedHabitIds.includes(action.id)) return g
+        const patched = { ...g, linkedHabitIds: g.linkedHabitIds.filter((id) => id !== action.id) }
+        return { ...patched, progress: computeLifeGoalProgress(patched, data.days, state.today) }
+      })
+      const next = { ...data, goals: data.goals.filter((g) => g.id !== action.id), lifeGoals }
       return withData(state, syncToday(next, state.today))
     }
 
@@ -255,7 +260,7 @@ export function reducer(state: AppState, action: Action): AppState {
       return withData(state, { ...data, settings: { ...data.settings, ...action.patch } })
 
     case 'addLifeGoal': {
-      const goal = { ...action.goal, progress: computeLifeGoalProgress(action.goal) }
+      const goal = { ...action.goal, progress: computeLifeGoalProgress(action.goal, data.days, state.today) }
       return withData(state, { ...data, lifeGoals: [...data.lifeGoals, goal] })
     }
 
@@ -265,7 +270,7 @@ export function reducer(state: AppState, action: Action): AppState {
         lifeGoals: data.lifeGoals.map((g) => {
           if (g.id !== action.id) return g
           const merged = { ...g, ...action.patch }
-          return { ...merged, progress: computeLifeGoalProgress(merged) }
+          return { ...merged, progress: computeLifeGoalProgress(merged, data.days, state.today) }
         }),
       })
 
@@ -427,6 +432,14 @@ export function reducer(state: AppState, action: Action): AppState {
       })
     }
 
+    case 'reorderProjects': {
+      const orderById = new Map(action.updates.map((u) => [u.id, u.order]))
+      return withData(state, {
+        ...data,
+        projects: data.projects.map((p) => (orderById.has(p.id) ? { ...p, order: orderById.get(p.id)! } : p)),
+      })
+    }
+
     case 'addProjectTask':
       return withData(state, { ...data, projectTasks: [...data.projectTasks, action.task] })
 
@@ -463,4 +476,22 @@ export function reducer(state: AppState, action: Action): AppState {
 
 function withData(state: AppState, data: AppData): AppState {
   return data === state.data ? state : { ...state, data }
+}
+
+/**
+ * Recalcula `progress` de las metas `kind: 'habits'` que tienen a `habitGoalId`
+ * entre sus `linkedHabitIds`, después de marcar ese hábito en `days`. Las
+ * demás metas quedan con la misma referencia (sin recalcular ni tocar), igual
+ * criterio de "no tocar lo que no cambió" que `moveLifeGoal`.
+ */
+function recomputeHabitLinkedGoals(data: AppData, habitGoalId: string, today: DateKey): AppData {
+  let changed = false
+  const lifeGoals = data.lifeGoals.map((g) => {
+    if (g.kind !== 'habits' || !g.linkedHabitIds.includes(habitGoalId)) return g
+    const progress = computeLifeGoalProgress(g, data.days, today)
+    if (progress === g.progress) return g
+    changed = true
+    return { ...g, progress }
+  })
+  return changed ? { ...data, lifeGoals } : data
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { computeLifeGoalProgress, nextMilestone, pace } from '../domain/lifeGoalProgress'
-import type { LifeGoal } from '../domain/types'
+import type { DayRecord, LifeGoal } from '../domain/types'
 
 function baseGoal(overrides: Partial<LifeGoal> = {}): LifeGoal {
   return {
@@ -64,6 +64,37 @@ describe('computeLifeGoalProgress', () => {
       ],
     })
     expect(computeLifeGoalProgress(goal)).toBe(50)
+  })
+
+  describe('habits: promedio de cumplimiento de los hábitos vinculados', () => {
+    const habitSnapshot: DayRecord['goals'][number] = {
+      goalId: 'h1',
+      name: 'Meditar',
+      categoryId: 'c1',
+      categoryName: 'Salud',
+      weight: 1,
+      kind: 'boolean',
+      trackingKind: 'habit',
+    }
+    const days: Record<string, DayRecord> = {
+      '2026-08-20': { date: '2026-08-20', goals: [habitSnapshot], goalProgress: { h1: true }, closed: true },
+      '2026-08-21': { date: '2026-08-21', goals: [habitSnapshot], goalProgress: { h1: false }, closed: true },
+    }
+
+    it('promedia días cumplidos vs. presentes de los hábitos vinculados', () => {
+      const goal = baseGoal({ kind: 'habits', linkedHabitIds: ['h1'], createdAt: '2026-08-01T00:00:00.000Z' })
+      expect(computeLifeGoalProgress(goal, days, '2026-08-21')).toBe(50)
+    })
+
+    it('sin hábitos vinculados da 0', () => {
+      const goal = baseGoal({ kind: 'habits', linkedHabitIds: [] })
+      expect(computeLifeGoalProgress(goal, days, '2026-08-21')).toBe(0)
+    })
+
+    it('un hábito sin historial en el rango da 0, no divide por cero', () => {
+      const goal = baseGoal({ kind: 'habits', linkedHabitIds: ['h-nuevo'] })
+      expect(computeLifeGoalProgress(goal, days, '2026-08-21')).toBe(0)
+    })
   })
 })
 

@@ -1,6 +1,10 @@
+import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import type { DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ProjectCard } from '../components/ProjectCard'
+import { ProjectListRow } from '../components/ProjectListRow'
 import { createId } from '../domain/id'
 import { useAppData } from '../state/context'
 import { ProjectDetailPage } from './ProjectDetailPage'
@@ -16,13 +20,18 @@ export function ProjectsPage() {
 
   const projects = useMemo(() => [...data.projects].sort((a, b) => a.order - b.order), [data.projects])
   const activeProjects = useMemo(() => projects.filter((p) => p.status === 'active'), [projects])
-  const taskCount = useMemo(() => {
-    const counts = new Map<string, number>()
+  const taskCounts = useMemo(() => {
+    const counts = new Map<string, { done: number; total: number }>()
     for (const task of data.projectTasks) {
-      counts.set(task.projectId, (counts.get(task.projectId) ?? 0) + 1)
+      const current = counts.get(task.projectId) ?? { done: 0, total: 0 }
+      current.total += 1
+      if (task.status === 'done') current.done += 1
+      counts.set(task.projectId, current)
     }
     return counts
   }, [data.projectTasks])
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
   if (openProject) {
     return <ProjectDetailPage project={openProject} onBack={() => setSearchParams({})} />
@@ -44,7 +53,20 @@ export function ProjectsPage() {
     setNewName('')
   }
 
-  const move = (id: string, direction: -1 | 1) => dispatch({ type: 'moveProject', id, direction })
+  const countsFor = (id: string) => taskCounts.get(id) ?? { done: 0, total: 0 }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const ids = projects.map((p) => p.id)
+    const from = ids.indexOf(String(active.id))
+    const to = ids.indexOf(String(over.id))
+    if (from === -1 || to === -1) return
+    const reordered = [...ids]
+    reordered.splice(from, 1)
+    reordered.splice(to, 0, String(active.id))
+    dispatch({ type: 'reorderProjects', updates: reordered.map((id, order) => ({ id, order })) })
+  }
 
   return (
     <div className="stack">
@@ -55,16 +77,19 @@ export function ProjectsPage() {
         {activeProjects.length === 0 ? (
           <p className="empty">No tenés proyectos activos. Creá el primero abajo.</p>
         ) : (
-          activeProjects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              taskCount={taskCount.get(project.id) ?? 0}
-              onUpdate={(patch) => dispatch({ type: 'updateProject', id: project.id, patch })}
-              onRemove={() => dispatch({ type: 'removeProject', id: project.id })}
-              onOpen={() => setSearchParams({ id: project.id })}
-            />
-          ))
+          activeProjects.map((project) => {
+            const { done, total } = countsFor(project.id)
+            return (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                doneCount={done}
+                taskCount={total}
+                onUpdate={(patch) => dispatch({ type: 'updateProject', id: project.id, patch })}
+                onOpen={() => setSearchParams({ id: project.id })}
+              />
+            )
+          })
         )}
       </section>
 
@@ -76,18 +101,26 @@ export function ProjectsPage() {
         {projects.length === 0 ? (
           <p className="empty">Todavía no creaste ningún proyecto.</p>
         ) : (
-          projects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              taskCount={taskCount.get(project.id) ?? 0}
-              onUpdate={(patch) => dispatch({ type: 'updateProject', id: project.id, patch })}
-              onRemove={() => dispatch({ type: 'removeProject', id: project.id })}
-              onMoveUp={() => move(project.id, -1)}
-              onMoveDown={() => move(project.id, 1)}
-              onOpen={() => setSearchParams({ id: project.id })}
-            />
-          ))
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={projects.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+              <div className="project-list">
+                {projects.map((project) => {
+                  const { done, total } = countsFor(project.id)
+                  return (
+                    <ProjectListRow
+                      key={project.id}
+                      project={project}
+                      doneCount={done}
+                      taskCount={total}
+                      onUpdate={(patch) => dispatch({ type: 'updateProject', id: project.id, patch })}
+                      onRemove={() => dispatch({ type: 'removeProject', id: project.id })}
+                      onOpen={() => setSearchParams({ id: project.id })}
+                    />
+                  )
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </section>
 

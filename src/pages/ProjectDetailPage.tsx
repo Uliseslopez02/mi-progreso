@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { KanbanBoard } from '../components/KanbanBoard'
+import { SelectMenu } from '../components/SelectMenu'
 import { createId } from '../domain/id'
 import type { Project, ProjectStatus, ProjectTaskStatus } from '../domain/types'
 import { useAppData } from '../state/context'
@@ -9,11 +10,11 @@ interface Props {
   onBack: () => void
 }
 
-const STATUS_LABEL: Record<ProjectStatus, string> = {
-  active: 'Activo',
-  completed: 'Completado',
-  archived: 'Archivado',
-}
+const STATUS_OPTIONS: Array<{ value: ProjectStatus; label: string; color: string }> = [
+  { value: 'active', label: 'Activo', color: 'var(--band-top)' },
+  { value: 'completed', label: 'Completado', color: 'var(--accent)' },
+  { value: 'archived', label: 'Archivado', color: 'var(--text-dim)' },
+]
 
 /** Tablero Kanban de un proyecto: encabezado editable + columnas Por hacer/En curso/Hecho. */
 export function ProjectDetailPage({ project, onBack }: Props) {
@@ -56,18 +57,12 @@ export function ProjectDetailPage({ project, onBack }: Props) {
           <button type="button" className="btn btn--ghost" onClick={onBack}>
             ‹ Volver
           </button>
-          <select
-            className="select"
-            aria-label="Estado del proyecto"
+          <SelectMenu
             value={project.status}
-            onChange={(e) => dispatch({ type: 'updateProject', id: project.id, patch: { status: e.target.value as ProjectStatus } })}
-          >
-            {(Object.keys(STATUS_LABEL) as ProjectStatus[]).map((key) => (
-              <option key={key} value={key}>
-                {STATUS_LABEL[key]}
-              </option>
-            ))}
-          </select>
+            options={STATUS_OPTIONS}
+            onChange={(status) => dispatch({ type: 'updateProject', id: project.id, patch: { status } })}
+            ariaLabel="Estado del proyecto"
+          />
         </div>
         <input
           className="input"

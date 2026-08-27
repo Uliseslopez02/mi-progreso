@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
+import { HabitSuggestionModal } from '../components/HabitSuggestionModal'
 import { LifeGoalCard } from '../components/LifeGoalCard'
+import { SelectMenu } from '../components/SelectMenu'
 import { createId } from '../domain/id'
 import type { LifeGoalKind, LifeGoalPriority, LifeGoalScope } from '../domain/types'
 import { useAppData } from '../state/context'
@@ -12,15 +14,27 @@ const SCOPE_FILTER_LABEL: Record<ScopeFilter, string> = {
   professional: 'Profesionales',
 }
 
-const KIND_LABEL: Record<LifeGoalKind, string> = {
-  percentage: 'Porcentaje',
-  quantity: 'Cantidad',
-  money: 'Dinero',
-  hours: 'Horas',
-  sessions: 'Sesiones',
-  checklist: 'Checklist',
-  milestones: 'Hitos',
-}
+const SCOPE_OPTIONS: Array<{ value: LifeGoalScope; label: string; color: string }> = [
+  { value: 'personal', label: 'Personal', color: 'var(--accent)' },
+  { value: 'professional', label: 'Profesional', color: '#93c5fd' },
+]
+
+const PRIORITY_OPTIONS: Array<{ value: LifeGoalPriority; label: string; color: string }> = [
+  { value: 'low', label: 'Prioridad baja', color: 'var(--text-dim)' },
+  { value: 'medium', label: 'Prioridad media', color: 'var(--band-good)' },
+  { value: 'high', label: 'Prioridad alta', color: 'var(--band-low)' },
+]
+
+const KIND_OPTIONS: Array<{ value: LifeGoalKind; label: string }> = [
+  { value: 'percentage', label: 'Porcentaje' },
+  { value: 'habits', label: 'Hábitos vinculados' },
+  { value: 'quantity', label: 'Cantidad' },
+  { value: 'money', label: 'Dinero' },
+  { value: 'hours', label: 'Horas' },
+  { value: 'sessions', label: 'Sesiones' },
+  { value: 'checklist', label: 'Checklist' },
+  { value: 'milestones', label: 'Hitos' },
+]
 
 const VALUE_KINDS: LifeGoalKind[] = ['quantity', 'money', 'hours', 'sessions']
 
@@ -34,6 +48,7 @@ export function GoalsPage() {
   const [newKind, setNewKind] = useState<LifeGoalKind>('percentage')
   const [newTargetValue, setNewTargetValue] = useState(10)
   const [newUnit, setNewUnit] = useState('')
+  const [suggestingFor, setSuggestingFor] = useState<{ id: string; name: string } | null>(null)
 
   const habits = useMemo(
     () => data.goals.filter((g) => g.trackingKind === 'habit' && g.active),
@@ -51,10 +66,11 @@ export function GoalsPage() {
   const addGoal = () => {
     const name = newName.trim()
     if (!name) return
+    const id = createId('meta')
     dispatch({
       type: 'addLifeGoal',
       goal: {
-        id: createId('meta'),
+        id,
         name,
         scope: newScope,
         priority: newPriority,
@@ -73,9 +89,47 @@ export function GoalsPage() {
     setNewPriority('medium')
     setNewKind('percentage')
     setNewUnit('')
+    setSuggestingFor({ id, name })
   }
 
   const move = (id: string, direction: -1 | 1) => dispatch({ type: 'moveLifeGoal', id, direction })
+
+  const ensureCategoryId = (): string => {
+    if (data.categories.length > 0) return [...data.categories].sort((a, b) => a.order - b.order)[0].id
+    const id = createId('cat')
+    dispatch({ type: 'addCategory', category: { id, name: 'General', order: 0 } })
+    return id
+  }
+
+  const confirmSuggestedHabits = (habitNames: string[], driveProgress: boolean) => {
+    if (!suggestingFor) return
+    const categoryId = ensureCategoryId()
+    const createdIds = habitNames.map((name) => {
+      const habitId = createId('habit')
+      dispatch({
+        type: 'addGoal',
+        goal: {
+          id: habitId,
+          name,
+          categoryId,
+          weight: 1,
+          active: true,
+          period: 'daily',
+          order: habits.length,
+          createdAt: new Date().toISOString(),
+          kind: 'boolean',
+          trackingKind: 'habit',
+        },
+      })
+      return habitId
+    })
+    dispatch({
+      type: 'updateLifeGoal',
+      id: suggestingFor.id,
+      patch: { linkedHabitIds: createdIds, ...(driveProgress ? { kind: 'habits' as const } : {}) },
+    })
+    setSuggestingFor(null)
+  }
 
   return (
     <div className="stack">
@@ -144,52 +198,9 @@ export function GoalsPage() {
               }}
             />
           </div>
-          <div className="field" style={{ flex: '1 1 160px' }}>
-            <label className="field__label" htmlFor="new-lifegoal-scope">
-              Ámbito
-            </label>
-            <select
-              id="new-lifegoal-scope"
-              className="select"
-              value={newScope}
-              onChange={(e) => setNewScope(e.target.value as LifeGoalScope)}
-            >
-              <option value="personal">Personal</option>
-              <option value="professional">Profesional</option>
-            </select>
-          </div>
-          <div className="field" style={{ flex: '1 1 160px' }}>
-            <label className="field__label" htmlFor="new-lifegoal-priority">
-              Prioridad
-            </label>
-            <select
-              id="new-lifegoal-priority"
-              className="select"
-              value={newPriority}
-              onChange={(e) => setNewPriority(e.target.value as LifeGoalPriority)}
-            >
-              <option value="low">Baja</option>
-              <option value="medium">Media</option>
-              <option value="high">Alta</option>
-            </select>
-          </div>
-          <div className="field" style={{ flex: '1 1 150px' }}>
-            <label className="field__label" htmlFor="new-lifegoal-kind">
-              Tipo
-            </label>
-            <select
-              id="new-lifegoal-kind"
-              className="select"
-              value={newKind}
-              onChange={(e) => setNewKind(e.target.value as LifeGoalKind)}
-            >
-              {(Object.keys(KIND_LABEL) as LifeGoalKind[]).map((k) => (
-                <option key={k} value={k}>
-                  {KIND_LABEL[k]}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectMenu value={newScope} options={SCOPE_OPTIONS} onChange={setNewScope} ariaLabel="Ámbito" />
+          <SelectMenu value={newPriority} options={PRIORITY_OPTIONS} onChange={setNewPriority} ariaLabel="Prioridad" />
+          <SelectMenu value={newKind} options={KIND_OPTIONS} onChange={setNewKind} ariaLabel="Tipo" />
           {VALUE_KINDS.includes(newKind) && (
             <div className="field" style={{ flex: '1 1 100px' }}>
               <label className="field__label" htmlFor="new-lifegoal-target">
@@ -223,6 +234,14 @@ export function GoalsPage() {
           </button>
         </div>
       </section>
+
+      {suggestingFor && (
+        <HabitSuggestionModal
+          goalName={suggestingFor.name}
+          onConfirm={confirmSuggestedHabits}
+          onSkip={() => setSuggestingFor(null)}
+        />
+      )}
     </div>
   )
 }

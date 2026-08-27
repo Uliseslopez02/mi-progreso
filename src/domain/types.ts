@@ -119,6 +119,7 @@ export type LifeGoalKind =
   | 'sessions'
   | 'checklist'
   | 'milestones'
+  | 'habits'
 
 export interface Milestone {
   id: string

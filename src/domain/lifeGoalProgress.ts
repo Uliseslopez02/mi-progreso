@@ -5,15 +5,45 @@
  * `state/reducer.ts`) y el resto de la app (`lifeGoalHealth.ts`, filtros) siga
  * leyendo `progress` sin saber nada de tipos.
  */
-import { diffDays, type DateKey } from './date'
-import type { LifeGoal, Milestone } from './types'
+import { addDays, diffDays, rangeKeys, type DateKey } from './date'
+import { goalConsistency } from './consistency'
+import type { DayRecord, LifeGoal, Milestone } from './types'
 
 const clampPercent = (n: number): number => Math.max(0, Math.min(100, Math.round(n)))
 
-export function computeLifeGoalProgress(goal: LifeGoal): number {
+/** Ventana móvil para el cálculo de `kind: 'habits'` — ver `habitsProgress`. */
+const HABITS_WINDOW_DAYS = 30
+
+/**
+ * Progreso de una meta tipo `'habits'`: promedio de cumplimiento de sus
+ * hábitos vinculados (`linkedHabitIds`) en los últimos 30 días, o desde que
+ * se creó la meta si es más reciente que eso (no penaliza días previos a su
+ * creación). Reusa `goalConsistency` (ya usada por Historial/Informes) en vez
+ * de reimplementar el conteo de días cumplidos.
+ */
+function habitsProgress(goal: LifeGoal, days: Record<string, DayRecord>, today: DateKey): number {
+  if (goal.linkedHabitIds.length === 0) return 0
+  const createdOn = goal.createdAt.slice(0, 10)
+  const windowStart = addDays(today, -(HABITS_WINDOW_DAYS - 1))
+  const from = createdOn > windowStart ? createdOn : windowStart
+  const keys = rangeKeys(from, today)
+  const consistency = goalConsistency(days, keys, 'habit').filter((c) => goal.linkedHabitIds.includes(c.id))
+  const present = consistency.reduce((sum, c) => sum + c.daysPresent, 0)
+  if (present === 0) return 0
+  const completed = consistency.reduce((sum, c) => sum + c.daysCompleted, 0)
+  return clampPercent((completed / present) * 100)
+}
+
+export function computeLifeGoalProgress(
+  goal: LifeGoal,
+  days: Record<string, DayRecord> = {},
+  today: DateKey = goal.createdAt.slice(0, 10),
+): number {
   const kind = goal.kind ?? 'percentage'
 
   switch (kind) {
+    case 'habits':
+      return habitsProgress(goal, days, today)
     case 'checklist': {
       if (goal.subGoals.length === 0) return 0
       const done = goal.subGoals.filter((s) => s.done).length

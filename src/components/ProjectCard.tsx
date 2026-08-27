@@ -1,77 +1,54 @@
 import type { Project, ProjectStatus } from '../domain/types'
+import { SelectMenu } from './SelectMenu'
 
 interface Props {
   project: Project
+  doneCount: number
   taskCount: number
   onUpdate: (patch: Partial<Omit<Project, 'id'>>) => void
-  onRemove: () => void
-  onMoveUp?: () => void
-  onMoveDown?: () => void
   onOpen: () => void
 }
 
-const STATUS_LABEL: Record<ProjectStatus, string> = {
-  active: 'Activo',
-  completed: 'Completado',
-  archived: 'Archivado',
-}
+const STATUS_OPTIONS: Array<{ value: ProjectStatus; label: string; color: string }> = [
+  { value: 'active', label: 'Activo', color: 'var(--band-top)' },
+  { value: 'completed', label: 'Completado', color: 'var(--accent)' },
+  { value: 'archived', label: 'Archivado', color: 'var(--text-dim)' },
+]
 
-/** CRUD de un proyecto: nombre, descripción, estado y acceso a su tablero. */
-export function ProjectCard({ project, taskCount, onUpdate, onRemove, onMoveUp, onMoveDown, onOpen }: Props) {
+/** Tarjeta destacada (estilo hero) de un proyecto activo/diario. */
+export function ProjectCard({ project, doneCount, taskCount, onUpdate, onOpen }: Props) {
+  const percent = taskCount === 0 ? 0 : Math.round((doneCount / taskCount) * 100)
+
   return (
-    <div className="routine-card">
-      <div className="lifegoal-card__head">
-        <input
-          className="input"
-          style={{ fontSize: '1.05rem', fontWeight: 650 }}
-          aria-label="Nombre del proyecto"
-          value={project.name}
-          onChange={(e) => onUpdate({ name: e.target.value })}
-        />
-      </div>
-
-      <div className="lifegoal-card__meta">
-        <select
-          className="select"
-          aria-label="Estado del proyecto"
+    <div className="project-hero">
+      <div className="project-hero__head">
+        <span className="project-hero__name">{project.name}</span>
+        <SelectMenu
           value={project.status}
-          onChange={(e) => onUpdate({ status: e.target.value as ProjectStatus })}
-        >
-          {(Object.keys(STATUS_LABEL) as ProjectStatus[]).map((key) => (
-            <option key={key} value={key}>
-              {STATUS_LABEL[key]}
-            </option>
-          ))}
-        </select>
-        <span className="card__hint">{taskCount} {taskCount === 1 ? 'tarea' : 'tareas'}</span>
-      </div>
-
-      <div className="field" style={{ marginBottom: 12 }}>
-        <input
-          className="input"
-          placeholder="Descripción (opcional)"
-          aria-label="Descripción del proyecto"
-          value={project.description ?? ''}
-          onChange={(e) => onUpdate({ description: e.target.value })}
+          options={STATUS_OPTIONS}
+          onChange={(status) => onUpdate({ status })}
+          ariaLabel={`Estado de ${project.name}`}
         />
       </div>
 
-      <div className="settings-goal__actions">
+      {project.description && <p className="card__hint">{project.description}</p>}
+
+      <div className="project-hero__meta">
+        <span className="numeric" style={{ fontSize: '1.1rem', color: 'var(--text)' }}>
+          {percent}%
+        </span>
+        <span>
+          {doneCount}/{taskCount} {taskCount === 1 ? 'tarea' : 'tareas'}
+        </span>
+      </div>
+
+      <div className="project-hero__progress-track">
+        <div className="project-hero__progress-fill" style={{ width: `${percent}%` }} />
+      </div>
+
+      <div className="project-hero__actions">
         <button type="button" className="btn btn--primary" onClick={onOpen}>
           Abrir tablero
-        </button>
-        {onMoveUp && (
-          <button type="button" className="icon-btn" aria-label="Subir proyecto" onClick={onMoveUp}>
-            ↑
-          </button>
-        )}
-        {onMoveDown && (
-          <button type="button" className="icon-btn" aria-label="Bajar proyecto" onClick={onMoveDown}>
-            ↓
-          </button>
-        )}
-        <button type="button" className="btn btn--danger" onClick={onRemove}>
-          Eliminar
         </button>
       </div>
     </div>

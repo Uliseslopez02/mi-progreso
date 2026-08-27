@@ -33,6 +33,19 @@ function renderApp() {
 
 const ringPercent = () => screen.getByTestId('ring-percent').textContent
 
+/** Elige una opción en un `SelectMenu` (reemplazo de `<select>` nativo): abre con su
+ * `aria-label` y clickea la opción por texto. */
+async function chooseSelectMenu(user: ReturnType<typeof userEvent.setup>, ariaLabel: string, optionLabel: string) {
+  await user.click(screen.getByRole('button', { name: ariaLabel }))
+  await user.click(await screen.findByRole('option', { name: optionLabel }))
+}
+
+/** Cierra el modal de sugerencia de hábitos que se abre automáticamente después de
+ * crear una meta, sin usarlo (no es el foco del test que lo llama). */
+async function dismissHabitSuggestions(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByRole('button', { name: 'Cerrar' }))
+}
+
 describe('Mi Progreso', () => {
   beforeEach(() => {
     window.localStorage.clear()
@@ -373,11 +386,14 @@ describe('Mi Progreso', () => {
     await user.click(screen.getByRole('button', { name: 'Objetivos' }))
     await user.click(screen.getByRole('button', { name: 'Metas' }))
     await user.type(screen.getByLabelText('Nombre'), 'Mejorar mi condición física')
-    await user.selectOptions(screen.getByLabelText('Ámbito'), 'Personal')
+    await chooseSelectMenu(user, 'Ámbito', 'Personal')
     await user.click(screen.getByRole('button', { name: 'Crear meta' }))
+    await dismissHabitSuggestions(user)
 
-    expect(await screen.findByDisplayValue('Mejorar mi condición física')).toBeInTheDocument()
+    expect(await screen.findByText('Mejorar mi condición física')).toBeInTheDocument()
 
+    // Los campos de edición viven en el modal, detrás del ícono de lápiz.
+    await user.click(screen.getByRole('button', { name: 'Editar Mejorar mi condición física' }))
     await user.type(screen.getByLabelText('Nuevo subobjetivo'), 'Entrenar 4 veces por semana')
     await user.click(screen.getByRole('button', { name: 'Agregar subobjetivo' }))
     const subGoalCheckbox = await screen.findByRole('checkbox', { name: 'Entrenar 4 veces por semana' })
@@ -385,7 +401,7 @@ describe('Mi Progreso', () => {
     expect(subGoalCheckbox).toBeChecked()
 
     fireEvent.change(screen.getByLabelText('Ajustar progreso'), { target: { value: '35' } })
-    expect(screen.getByText('35%')).toBeInTheDocument()
+    expect(screen.getByText('Progreso: 35%')).toBeInTheDocument()
 
     await waitFor(async () => {
       const stored = await repository.load()
@@ -407,11 +423,13 @@ describe('Mi Progreso', () => {
     await user.click(screen.getByRole('button', { name: 'Objetivos' }))
     await user.click(screen.getByRole('button', { name: 'Metas' }))
     await user.type(screen.getByLabelText('Nombre'), 'Ahorrar para el viaje')
-    await user.selectOptions(screen.getByLabelText('Tipo'), 'Dinero')
+    await chooseSelectMenu(user, 'Tipo', 'Dinero')
     fireEvent.change(screen.getByLabelText('Meta'), { target: { value: '10000' } })
     await user.click(screen.getByRole('button', { name: 'Crear meta' }))
+    await dismissHabitSuggestions(user)
 
-    await screen.findByDisplayValue('Ahorrar para el viaje')
+    await screen.findByText('Ahorrar para el viaje')
+    await user.click(screen.getByRole('button', { name: 'Editar Ahorrar para el viaje' }))
     fireEvent.change(screen.getByLabelText('Actual'), { target: { value: '6500' } })
     expect(screen.getByText('65%')).toBeInTheDocument()
 
@@ -430,10 +448,12 @@ describe('Mi Progreso', () => {
     await user.click(screen.getByRole('button', { name: 'Objetivos' }))
     await user.click(screen.getByRole('button', { name: 'Metas' }))
     await user.type(screen.getByLabelText('Nombre'), 'Lanzar el sitio web')
-    await user.selectOptions(screen.getByLabelText('Tipo'), 'Hitos')
+    await chooseSelectMenu(user, 'Tipo', 'Hitos')
     await user.click(screen.getByRole('button', { name: 'Crear meta' }))
+    await dismissHabitSuggestions(user)
 
-    await screen.findByDisplayValue('Lanzar el sitio web')
+    await screen.findByText('Lanzar el sitio web')
+    await user.click(screen.getByRole('button', { name: 'Editar Lanzar el sitio web' }))
     await user.type(screen.getByLabelText('Nuevo hito'), 'Diseño aprobado')
     await user.click(screen.getByRole('button', { name: 'Agregar hito' }))
     await user.type(screen.getByLabelText('Nuevo hito'), 'Publicado')
@@ -805,9 +825,10 @@ describe('Mi Progreso', () => {
     await user.type(screen.getByLabelText('Nombre'), 'Mudanza')
     await user.click(screen.getByRole('button', { name: 'Crear proyecto' }))
 
-    await screen.findAllByDisplayValue('Mudanza')
-    // El proyecto activo aparece en "Proyectos activos" y en "Todos los proyectos" — dos tarjetas.
-    await user.click(screen.getAllByRole('button', { name: 'Abrir tablero' })[0])
+    // El proyecto activo aparece en la tarjeta destacada de "Proyectos activos" y en la fila
+    // compacta de "Todos los proyectos".
+    await screen.findAllByText('Mudanza')
+    await user.click(screen.getByRole('button', { name: 'Abrir tablero' }))
 
     await user.type(screen.getByLabelText('Nueva tarea'), 'Empacar cajas')
     await user.click(screen.getByRole('button', { name: 'Agregar' }))
@@ -827,7 +848,7 @@ describe('Mi Progreso', () => {
     })
 
     await user.click(screen.getByRole('button', { name: '‹ Volver' }))
-    await user.click(screen.getAllByRole('button', { name: 'Eliminar' })[0])
+    await user.click(screen.getByRole('button', { name: 'Eliminar Mudanza' }))
 
     await waitFor(async () => {
       const stored = await repository.load()

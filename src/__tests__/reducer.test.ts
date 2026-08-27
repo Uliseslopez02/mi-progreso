@@ -162,6 +162,26 @@ describe('reducer: proyectos', () => {
     expect(ordered[1].id).toBe(uno.id)
   })
 
+  it('reorderProjects aplica el order de la lista arrastrada, para cualquier cantidad de proyectos', () => {
+    let state = hydrated()
+    state = withProject(state, 'Uno')
+    state = withProject(state, 'Dos')
+    state = withProject(state, 'Tres')
+    const [uno, dos, tres] = state.data!.projects
+
+    state = reducer(state, {
+      type: 'reorderProjects',
+      updates: [
+        { id: tres.id, order: 0 },
+        { id: uno.id, order: 1 },
+        { id: dos.id, order: 2 },
+      ],
+    })
+
+    const ordered = [...state.data!.projects].sort((a, b) => a.order - b.order)
+    expect(ordered.map((p) => p.id)).toEqual([tres.id, uno.id, dos.id])
+  })
+
   it('removeProject elimina el proyecto y sus tareas, sin tocar las de otro proyecto', () => {
     let state = withProject(hydrated())
     const projectId = state.data!.projects[0].id
@@ -275,3 +295,95 @@ describe('reducer: notas', () => {
     let state = withNote(hydrated())
     state = withNote(state, 'Segunda nota')
     const idToRemove = state.data!.notes[0].id
+    state = reducer(state, { type: 'removeNote', id: idToRemove })
+    expect(state.data?.notes.map((n) => n.body)).toEqual(['Segunda nota'])
+  })
+})
+
+describe('reducer: metas con hábitos vinculados (kind habits)', () => {
+  const HABIT_ID = 'habito-test'
+  const GOAL_ID = 'meta-test'
+
+  function withHabitAndLifeGoal(state: AppState): AppState {
+    let next = reducer(state, {
+      type: 'addGoal',
+      goal: {
+        id: HABIT_ID,
+        name: 'Meditar',
+        categoryId: 'productividad',
+        weight: 1,
+        active: true,
+        period: 'daily',
+        order: 0,
+        createdAt: '2026-08-01T00:00:00.000Z',
+        kind: 'boolean',
+        trackingKind: 'habit',
+      },
+    })
+    next = reducer(next, {
+      type: 'addLifeGoal',
+      goal: {
+        id: GOAL_ID,
+        name: 'Estar en forma',
+        scope: 'personal',
+        priority: 'medium',
+        progress: 0,
+        status: 'active',
+        subGoals: [],
+        linkedHabitIds: [HABIT_ID],
+        order: 0,
+        createdAt: '2026-08-01T00:00:00.000Z',
+        kind: 'habits',
+      },
+    })
+    return next
+  }
+
+  it('marcar el hábito vinculado recalcula el % de la meta automáticamente', () => {
+    const initial = withHabitAndLifeGoal(hydrated())
+    expect(initial.data!.lifeGoals.find((g) => g.id === GOAL_ID)!.progress).toBe(0)
+
+    const toggled = reducer(initial, { type: 'toggleGoal', date: TODAY, goalId: HABIT_ID })
+    expect(toggled.data!.lifeGoals.find((g) => g.id === GOAL_ID)!.progress).toBe(100)
+
+    const untoggled = reducer(toggled, { type: 'toggleGoal', date: TODAY, goalId: HABIT_ID })
+    expect(untoggled.data!.lifeGoals.find((g) => g.id === GOAL_ID)!.progress).toBe(0)
+  })
+
+  it('no toca metas kind !== habits ni metas sin ese hábito vinculado (misma referencia)', () => {
+    let state = withHabitAndLifeGoal(hydrated())
+    state = reducer(state, {
+      type: 'addLifeGoal',
+      goal: {
+        id: 'otra-meta',
+        name: 'Leer más',
+        scope: 'personal',
+        priority: 'low',
+        progress: 30,
+        status: 'active',
+        subGoals: [],
+        linkedHabitIds: [],
+        order: 1,
+        createdAt: '2026-08-01T00:00:00.000Z',
+        kind: 'percentage',
+      },
+    })
+    const before = state.data!.lifeGoals.find((g) => g.id === 'otra-meta')!
+
+    const toggled = reducer(state, { type: 'toggleGoal', date: TODAY, goalId: HABIT_ID })
+    const after = toggled.data!.lifeGoals.find((g) => g.id === 'otra-meta')!
+    expect(after).toBe(before)
+  })
+
+  it('removeGoal desvincula el hábito borrado de linkedHabitIds y recalcula el progreso (sin huérfanos)', () => {
+    let state = withHabitAndLifeGoal(hydrated())
+    state = reducer(state, { type: 'toggleGoal', date: TODAY, goalId: HABIT_ID })
+    expect(state.data!.lifeGoals.find((g) => g.id === GOAL_ID)!.progress).toBe(100)
+
+    state = reducer(state, { type: 'removeGoal', id: HABIT_ID })
+    const goal = state.data!.lifeGoals.find((g) => g.id === GOAL_ID)!
+    expect(goal.linkedHabitIds).toEqual([])
+    expect(goal.progress).toBe(0)
+    expect(state.data!.goals.some((g) => g.id === HABIT_ID)).toBe(false)
+  })
+})
