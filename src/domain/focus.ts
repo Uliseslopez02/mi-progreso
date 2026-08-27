@@ -39,3 +39,34 @@ export function sessionsOn(sessions: FocusSession[], date: DateKey): FocusSessio
     .filter((s) => s.completedAt.slice(0, 10) === date)
     .sort((a, b) => b.completedAt.localeCompare(a.completedAt))
 }
+
+export const POMODORO_FOCUS_MINUTES = 25
+export const POMODORO_SHORT_BREAK_MINUTES = 5
+export const POMODORO_LONG_BREAK_MINUTES = 15
+export const POMODORO_CYCLE_LENGTH = 4
+
+export interface PomodoroPhase {
+  type: FocusSessionType
+  minutes: number
+  pomodoroCount: number
+}
+
+/** Siguiente fase del ciclo Pomodoro clásico, a partir de la fase que acaba de
+ * completarse. Cada `POMODORO_CYCLE_LENGTH` enfoques el descanso es largo; el
+ * conteo se reinicia a 1 después de un descanso largo. */
+export function nextPomodoroPhase(finishedType: FocusSessionType, finishedPomodoroCount: number): PomodoroPhase {
+  if (finishedType === 'focus') {
+    const isLongBreak = finishedPomodoroCount % POMODORO_CYCLE_LENGTH === 0
+    return {
+      type: 'break',
+      minutes: isLongBreak ? POMODORO_LONG_BREAK_MINUTES : POMODORO_SHORT_BREAK_MINUTES,
+      pomodoroCount: finishedPomodoroCount,
+    }
+  }
+  const wasLongBreak = finishedPomodoroCount % POMODORO_CYCLE_LENGTH === 0
+  return {
+    type: 'focus',
+    minutes: POMODORO_FOCUS_MINUTES,
+    pomodoroCount: wasLongBreak ? 1 : finishedPomodoroCount + 1,
+  }
+}

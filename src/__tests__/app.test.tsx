@@ -624,6 +624,54 @@ describe('Mi Progreso', () => {
     })
   })
 
+  it('el modo Pomodoro arranca en el primer enfoque del ciclo y "Detener" sale sin encadenar la siguiente fase', async () => {
+    const user = userEvent.setup()
+    const { repository } = renderApp()
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Agenda' }))
+    await user.click(screen.getByRole('button', { name: 'Enfoque' }))
+    await user.click(screen.getByRole('button', { name: 'Pomodoro' }))
+
+    expect(screen.getByText('25 min enfoque · 5 min descanso · descanso largo cada 4')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '25 min' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Iniciar' }))
+    expect(await screen.findByText('Pomodoro 1/4', { exact: false })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Detener' }))
+
+    expect(await screen.findByRole('button', { name: 'Iniciar' })).toBeInTheDocument()
+
+    await waitFor(async () => {
+      const sessions = await repository.loadFocusSessions()
+      expect(sessions).toHaveLength(1)
+      expect(sessions[0]).toMatchObject({ type: 'focus', status: 'stopped', plannedMinutes: 25 })
+    })
+  })
+
+  it('el modo Trabajo profundo ofrece bloques de 50/90 min y queda en el historial', async () => {
+    const user = userEvent.setup()
+    const { repository } = renderApp()
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Agenda' }))
+    await user.click(screen.getByRole('button', { name: 'Enfoque' }))
+    await user.click(screen.getByRole('button', { name: 'Trabajo profundo' }))
+    await user.click(screen.getByRole('button', { name: '90 min' }))
+    await user.click(screen.getByRole('button', { name: 'Iniciar' }))
+
+    expect(await screen.findByText('🧠 Trabajo profundo')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Detener' }))
+
+    await waitFor(async () => {
+      const sessions = await repository.loadFocusSessions()
+      expect(sessions).toHaveLength(1)
+      expect(sessions[0]).toMatchObject({ type: 'focus', status: 'stopped', plannedMinutes: 90 })
+    })
+  })
+
   it('un snapshot de la Rueda de la vida se crea con los puntajes por categoría y persiste', async () => {
     const user = userEvent.setup()
     const { repository } = renderApp()

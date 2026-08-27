@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { focusMinutesOn, formatDuration, remainingSeconds, sessionMinutes, sessionsOn } from '../domain/focus'
+import { focusMinutesOn, formatDuration, nextPomodoroPhase, remainingSeconds, sessionMinutes, sessionsOn } from '../domain/focus'
 import type { FocusSession } from '../domain/types'
 
 describe('formatDuration', () => {
@@ -81,5 +81,25 @@ describe('sessionsOn', () => {
     ]
 
     expect(sessionsOn(sessions, '2026-08-21').map((s) => s.id)).toEqual(['tarde', 'temprano'])
+  })
+})
+
+describe('nextPomodoroPhase', () => {
+  it('después de un enfoque que no es el 4º da descanso corto, mismo conteo', () => {
+    expect(nextPomodoroPhase('focus', 1)).toEqual({ type: 'break', minutes: 5, pomodoroCount: 1 })
+    expect(nextPomodoroPhase('focus', 3)).toEqual({ type: 'break', minutes: 5, pomodoroCount: 3 })
+  })
+
+  it('después del 4º enfoque da descanso largo', () => {
+    expect(nextPomodoroPhase('focus', 4)).toEqual({ type: 'break', minutes: 15, pomodoroCount: 4 })
+  })
+
+  it('después de un descanso corto sigue el próximo enfoque, incrementando el conteo', () => {
+    expect(nextPomodoroPhase('break', 1)).toEqual({ type: 'focus', minutes: 25, pomodoroCount: 2 })
+    expect(nextPomodoroPhase('break', 3)).toEqual({ type: 'focus', minutes: 25, pomodoroCount: 4 })
+  })
+
+  it('después de un descanso largo reinicia el ciclo (conteo vuelve a 1)', () => {
+    expect(nextPomodoroPhase('break', 4)).toEqual({ type: 'focus', minutes: 25, pomodoroCount: 1 })
   })
 })

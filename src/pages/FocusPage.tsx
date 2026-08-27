@@ -2,14 +2,30 @@ import { useEffect, useMemo, useState } from 'react'
 import { ProgressRing } from '../components/ProgressRing'
 import { Stat } from '../components/Stat'
 import { createId } from '../domain/id'
-import { formatDuration, focusMinutesOn, remainingSeconds, sessionMinutes, sessionsOn } from '../domain/focus'
+import {
+  focusMinutesOn,
+  formatDuration,
+  nextPomodoroPhase,
+  POMODORO_CYCLE_LENGTH,
+  POMODORO_FOCUS_MINUTES,
+  POMODORO_LONG_BREAK_MINUTES,
+  remainingSeconds,
+  sessionMinutes,
+  sessionsOn,
+} from '../domain/focus'
 import type { FocusSession, FocusSessionStatus, FocusSessionType } from '../domain/types'
 import { useAppContext, useAppData } from '../state/context'
 
 /** Sesión en curso: vive sólo en este navegador, nunca en Supabase — se
  * persiste una sesión real (`FocusSession`) recién cuando termina. */
 const ACTIVE_KEY = 'mi-progreso:focus-active'
-const DURATION_PRESETS = [5, 15, 25, 45, 60]
+const LIBRE_DURATION_PRESETS = [5, 15, 25, 45, 60]
+const DEEP_WORK_DURATION_PRESETS = [50, 90]
+
+/** No es dominio persistido — sólo decide qué setup mostrar y, en Pomodoro,
+ * si una fase completada debe encadenar la siguiente sola. */
+type FocusMode = 'libre' | 'pomodoro' | 'profundo'
+const MODE_LABEL: Record<FocusMode, string> = { libre: 'Libre', pomodoro: 'Pomodoro', profundo: 'Trabajo profundo' }
 
 interface ActiveSession {
   id: string
@@ -17,6 +33,9 @@ interface ActiveSession {
   plannedMinutes: number
   type: FocusSessionType
   linkedPlannerItemId?: string
+  mode: FocusMode
+  /** Sólo relevante en modo pomodoro: qué enfoque del ciclo de 4 es este (o fue el último). */
+  pomodoroCount?: number
 }
 
 function readActive(): ActiveSession | null {
@@ -48,9 +67,16 @@ export function FocusPage() {
   const [active, setActive] = useState<ActiveSession | null>(() => readActive())
   const [now, setNow] = useState(() => new Date())
   const [sessions, setSessions] = useState<FocusSession[]>([])
+  const [mode, setMode] = useState<FocusMode>('libre')
   const [type, setType] = useState<FocusSessionType>('focus')
   const [minutes, setMinutes] = useState(25)
   const [linkedId, setLinkedId] = useState('')
+
+  const chooseMode = (next: FocusMode) => {
+    setMode(next)
+    if (next === 'profundo') setMinutes(50)
+    else if (next === 'libre') setMinutes(25)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -72,10 +98,31 @@ export function FocusPage() {
       status,
       linkedPlannerItemId: session.linkedPlannerItemId,
     }
-    writeActive(null)
-    setActive(null)
     setSessions((prev) => [finished, ...prev])
     void repository.saveFocusSession(finished)
+
+    // En Pomodoro, sólo la finalización natural encadena la fase siguiente sola —
+    // "Detener" siempre sale del ciclo, para no arrancar una cuenta regresiva sin que
+    // la persona lo haya pedido.
+    if (status === 'completed' && session.mode === 'pomodoro') {
+      const next = nextPomodoroPhase(session.type, session.pomodoroCount ?? 1)
+      const nextSession: ActiveSession = {
+        id: createId('focus'),
+        startedAt: new Date().toISOString(),
+        plannedMinutes: next.minutes,
+        type: next.type,
+        linkedPlannerItemId: session.linkedPlannerItemId,
+        mode: 'pomodoro',
+        pomodoroCount: next.pomodoroCount,
+      }
+      writeActive(nextSession)
+      setActive(nextSession)
+      setNow(new Date())
+      return
+    }
+
+    writeActive(null)
+    setActive(null)
   }
 
   // Un solo timer hace las dos cosas: refresca "now" para el conteo visible y
@@ -95,16 +142,32 @@ export function FocusPage() {
   }, [active])
 
   const startSession = () => {
+    const effectiveType: FocusSessionType = mode === 'libre' ? type : 'focus'
+    const effectiveMinutes = mode === 'pomodoro' ? POMODORO_FOCUS_MINUTES : minutes
     const session: ActiveSession = {
       id: createId('focus'),
       startedAt: new Date().toISOString(),
-      plannedMinutes: minutes,
-      type,
+      plannedMinutes: effectiveMinutes,
+      type: effectiveType,
       linkedPlannerItemId: linkedId || undefined,
+      mode,
+      pomodoroCount: mode === 'pomodoro' ? 1 : undefined,
     }
     writeActive(session)
     setActive(session)
     setNow(new Date())
+  }
+
+  const activeLabel = (session: ActiveSession): string => {
+    if (session.mode === 'pomodoro') {
+      if (session.type === 'focus') {
+        const n = ((session.pomodoroCount ?? 1) - 1) % POMODORO_CYCLE_LENGTH + 1
+        return `🎯 Enfoque · Pomodoro ${n}/${POMODORO_CYCLE_LENGTH}`
+      }
+      return session.plannedMinutes === POMODORO_LONG_BREAK_MINUTES ? '☕ Descanso largo' : '☕ Descanso corto'
+    }
+    if (session.mode === 'profundo') return '🧠 Trabajo profundo'
+    return TYPE_LABEL[session.type]
   }
 
   const pendingTasks = useMemo(
@@ -132,7 +195,7 @@ export function FocusPage() {
 
         {active ? (
           <div className="focus-timer">
-            <ProgressRing percent={elapsedPercent} label={formatDuration(remaining)} caption={TYPE_LABEL[active.type]} />
+            <ProgressRing percent={elapsedPercent} label={formatDuration(remaining)} caption={activeLabel(active)} />
             {taskName(active.linkedPlannerItemId) && (
               <p className="card__hint" style={{ marginTop: 12 }}>
                 Trabajando en: <strong>{taskName(active.linkedPlannerItemId)}</strong>
@@ -150,39 +213,60 @@ export function FocusPage() {
         ) : (
           <div className="focus-setup">
             <div className="chip-list" style={{ marginBottom: 14 }}>
-              {(Object.keys(TYPE_LABEL) as FocusSessionType[]).map((key) => (
+              {(Object.keys(MODE_LABEL) as FocusMode[]).map((key) => (
                 <button
                   key={key}
                   type="button"
-                  className={`btn btn--ghost${type === key ? ' btn--primary' : ''}`}
-                  onClick={() => setType(key)}
+                  className={`btn btn--ghost${mode === key ? ' btn--primary' : ''}`}
+                  onClick={() => chooseMode(key)}
                 >
-                  {TYPE_LABEL[key]}
+                  {MODE_LABEL[key]}
                 </button>
               ))}
             </div>
 
-            <div className="chip-list" style={{ marginBottom: 14 }}>
-              {DURATION_PRESETS.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  className={`btn btn--ghost${minutes === m ? ' btn--primary' : ''}`}
-                  onClick={() => setMinutes(m)}
-                >
-                  {m} min
-                </button>
-              ))}
-              <input
-                className="input"
-                style={{ width: 90 }}
-                type="number"
-                min={1}
-                aria-label="Duración personalizada en minutos"
-                value={minutes}
-                onChange={(e) => setMinutes(Math.max(1, Number(e.target.value) || 1))}
-              />
-            </div>
+            {mode === 'libre' && (
+              <div className="chip-list" style={{ marginBottom: 14 }}>
+                {(Object.keys(TYPE_LABEL) as FocusSessionType[]).map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`btn btn--ghost${type === key ? ' btn--primary' : ''}`}
+                    onClick={() => setType(key)}
+                  >
+                    {TYPE_LABEL[key]}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {mode === 'pomodoro' ? (
+              <p className="card__hint" style={{ marginBottom: 14 }}>
+                25 min enfoque · 5 min descanso · descanso largo cada 4
+              </p>
+            ) : (
+              <div className="chip-list" style={{ marginBottom: 14 }}>
+                {(mode === 'profundo' ? DEEP_WORK_DURATION_PRESETS : LIBRE_DURATION_PRESETS).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    className={`btn btn--ghost${minutes === m ? ' btn--primary' : ''}`}
+                    onClick={() => setMinutes(m)}
+                  >
+                    {m} min
+                  </button>
+                ))}
+                <input
+                  className="input"
+                  style={{ width: 90 }}
+                  type="number"
+                  min={1}
+                  aria-label="Duración personalizada en minutos"
+                  value={minutes}
+                  onChange={(e) => setMinutes(Math.max(1, Number(e.target.value) || 1))}
+                />
+              </div>
+            )}
 
             {pendingTasks.length > 0 && (
               <div className="field" style={{ marginBottom: 18, maxWidth: 320 }}>
