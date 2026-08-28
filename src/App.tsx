@@ -6,6 +6,7 @@ import { ErrorScreen } from './components/ErrorScreen'
 import { LoadingScreen } from './components/LoadingScreen'
 import { SectionLayout } from './components/SectionLayout'
 import { formatLongDate } from './domain/date'
+import { NAV_TABS, orderTabs } from './domain/navigation'
 import { CalendarPage } from './pages/CalendarPage'
 import { DayAgendaPage } from './pages/DayAgendaPage'
 import { EisenhowerPage } from './pages/EisenhowerPage'
@@ -27,16 +28,6 @@ import { TodayPage } from './pages/TodayPage'
 import { FirstTimeIntro } from './onboarding/FirstTimeIntro'
 import { OnboardingWizard } from './onboarding/OnboardingWizard'
 import { useAppContext } from './state/context'
-
-const TABS = [
-  { label: 'Hoy', path: '/' },
-  { label: 'Agenda', path: '/agenda' },
-  { label: 'Proyectos', path: '/proyectos' },
-  { label: 'Objetivos', path: '/objetivos' },
-  { label: 'Historial', path: '/historial' },
-  { label: 'Informes', path: '/informes' },
-  { label: 'Ajustes', path: '/ajustes' },
-]
 
 const AGENDA_ITEMS = [
   { to: '/agenda', label: 'Día' },
@@ -170,7 +161,7 @@ function AppShell() {
             <p className="brand__date">{formatLongDate(state.today)}</p>
           </div>
           <nav className="nav" aria-label="Secciones">
-            {TABS.map((item) => (
+            {orderTabs(NAV_TABS, state.data.settings.navOrder).map((item) => (
               <button
                 key={item.path}
                 type="button"

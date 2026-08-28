@@ -180,6 +180,40 @@ describe('Mi Progreso', () => {
     expect(await screen.findByText('Free')).toBeInTheDocument()
   })
 
+  it('reordenar la navegación en Ajustes cambia la barra superior y persiste', async () => {
+    const user = userEvent.setup()
+    const { unmount, repository } = renderApp()
+    await screen.findByText('Objetivos de hoy')
+
+    const defaultOrder = ['Hoy', 'Agenda', 'Proyectos', 'Objetivos', 'Historial', 'Informes', 'Ajustes']
+    const nav = screen.getByRole('navigation', { name: 'Secciones' })
+    expect(within(nav).getAllByRole('button').map((b) => b.textContent)).toEqual(defaultOrder)
+
+    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
+    await user.click(screen.getByRole('button', { name: 'Bajar Hoy' }))
+
+    const swappedOrder = ['Agenda', 'Hoy', 'Proyectos', 'Objetivos', 'Historial', 'Informes', 'Ajustes']
+    expect(within(nav).getAllByRole('button').map((b) => b.textContent)).toEqual(swappedOrder)
+
+    await waitFor(async () => {
+      const stored = await repository.load()
+      expect(stored?.settings.navOrder).toEqual([
+        '/agenda',
+        '/',
+        '/proyectos',
+        '/objetivos',
+        '/historial',
+        '/informes',
+        '/ajustes',
+      ])
+    })
+
+    unmount()
+    renderApp()
+    const navAfterReload = await screen.findByRole('navigation', { name: 'Secciones' })
+    expect(within(navAfterReload).getAllByRole('button').map((b) => b.textContent)).toEqual(swappedOrder)
+  })
+
   it('eliminar un objetivo en Ajustes lo saca del día', async () => {
     const user = userEvent.setup()
     renderApp()

@@ -243,6 +243,7 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
           allowEditingPastDays: settingsRes.data.allow_editing_past_days,
           birthDate: settingsRes.data.birth_date ?? undefined,
           lifeExpectancyYears: settingsRes.data.life_expectancy_years ?? undefined,
+          navOrder: settingsRes.data.nav_order?.length ? settingsRes.data.nav_order : undefined,
         },
         categories,
         goals,

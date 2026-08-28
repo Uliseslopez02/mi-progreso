@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { Toggle } from '../components/Toggle'
 import { CATEGORY_COLOR_NAMES, CATEGORY_PALETTE } from '../domain/categoryColors'
 import { createEmptyData } from '../domain/defaults'
+import { NAV_TABS, orderTabs } from '../domain/navigation'
 import { createId } from '../domain/id'
 import { WEEKDAY_KEYS, weekdayInitials } from '../domain/date'
 import type { GoalFrequency, GoalKind, GoalPeriod } from '../domain/types'
@@ -159,6 +160,18 @@ export function SettingsPage() {
     )
   }
 
+  const navTabs = orderTabs(NAV_TABS, data.settings.navOrder)
+
+  const moveTab = (path: string, direction: -1 | 1) => {
+    const order = navTabs.map((t) => t.path)
+    const index = order.indexOf(path)
+    const target = index + direction
+    if (target < 0 || target >= order.length) return
+    const next = [...order]
+    ;[next[index], next[target]] = [next[target], next[index]]
+    dispatch({ type: 'updateSettings', patch: { navOrder: next } })
+  }
+
   const addCategory = () => {
     const name = newCategory.trim()
     if (!name) return
@@ -221,6 +234,40 @@ export function SettingsPage() {
             }
             label="Permitir corregir días anteriores"
           />
+        </div>
+      </section>
+
+      <section className="card">
+        <div className="card__header">
+          <h2 className="card__title">Navegación</h2>
+          <span className="card__hint">Orden de las pestañas principales.</span>
+        </div>
+        <div className="stack" style={{ gap: 8 }}>
+          {navTabs.map((tab, index) => (
+            <div key={tab.path} className="settings-goal">
+              <span style={{ flex: 1 }}>{tab.label}</span>
+              <div className="settings-goal__actions">
+                <button
+                  type="button"
+                  className="icon-btn"
+                  aria-label={`Subir ${tab.label}`}
+                  disabled={index === 0}
+                  onClick={() => moveTab(tab.path, -1)}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  className="icon-btn"
+                  aria-label={`Bajar ${tab.label}`}
+                  disabled={index === navTabs.length - 1}
+                  onClick={() => moveTab(tab.path, 1)}
+                >
+                  ↓
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 

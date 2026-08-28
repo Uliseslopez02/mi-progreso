@@ -325,6 +325,8 @@ export interface Settings {
   birthDate?: string
   /** Expectativa de vida estimada en años, para Momento Mori. Opcional. */
   lifeExpectancyYears?: number
+  /** Orden elegido de las pestañas principales (paths de `NAV_TABS`). Opcional. */
+  navOrder?: string[]
 }
 
 /**
