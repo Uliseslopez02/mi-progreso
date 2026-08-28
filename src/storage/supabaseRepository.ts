@@ -86,6 +86,7 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         id: row.id,
         name: row.name,
         order: row.order_index,
+        color: row.color ?? undefined,
       }))
 
       const goals: Goal[] = (goalsRes.data ?? []).map((row) => ({

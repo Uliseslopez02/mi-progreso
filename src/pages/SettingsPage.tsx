@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { Toggle } from '../components/Toggle'
+import { CATEGORY_COLOR_NAMES, CATEGORY_PALETTE } from '../domain/categoryColors'
 import { createEmptyData } from '../domain/defaults'
 import { createId } from '../domain/id'
 import { WEEKDAY_KEYS, weekdayInitials } from '../domain/date'
@@ -749,28 +750,58 @@ export function SettingsPage() {
 
         <div className="chip-list">
           {categories.map((category) => (
-            <span className="category-chip" key={category.id}>
-              <input
-                className="input"
-                aria-label={`Nombre de ${category.name}`}
-                style={{ width: 170, padding: '4px 8px', background: 'transparent', border: 0 }}
-                value={category.name}
-                onChange={(e) =>
-                  dispatch({
-                    type: 'updateCategory',
-                    id: category.id,
-                    patch: { name: e.target.value },
-                  })
-                }
-              />
-              <button
-                type="button"
-                className="icon-btn"
-                aria-label={`Eliminar ${category.name}`}
-                onClick={() => dispatch({ type: 'removeCategory', id: category.id })}
-              >
-                ×
-              </button>
+            <span
+              className="category-chip"
+              key={category.id}
+              style={category.color ? { borderColor: category.color } : undefined}
+            >
+              <div className="category-chip__main">
+                <input
+                  className="input"
+                  aria-label={`Nombre de ${category.name}`}
+                  style={{ width: 170, padding: '4px 8px', background: 'transparent', border: 0 }}
+                  value={category.name}
+                  onChange={(e) =>
+                    dispatch({
+                      type: 'updateCategory',
+                      id: category.id,
+                      patch: { name: e.target.value },
+                    })
+                  }
+                />
+                <button
+                  type="button"
+                  className="icon-btn"
+                  aria-label={`Eliminar ${category.name}`}
+                  onClick={() => dispatch({ type: 'removeCategory', id: category.id })}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="category-chip__swatches" role="group" aria-label={`Color de ${category.name}`}>
+                {CATEGORY_PALETTE.map((color) => {
+                  const active = category.color === color
+                  return (
+                    <button
+                      key={color}
+                      type="button"
+                      className={`category-chip__swatch${active ? ' category-chip__swatch--active' : ''}`}
+                      style={{ background: color, boxShadow: active ? `0 0 0 4px ${color}40` : undefined }}
+                      aria-pressed={active}
+                      aria-label={`Usar ${CATEGORY_COLOR_NAMES[color]} para ${category.name}`}
+                      onClick={() =>
+                        dispatch({
+                          type: 'updateCategory',
+                          id: category.id,
+                          patch: { color: active ? undefined : color },
+                        })
+                      }
+                    >
+                      {active && <span aria-hidden="true">✓</span>}
+                    </button>
+                  )
+                })}
+              </div>
             </span>
           ))}
         </div>

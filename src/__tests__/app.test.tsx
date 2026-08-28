@@ -721,6 +721,42 @@ describe('Mi Progreso', () => {
     })
   })
 
+  it('elegir un color de categoría en Ajustes persiste y se ve en la Rueda de la vida', async () => {
+    const user = userEvent.setup()
+    const { unmount, repository } = renderApp()
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
+    await user.click(screen.getByRole('button', { name: 'Usar celeste para Salud' }))
+
+    await waitFor(async () => {
+      const stored = await repository.load()
+      expect(stored?.categories.find((c) => c.name === 'Salud')).toMatchObject({ color: '#38bdf8' })
+    })
+
+    unmount()
+    renderApp()
+    expect(await screen.findByRole('button', { name: 'Usar celeste para Salud' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.click(screen.getByRole('button', { name: 'Rueda de la vida' }))
+    expect(screen.getByText('Salud (5)')).toHaveAttribute('fill', '#38bdf8')
+
+    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
+    await user.click(screen.getByRole('button', { name: 'Usar celeste para Salud' }))
+    await waitFor(async () => {
+      const stored = await repository.load()
+      expect(stored?.categories.find((c) => c.name === 'Salud')?.color).toBeUndefined()
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.click(screen.getByRole('button', { name: 'Rueda de la vida' }))
+    expect(screen.getByText('Salud (5)')).not.toHaveAttribute('fill')
+  })
+
   it('hacer click en un área de la Rueda muestra el detalle con sus hábitos de hoy', async () => {
     const user = userEvent.setup()
     renderApp()

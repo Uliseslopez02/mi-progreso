@@ -28,6 +28,14 @@ export function LifeWheelPage() {
     [data.categories],
   )
 
+  const categoryColors = useMemo(
+    () =>
+      Object.fromEntries(
+        data.categories.filter((c) => c.color).map((c) => [c.id, c.color as string]),
+      ),
+    [data.categories],
+  )
+
   const sortedSnapshots = useMemo(
     () => [...data.lifeWheelSnapshots].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)),
     [data.lifeWheelSnapshots],
@@ -92,6 +100,7 @@ export function LifeWheelPage() {
               previousAreas={previous?.areas}
               selectedIndex={selectedAreaIndex}
               onSelectArea={(i) => setSelectedAreaIndex((current) => (current === i ? null : i))}
+              categoryColors={categoryColors}
             />
             <div className="stat-grid" style={{ marginTop: 12 }}>
               <Stat label="Promedio" value={averageScore(latest)} />
@@ -172,7 +181,11 @@ export function LifeWheelPage() {
         ) : (
           <>
             <div style={{ marginBottom: 16 }}>
-              <LifeWheelChart areas={previewAreas} previousAreas={latest?.areas} />
+              <LifeWheelChart
+                areas={previewAreas}
+                previousAreas={latest?.areas}
+                categoryColors={categoryColors}
+              />
             </div>
 
             {sortedCategories.map((c) => (

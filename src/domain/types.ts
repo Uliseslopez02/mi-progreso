@@ -33,6 +33,8 @@ export interface Category {
   id: string
   name: string
   order: number
+  /** Hex de `CATEGORY_PALETTE` (domain/categoryColors.ts). Sin valor = usa `--accent`. */
+  color?: string
 }
 
 export interface Goal {

@@ -149,6 +149,7 @@ export function migrate(input: unknown): AppData | null {
       id: String(c.id),
       name: String(c.name),
       order: typeof c.order === 'number' ? c.order : i,
+      color: typeof c.color === 'string' ? c.color : undefined,
     })),
     goals,
     days,

@@ -9,6 +9,8 @@ interface Props {
   /** Área elegida por click/tap, resaltada igual que el hover. */
   selectedIndex?: number | null
   onSelectArea?: (index: number) => void
+  /** Color propio por categoría (id → hex). Si falta, usa el accent/neutral por defecto. */
+  categoryColors?: Record<string, string>
 }
 
 const SIZE = 320
@@ -40,6 +42,7 @@ export function LifeWheelChart({
   onHoverArea,
   selectedIndex = null,
   onSelectArea,
+  categoryColors,
 }: Props) {
   if (areas.length === 0) {
     return <p className="chart-empty">Necesitás al menos una categoría para graficar la rueda.</p>
@@ -92,13 +95,14 @@ export function LifeWheelChart({
         {areas.map((area, i) => {
           const p = point(i, total, area.score)
           const active = hoveredIndex === i || selectedIndex === i
+          const categoryColor = categoryColors?.[area.categoryId]
           return (
             <circle
               key={`dot-${area.categoryId}`}
               cx={p.x}
               cy={p.y}
               r={active ? 5 : 3}
-              fill={active ? 'var(--accent)' : 'var(--text)'}
+              fill={categoryColor ?? (active ? 'var(--accent)' : 'var(--text)')}
               opacity={active ? 1 : 0.7}
             />
           )
@@ -107,6 +111,7 @@ export function LifeWheelChart({
         {areas.map((area, i) => {
           const p = point(i, total, MAX_SCORE + 1.7)
           const active = hoveredIndex === i || selectedIndex === i
+          const categoryColor = categoryColors?.[area.categoryId]
           return (
             <text
               key={area.categoryId}
@@ -115,7 +120,7 @@ export function LifeWheelChart({
               y={p.y}
               textAnchor="middle"
               dominantBaseline="middle"
-              fill={active ? 'var(--accent)' : undefined}
+              fill={categoryColor ?? (active ? 'var(--accent)' : undefined)}
               fontWeight={active ? 700 : undefined}
             >
               {area.categoryName} ({area.score})
