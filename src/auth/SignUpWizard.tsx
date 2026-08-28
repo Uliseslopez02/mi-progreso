@@ -6,6 +6,7 @@ import { describeAuthError } from './authErrors'
 import { signUp } from './supabaseAuth'
 import { isValidEmail, passwordMeetsRequirements } from './validation'
 import { IconField, PasswordField } from '../components/AuthFields'
+import { LogoMark } from '../components/Logo'
 import { ProgressPath } from '../components/ProgressPath'
 import { MailIcon, UserIcon } from '../components/icons'
 import { useAutoFocusHeading } from '../hooks/useAutoFocusHeading'
@@ -115,9 +116,7 @@ export function SignUpWizard({ onSwitchToSignIn, onGoToReset, onEnterApp }: Prop
     <div className="auth-screen">
       <div className="card auth-card signup-wizard">
         <div className="auth-card__brand">
-          <span className="auth-card__mark" aria-hidden="true">
-            MP
-          </span>
+          <LogoMark size={30} />
           <p className="hero__eyebrow">Mi Progreso</p>
         </div>
 

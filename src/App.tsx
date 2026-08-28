@@ -6,6 +6,7 @@ import { ErrorScreen } from './components/ErrorScreen'
 import { LoadingScreen } from './components/LoadingScreen'
 import { SectionLayout } from './components/SectionLayout'
 import { formatLongDate } from './domain/date'
+import { LogoMark } from './components/Logo'
 import { NAV_TABS, orderTabs } from './domain/navigation'
 import { CalendarPage } from './pages/CalendarPage'
 import { DayAgendaPage } from './pages/DayAgendaPage'
@@ -157,7 +158,10 @@ function AppShell() {
       <header className="app-header">
         <div className="container app-header__row">
           <div className="brand">
-            <h1 className="brand__name">{appName}</h1>
+            <div className="brand__row">
+              <LogoMark size={26} />
+              <h1 className="brand__name">{appName}</h1>
+            </div>
             <p className="brand__date">{formatLongDate(state.today)}</p>
           </div>
           <nav className="nav" aria-label="Secciones">

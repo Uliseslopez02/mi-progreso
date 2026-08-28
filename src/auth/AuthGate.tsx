@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { IconField, PasswordField } from '../components/AuthFields'
 import { EnterTransition } from '../components/EnterTransition'
 import { LoadingScreen } from '../components/LoadingScreen'
+import { LogoMark } from '../components/Logo'
 import { MailIcon } from '../components/icons'
 import { useAutoFocusHeading } from '../hooks/useAutoFocusHeading'
 import { SUPABASE_CONFIG_ERROR } from '../lib/supabaseClient'
@@ -138,9 +139,7 @@ export function AuthGate({ children }: Props) {
       <div className="auth-screen">
         <div className="card auth-card">
           <div className="auth-card__brand">
-            <span className="auth-card__mark" aria-hidden="true">
-              MP
-            </span>
+            <LogoMark size={30} />
             <p className="hero__eyebrow">Mi Progreso</p>
           </div>
           <h1 className="card__title" ref={headingRef} tabIndex={-1}>
@@ -289,9 +288,7 @@ export function AuthGate({ children }: Props) {
         <div className="auth-screen">
           <div className="card auth-card">
             <div className="auth-card__brand">
-              <span className="auth-card__mark" aria-hidden="true">
-                MP
-              </span>
+              <LogoMark size={30} />
               <p className="hero__eyebrow">Mi Progreso</p>
             </div>
             <h1 className="card__title" ref={headingRef} tabIndex={-1}>
@@ -338,9 +335,7 @@ export function AuthGate({ children }: Props) {
       <div className="auth-screen">
         <form className="card auth-card" onSubmit={(e) => void handleResetRequest(e)} noValidate>
           <div className="auth-card__brand">
-            <span className="auth-card__mark" aria-hidden="true">
-              MP
-            </span>
+            <LogoMark size={30} />
             <p className="hero__eyebrow">Mi Progreso</p>
           </div>
           <h1 className="card__title" ref={headingRef} tabIndex={-1}>
@@ -386,9 +381,7 @@ export function AuthGate({ children }: Props) {
       <div className="auth-screen">
         <form className="card auth-card" onSubmit={(e) => void handleSetNewPassword(e)} noValidate>
           <div className="auth-card__brand">
-            <span className="auth-card__mark" aria-hidden="true">
-              MP
-            </span>
+            <LogoMark size={30} />
             <p className="hero__eyebrow">Mi Progreso</p>
           </div>
           <h1 className="card__title" ref={headingRef} tabIndex={-1}>
@@ -430,9 +423,7 @@ export function AuthGate({ children }: Props) {
     <div className="auth-screen">
       <form className="card auth-card" onSubmit={(e) => void handleSignIn(e)} noValidate>
         <div className="auth-card__brand">
-          <span className="auth-card__mark" aria-hidden="true">
-            MP
-          </span>
+          <LogoMark size={30} />
           <p className="hero__eyebrow">Mi Progreso</p>
         </div>
         <h1 className="card__title" ref={headingRef} tabIndex={-1}>

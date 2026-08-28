@@ -91,10 +91,29 @@ button { cursor: pointer; }
   gap: 2px;
 }
 
+.brand__row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
 .brand__name {
   font-size: 1.05rem;
   font-weight: 650;
   letter-spacing: -0.01em;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.logo__text {
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text);
 }
 
 .brand__date {
@@ -1203,6 +1222,10 @@ main { flex: 1; padding: 28px 0 72px; }
   text-align: center;
 }
 
+.loading-screen__brandmark {
+  margin-bottom: 14px;
+}
+
 .loading-screen__mark {
   position: relative;
   width: 56px;
@@ -1421,20 +1444,6 @@ main { flex: 1; padding: 28px 0 72px; }
   align-items: center;
   gap: 10px;
   margin-bottom: -6px;
-}
-
-.auth-card__mark {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  display: grid;
-  place-items: center;
-  background: rgba(52, 211, 153, 0.14);
-  border: 1px solid rgba(52, 211, 153, 0.3);
-  color: var(--accent);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
 }
 
 .auth-card__subtitle { margin-top: -8px; }

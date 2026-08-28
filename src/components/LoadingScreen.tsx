@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Logo } from './Logo'
 import { ProgressPath } from './ProgressPath'
 
 interface Props {
@@ -29,8 +30,8 @@ export function LoadingScreen({ message, onRetry, slowAfterMs = 6000, stuckAfter
 
   return (
     <div className="loading-screen">
+      <Logo size={32} className="loading-screen__brandmark" />
       <ProgressPath steps={5} indeterminate size="md" />
-      <p className="loading-screen__brand">Mi Progreso</p>
       <p className="loading-screen__message" role="status">
         {message}
       </p>
