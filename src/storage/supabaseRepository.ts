@@ -301,5 +301,18 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
       if (error) throw error
       return (data?.plan as UserPlan | undefined) ?? 'free'
     },
+
+    async getOnboardingCompleted() {
+      const { data, error } = await client.from('profiles').select('onboarding_completed').single()
+      if (error) throw error
+      return Boolean(data?.onboarding_completed)
+    },
+
+    async completeOnboarding() {
+      // Sin filtro explícito: RLS ("profiles: owner rw") ya acota el update a la
+      // propia fila, mismo criterio que getUserPlan de arriba.
+      const { error } = await client.from('profiles').update({ onboarding_completed: true })
+      if (error) throw error
+    },
   }
 }

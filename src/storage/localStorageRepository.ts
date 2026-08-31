@@ -63,6 +63,14 @@ export function createLocalStorageRepository(
       // No hay concepto de cuenta/plan sin Supabase — localStorage es siempre 'free'.
       return 'free'
     },
+    async getOnboardingCompleted() {
+      // Sin cuenta real no hay perfil server-side — la señal local
+      // (onboarding/onboardingStatus.ts) es la única fuente en este modo.
+      return false
+    },
+    async completeOnboarding() {
+      // No-op a propósito: ver getOnboardingCompleted arriba.
+    },
   }
 }
 

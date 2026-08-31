@@ -45,6 +45,16 @@ export async function signUp(
   return { needsEmailConfirmation: !data.session && !alreadyRegistered, alreadyRegistered }
 }
 
+/** Reenvía el email de confirmación de una cuenta recién creada que todavía no lo usó. */
+export async function resendSignUpConfirmation(email: string): Promise<void> {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: { emailRedirectTo: window.location.origin },
+  })
+  if (error) throw error
+}
+
 export async function signOut(): Promise<void> {
   const { error } = await supabase.auth.signOut()
   if (error) throw error

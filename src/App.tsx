@@ -27,6 +27,7 @@ import { SettingsPage } from './pages/SettingsPage'
 import { TodayPage } from './pages/TodayPage'
 import { FirstTimeIntro } from './onboarding/FirstTimeIntro'
 import { OnboardingWizard } from './onboarding/OnboardingWizard'
+import { hasOnboarded, markOnboarded } from './onboarding/onboardingStatus'
 import { useAppContext } from './state/context'
 
 const AGENDA_ITEMS = [
@@ -73,7 +74,7 @@ export function App() {
 }
 
 function AppShell() {
-  const { state, retryHydrate, saveStatus } = useAppContext()
+  const { state, retryHydrate, saveStatus, repository } = useAppContext()
   // Se lee y consume una sola vez (localStorage, ver entryIntent.ts): qué tan
   // directo entrar eligió la persona en la pantalla final del registro.
   const [entryIntent] = useState(() => consumeEntryIntent())
@@ -91,12 +92,27 @@ function AppShell() {
     document.title = appName
   }, [appName])
 
+  // Marca "ya pasó por onboarding" en este dispositivo (síncrono, sin
+  // parpadeo — ver onboardingStatus.ts) y, en paralelo y sin bloquear nada,
+  // persiste lo mismo en el perfil server-side para quien lo necesite después
+  // (panel propio, IA, otro dispositivo). Un fallo de red acá nunca debe
+  // afectar la UI: por eso no se espera ni se muestra su resultado.
+  const finishOnboarding = () => {
+    markOnboarded()
+    repository.completeOnboarding().catch(() => {})
+  }
+
   // Se decide una sola vez, no en cada render: si se recalculara reactivamente
   // desde `state.data`, el primer objetivo creado dentro del wizard sacaría al
   // usuario del wizard a mitad de camino (categories/goals dejarían de estar vacíos).
   const isEmpty = state.data ? state.data.categories.length === 0 && state.data.goals.length === 0 : false
   if (state.status === 'ready' && state.data && onboarding === null) {
-    setOnboarding(entryIntent === 'explore' ? false : isEmpty)
+    // `entryIntent === 'explore'` cubre la primera visita tras elegir "explorar
+    // por mi cuenta" (esa key se consume una sola vez); `hasOnboarded()` cubre
+    // todas las visitas siguientes, cuando `entryIntent` ya no está disponible.
+    const skip = entryIntent === 'explore' || hasOnboarded()
+    if (skip && entryIntent === 'explore') finishOnboarding()
+    setOnboarding(skip ? false : isEmpty)
   }
 
   // Re-arma el wizard si los datos vuelven a quedar vacíos más adelante (p. ej.
@@ -139,11 +155,20 @@ function AppShell() {
           onSkip={() => {
             setIntroSeen(true)
             setOnboarding(false)
+            finishOnboarding()
           }}
         />
       )
     }
-    return <OnboardingWizard onComplete={() => setOnboarding(false)} stepOffset={introCompleted ? 4 : 0} />
+    return (
+      <OnboardingWizard
+        onComplete={() => {
+          setOnboarding(false)
+          finishOnboarding()
+        }}
+        stepOffset={introCompleted ? 4 : 0}
+      />
+    )
   }
 
   return (

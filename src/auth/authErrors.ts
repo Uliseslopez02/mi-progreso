@@ -1,4 +1,4 @@
-export type AuthMode = 'signIn' | 'signUp' | 'resetPassword' | 'setNewPassword'
+export type AuthMode = 'signIn' | 'signUp' | 'resetPassword' | 'setNewPassword' | 'resendConfirmation'
 
 interface SupabaseLikeError {
   message?: string
@@ -52,6 +52,13 @@ export function describeAuthError(mode: AuthMode, raw: unknown): string {
 
   if (mode === 'resetPassword') {
     return 'No pudimos procesar el pedido. Probá de nuevo en un momento.'
+  }
+
+  if (mode === 'resendConfirmation') {
+    if (/already confirmed/i.test(message)) {
+      return 'Esa cuenta ya está confirmada. Iniciá sesión.'
+    }
+    return 'No pudimos reenviar el email. Probá de nuevo en un momento.'
   }
 
   // setNewPassword

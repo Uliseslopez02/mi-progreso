@@ -8,6 +8,7 @@ export function createMemoryRepository(
 ): ProgressRepository {
   let data = initial
   let focusSessions: FocusSession[] = []
+  let onboardingCompleted = false
   return {
     async load() {
       return data ? structuredClone(data) : null
@@ -27,6 +28,12 @@ export function createMemoryRepository(
     },
     async getUserPlan() {
       return plan
+    },
+    async getOnboardingCompleted() {
+      return onboardingCompleted
+    },
+    async completeOnboarding() {
+      onboardingCompleted = true
     },
   }
 }

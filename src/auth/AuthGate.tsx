@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { IconField, PasswordField } from '../components/AuthFields'
@@ -9,6 +9,7 @@ import { MailIcon } from '../components/icons'
 import { useAutoFocusHeading } from '../hooks/useAutoFocusHeading'
 import { SUPABASE_CONFIG_ERROR } from '../lib/supabaseClient'
 import { describeAuthError } from './authErrors'
+import { touchLastActive } from './profileActivity'
 import { SignUpWizard } from './SignUpWizard'
 import { isValidEmail, maskEmail } from './validation'
 import { isReturningDevice, markReturningDevice, pickWelcomeCopy } from './welcomeMessages'
@@ -58,6 +59,7 @@ export function AuthGate({ children }: Props) {
   const [entering, setEntering] = useState(false)
   const [welcome] = useState(() => pickWelcomeCopy(isReturningDevice()))
   const [linkError, setLinkError] = useState<LinkError>(() => readLinkErrorFromUrl())
+  const activityTouched = useRef(false)
   // Una sola pantalla con h1 está montada por vez (configError/linkError/resetSent/mode son
   // returns tempranos mutuamente excluyentes), así que esta clave combinada alcanza para mover
   // el foco al encabezado correcto en cada transición.
@@ -112,6 +114,15 @@ export function AuthGate({ children }: Props) {
     const timer = window.setTimeout(() => setEntering(false), 900)
     return () => window.clearTimeout(timer)
   }, [entering])
+
+  // Una sola vez por sesión de pestaña, apenas hay una sesión válida: no en
+  // cada evento de onAuthStateChange (el refresh de token también dispara
+  // ese callback, y no hace falta un update por cada uno).
+  useEffect(() => {
+    if (!session || activityTouched.current) return
+    activityTouched.current = true
+    touchLastActive()
+  }, [session])
 
   if (checking) {
     return <LoadingScreen message="Verificando tu sesión…" />

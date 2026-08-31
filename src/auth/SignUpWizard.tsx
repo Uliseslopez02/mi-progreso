@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { FOCUS_OPTIONS, saveFocusIntent } from './focusIntent'
 import { saveEntryIntent } from './entryIntent'
 import { describeAuthError } from './authErrors'
-import { signUp } from './supabaseAuth'
+import { resendSignUpConfirmation, signUp } from './supabaseAuth'
 import { isValidEmail, passwordMeetsRequirements } from './validation'
 import { IconField, PasswordField } from '../components/AuthFields'
 import { LogoMark } from '../components/Logo'
@@ -29,6 +29,7 @@ interface Fields {
 
 const STEP_INDEX: Record<Step, number> = { welcome: 0, identity: 0, security: 1, intention: 2, creating: 2, done: 2 }
 const STEP_LABELS = ['Tu identidad', 'Seguridad', 'Tu enfoque']
+const RESEND_COOLDOWN_S = 30
 
 function identityErrors(values: Fields) {
   const errors: Partial<Record<keyof Fields, string>> = {}
@@ -57,8 +58,17 @@ export function SignUpWizard({ onSwitchToSignIn, onGoToReset, onEnterApp }: Prop
   const [touched, setTouched] = useState<Partial<Record<keyof Fields, boolean>>>({})
   const [attempted, setAttempted] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [info, setInfo] = useState<string | null>(null)
   const [outcome, setOutcome] = useState<'confirmEmail' | 'alreadyRegistered' | 'immediateSession' | null>(null)
+  const [resending, setResending] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
   const headingRef = useAutoFocusHeading<HTMLHeadingElement>(`${step}:${outcome}`)
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const timer = window.setInterval(() => setResendCooldown((s) => Math.max(0, s - 1)), 1000)
+    return () => window.clearInterval(timer)
+  }, [resendCooldown])
 
   const set = (patch: Partial<Fields>) => setFields((f) => ({ ...f, ...patch }))
   const markTouched = (field: keyof Fields) => () => setTouched((t) => ({ ...t, [field]: true }))
@@ -97,11 +107,31 @@ export function SignUpWizard({ onSwitchToSignIn, onGoToReset, onEnterApp }: Prop
       } else {
         saveFocusIntent(chosenFocusId)
         setOutcome(needsEmailConfirmation ? 'confirmEmail' : 'immediateSession')
+        // signUp() ya disparó el primer envío: el reenvío arranca con el mismo
+        // cooldown que la recuperación de contraseña, para no chocar con el
+        // rate-limit del SMTP compartido de Supabase.
+        if (needsEmailConfirmation) setResendCooldown(RESEND_COOLDOWN_S)
       }
       setStep('done')
     } catch (err) {
       setError(describeAuthError('signUp', err))
       setStep('intention')
+    }
+  }
+
+  const handleResendConfirmation = async () => {
+    if (resendCooldown > 0) return
+    setError(null)
+    setInfo(null)
+    setResending(true)
+    try {
+      await resendSignUpConfirmation(fields.email.trim())
+      setResendCooldown(RESEND_COOLDOWN_S)
+      setInfo('Reenviado.')
+    } catch (err) {
+      setError(describeAuthError('resendConfirmation', err))
+    } finally {
+      setResending(false)
     }
   }
 
@@ -303,12 +333,32 @@ export function SignUpWizard({ onSwitchToSignIn, onGoToReset, onEnterApp }: Prop
               {firstName ? `¡Listo, ${firstName}!` : '¡Listo!'}
             </h1>
             <p className="card__hint auth-card__subtitle">
-              Este es tu punto de partida. Te enviamos un email para confirmar tu cuenta — confirmalo y volvé para
-              entrar.
+              Este es tu punto de partida. Te enviamos un email para confirmar tu cuenta a{' '}
+              <strong>{fields.email.trim()}</strong> — confirmalo y volvé para entrar.
             </p>
+            {error && (
+              <p className="auth-card__error" role="alert">
+                {error}
+              </p>
+            )}
+            {info && (
+              <p className="auth-card__info" role="status">
+                {info}
+              </p>
+            )}
             <button type="button" className="btn btn--primary" onClick={onSwitchToSignIn}>
               Ir a iniciar sesión
             </button>
+            <div className="auth-card__links auth-card__links--center">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                disabled={resending || resendCooldown > 0}
+                onClick={() => void handleResendConfirmation()}
+              >
+                {resendCooldown > 0 ? `Reenviar email (${resendCooldown}s)` : 'Reenviar email'}
+              </button>
+            </div>
           </>
         )}
 

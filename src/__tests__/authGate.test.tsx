@@ -13,6 +13,11 @@ vi.mock('../auth/supabaseAuth', () => ({
   signOut: vi.fn(),
   requestPasswordReset: vi.fn(),
   updatePassword: vi.fn(),
+  resendSignUpConfirmation: vi.fn(),
+}))
+
+vi.mock('../auth/profileActivity', () => ({
+  touchLastActive: vi.fn(),
 }))
 
 const fakeSession = { user: { id: 'user-1', email: 'ulises@walabi.ar' } } as unknown as Session
@@ -45,6 +50,7 @@ describe('AuthGate', () => {
     vi.mocked(supabaseAuth.signUp).mockReset()
     vi.mocked(supabaseAuth.requestPasswordReset).mockReset()
     vi.mocked(supabaseAuth.updatePassword).mockReset()
+    vi.mocked(supabaseAuth.resendSignUpConfirmation).mockReset()
   })
 
   afterEach(() => {
@@ -192,6 +198,34 @@ describe('AuthGate', () => {
     await user.click(screen.getByRole('button', { name: 'Ir a iniciar sesión' }))
     expect(await screen.findByLabelText('Email')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument()
+  })
+
+  it('permite reenviar el email de confirmación del registro, con cooldown', async () => {
+    vi.mocked(supabaseAuth.getSession).mockResolvedValue(null)
+    vi.mocked(supabaseAuth.onAuthStateChange).mockReturnValue(() => {})
+    vi.mocked(supabaseAuth.signUp).mockResolvedValue({
+      needsEmailConfirmation: true,
+      alreadyRegistered: false,
+    })
+    vi.mocked(supabaseAuth.resendSignUpConfirmation).mockResolvedValue(undefined)
+    const user = userEvent.setup()
+
+    render(
+      <AuthGate>
+        <p>Contenido secreto</p>
+      </AuthGate>,
+    )
+
+    await goToSecurityStep(user)
+    await user.type(screen.getByLabelText('Contraseña'), 'nueva12345')
+    await user.type(screen.getByLabelText('Confirmar contraseña'), 'nueva12345')
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+    await user.click(await screen.findByRole('button', { name: 'Crear mi cuenta' }))
+
+    expect(await screen.findByText('¡Listo, Ulises!')).toBeInTheDocument()
+    // signUp() ya mandó el primer email: el botón arranca en cooldown, no habilitado.
+    const resendButton = screen.getByRole('button', { name: /Reenviar email \(\d+s\)/ })
+    expect(resendButton).toBeDisabled()
   })
 
   it('registro avisa si las contraseñas no coinciden y no llama al backend', async () => {
