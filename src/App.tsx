@@ -17,7 +17,6 @@ import { HabitsPage } from './pages/HabitsPage'
 import { HabitYearMapPage } from './pages/HabitYearMapPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { InformesPage } from './pages/InformesPage'
-import { LifeWheelPage } from './pages/LifeWheelPage'
 import { MonthAgendaPage } from './pages/MonthAgendaPage'
 import { MonthlyReviewPage } from './pages/MonthlyReviewPage'
 import { NotesPage } from './pages/NotesPage'
@@ -42,7 +41,6 @@ const OBJETIVOS_ITEMS = [
   { to: '/objetivos', label: 'Hábitos' },
   { to: '/objetivos/metas', label: 'Metas' },
   { to: '/objetivos/rutinas', label: 'Rutinas' },
-  { to: '/objetivos/rueda-de-la-vida', label: 'Rueda de la vida' },
 ]
 
 const HISTORIAL_ITEMS = [
@@ -196,7 +194,6 @@ function AppShell() {
               <Route index element={<HabitsPage />} />
               <Route path="metas" element={<GoalsPage />} />
               <Route path="rutinas" element={<RoutinesPage />} />
-              <Route path="rueda-de-la-vida" element={<LifeWheelPage />} />
             </Route>
             <Route path="/historial" element={<SectionLayout items={HISTORIAL_ITEMS} ariaLabel="Historial" />}>
               <Route index element={<HistoryPage />} />

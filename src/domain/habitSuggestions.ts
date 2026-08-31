@@ -1,7 +1,13 @@
 import { supabase } from '../lib/supabaseClient'
 
+export interface SuggestedHabit {
+  text: string
+  /** 1-7 veces por semana (7 = todos los días). */
+  timesPerWeek: number
+}
+
 export type HabitSuggestionResult =
-  | { ok: true; suggestions: string[] }
+  | { ok: true; suggestions: SuggestedHabit[] }
   | { ok: false; error: string }
 
 /**
@@ -31,7 +37,14 @@ export async function suggestHabits(goalName: string, categoryName?: string): Pr
     }
     const data = (await res.json()) as { suggestions?: unknown }
     const suggestions = Array.isArray(data.suggestions)
-      ? data.suggestions.filter((s): s is string => typeof s === 'string')
+      ? data.suggestions
+          .filter((s): s is { text: unknown; timesPerWeek: unknown } => !!s && typeof s === 'object')
+          .filter((s) => typeof s.text === 'string' && s.text.trim().length > 0)
+          .map((s) => ({
+            text: s.text as string,
+            timesPerWeek:
+              typeof s.timesPerWeek === 'number' ? Math.min(7, Math.max(1, Math.round(s.timesPerWeek))) : 7,
+          }))
       : []
     return { ok: true, suggestions }
   } catch {

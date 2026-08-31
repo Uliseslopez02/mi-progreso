@@ -6,7 +6,7 @@
  */
 import { addDays, todayKey, type DateKey } from '../domain/date'
 import { snapshotGoals } from '../domain/day'
-import type { Category, DayRecord, Goal, LifeGoal, LifeWheelSnapshot } from '../domain/types'
+import type { Category, DayRecord, Goal, LifeGoal } from '../domain/types'
 
 export const TODAY: DateKey = todayKey()
 export const DAYS_BACK = 20
@@ -168,22 +168,6 @@ export function buildDemoDreams(): LifeGoal[] {
       createdAt: TODAY,
     },
   ]
-}
-
-export function buildDemoWheelSnapshot(): LifeWheelSnapshot {
-  return {
-    id: 'wheel-demo',
-    date: TODAY,
-    createdAt: TODAY,
-    areas: [
-      { categoryId: 'salud', categoryName: 'Salud', score: 7 },
-      { categoryId: 'productividad', categoryName: 'Productividad', score: 6 },
-      { categoryId: 'relaciones', categoryName: 'Relaciones', score: 8 },
-      { categoryId: 'desarrollo', categoryName: 'Desarrollo personal', score: 5 },
-      { categoryId: 'descanso', categoryName: 'Descanso', score: 4 },
-      { categoryId: 'bienestar', categoryName: 'Bienestar', score: 7 },
-    ],
-  }
 }
 
 /** Fecha/expectativa fijas de demo — no representan a ninguna persona real. */

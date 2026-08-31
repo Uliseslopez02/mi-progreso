@@ -51,16 +51,11 @@ function SortableRow({
       ref={setNodeRef}
       className={`planner-item${item.done ? ' planner-item--done' : ''}${isDragging ? ' planner-item--dragging' : ''}`}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      {...attributes}
-      {...listeners}
     >
-      <input
-        type="checkbox"
-        checked={item.done}
-        aria-label={item.title}
-        onPointerDown={(e) => e.stopPropagation()}
-        onChange={() => onToggle(item.id)}
-      />
+      <button type="button" className="drag-handle" aria-label={`Reordenar ${item.title}`} {...attributes} {...listeners}>
+        ⠿
+      </button>
+      <input type="checkbox" checked={item.done} aria-label={item.title} onChange={() => onToggle(item.id)} />
       <div>
         <p className="planner-item__title">
           {item.type === 'event' ? '📅 ' : ''}
@@ -74,13 +69,7 @@ function SortableRow({
           )}
         </div>
       </div>
-      <button
-        type="button"
-        className="planner-item__remove"
-        aria-label={`Eliminar ${item.title}`}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={() => onRemove(item.id)}
-      >
+      <button type="button" className="planner-item__remove" aria-label={`Eliminar ${item.title}`} onClick={() => onRemove(item.id)}>
         ×
       </button>
     </li>

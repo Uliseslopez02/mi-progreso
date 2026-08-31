@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { categoryConsistency, goalConsistency, habitStreakBreakdown } from '../domain/consistency'
+import {
+  categoryConsistency,
+  daysSinceLastCompletion,
+  goalConsistency,
+  habitStreakBreakdown,
+  weekdayConsistency,
+} from '../domain/consistency'
+import { formatWeekday } from '../domain/date'
 import type { DayRecord, Goal, GoalSnapshot } from '../domain/types'
 
 const leer: GoalSnapshot = {
@@ -99,6 +106,60 @@ describe('categoryConsistency', () => {
       daysPresent: 6,
       daysCompleted: 3,
     })
+  })
+})
+
+describe('weekdayConsistency', () => {
+  it('agrupa el cumplimiento por día de la semana en vez de por objetivo', () => {
+    const result = weekdayConsistency(days, keys)
+    const byWeekday = new Map(result.map((r) => [r.weekday, r]))
+
+    // 2026-08-16/17/18 tienen 3 objetivos cada uno; 'agua' se cumple los 3 días,
+    // 'leer' se cumple el 17 y 18, 'gym' nunca.
+    expect(byWeekday.get(formatWeekday('2026-08-16'))).toMatchObject({ daysPresent: 3, daysCompleted: 1 })
+    expect(byWeekday.get(formatWeekday('2026-08-17'))).toMatchObject({ daysPresent: 3, daysCompleted: 2 })
+    expect(byWeekday.get(formatWeekday('2026-08-18'))).toMatchObject({ daysPresent: 3, daysCompleted: 2 })
+  })
+
+  it('ignora los días sin registro', () => {
+    expect(weekdayConsistency({}, keys)).toEqual([])
+  })
+
+  it('filtra por trackingKind igual que goalConsistency', () => {
+    const meditarSnap: GoalSnapshot = {
+      goalId: 'meditar',
+      name: 'Meditar',
+      categoryId: 'salud',
+      categoryName: 'Salud',
+      weight: 1,
+      kind: 'boolean',
+      trackingKind: 'habit',
+    }
+    const conHabito = {
+      ...days,
+      '2026-08-18': day('2026-08-18', [leer, agua, gym, meditarSnap], ['agua', 'leer', 'meditar']),
+    }
+    const soloHabitos = weekdayConsistency(conHabito, keys, 'habit')
+    expect(soloHabitos).toEqual([
+      { weekday: formatWeekday('2026-08-18'), daysPresent: 1, daysCompleted: 1, percent: 100 },
+    ])
+  })
+})
+
+describe('daysSinceLastCompletion', () => {
+  it('0 si se cumplió hoy mismo', () => {
+    expect(daysSinceLastCompletion(days, 'agua', '2026-08-18')).toBe(0)
+  })
+
+  it('cuenta los días desde el último cumplimiento', () => {
+    const habitDays: Record<string, DayRecord> = {
+      '2026-08-14': day('2026-08-14', [agua], ['agua']),
+    }
+    expect(daysSinceLastCompletion(habitDays, 'agua', '2026-08-18')).toBe(4)
+  })
+
+  it('null si nunca se cumplió dentro del rango', () => {
+    expect(daysSinceLastCompletion(days, 'gym', '2026-08-18')).toBeNull()
   })
 })
 

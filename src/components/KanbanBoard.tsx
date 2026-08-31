@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   DndContext,
   PointerSensor,
@@ -19,10 +20,26 @@ const STATUS_LABEL: Record<ProjectTaskStatus, string> = {
   done: 'Hecho',
 }
 
+/** Mismo lenguaje visual que se usaría para "por hacer/en curso/hecho" en
+ * cualquier otro lugar de la app — reconocible sin tener que leer la etiqueta. */
+const STATUS_ICON: Record<ProjectTaskStatus, string> = {
+  todo: '○',
+  doing: '◐',
+  done: '✓',
+}
+
+const STATUS_COLOR: Record<ProjectTaskStatus, string> = {
+  todo: 'var(--text-dim)',
+  doing: 'var(--band-good)',
+  done: 'var(--band-top)',
+}
+
 interface Props {
   tasksByStatus: Record<ProjectTaskStatus, ProjectTask[]>
   onRemove: (id: string) => void
   onReorder: (updates: Array<{ id: string; status: ProjectTaskStatus; order: number }>) => void
+  /** Alta rápida directo en una columna — cae en ese estado, sin pasar por el form de arriba. */
+  onAdd: (status: ProjectTaskStatus, title: string) => void
 }
 
 function SortableCard({ task, onRemove }: { task: ProjectTask; onRemove: (id: string) => void }) {
@@ -35,17 +52,12 @@ function SortableCard({ task, onRemove }: { task: ProjectTask; onRemove: (id: st
       ref={setNodeRef}
       className={`planner-item${isDragging ? ' planner-item--dragging' : ''}`}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      {...attributes}
-      {...listeners}
     >
+      <button type="button" className="drag-handle" aria-label={`Reordenar ${task.title}`} {...attributes} {...listeners}>
+        ⠿
+      </button>
       <p className="planner-item__title">{task.title}</p>
-      <button
-        type="button"
-        className="planner-item__remove"
-        aria-label={`Eliminar ${task.title}`}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={() => onRemove(task.id)}
-      >
+      <button type="button" className="planner-item__remove" aria-label={`Eliminar ${task.title}`} onClick={() => onRemove(task.id)}>
         ×
       </button>
     </li>
@@ -56,17 +68,33 @@ function StatusColumn({
   status,
   tasks,
   onRemove,
+  onAdd,
 }: {
   status: ProjectTaskStatus
   tasks: ProjectTask[]
   onRemove: (id: string) => void
+  onAdd: (status: ProjectTaskStatus, title: string) => void
 }) {
   const { setNodeRef } = useDroppable({ id: `status:${status}` })
+  const [newTitle, setNewTitle] = useState('')
+
+  const addHere = () => {
+    const title = newTitle.trim()
+    if (!title) return
+    onAdd(status, title)
+    setNewTitle('')
+  }
 
   return (
     <div className="planner-day">
       <div className="planner-day__header">
-        <span className="planner-day__weekday">{STATUS_LABEL[status]}</span>
+        <span className="planner-day__weekday">
+          <span aria-hidden="true" style={{ color: STATUS_COLOR[status] }}>
+            {STATUS_ICON[status]}
+          </span>{' '}
+          {STATUS_LABEL[status]}
+        </span>
+        <span className="planner-day__date numeric">{tasks.length}</span>
       </div>
       <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
         <ul className="planner-day__items" ref={setNodeRef}>
@@ -75,12 +103,27 @@ function StatusColumn({
           ))}
         </ul>
       </SortableContext>
+      <div className="planner-day__add">
+        <input
+          className="input"
+          placeholder="+ Agregar"
+          aria-label={`Agregar tarea a ${STATUS_LABEL[status]}`}
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') addHere()
+          }}
+        />
+        <button type="button" className="icon-btn" aria-label={`Agregar a ${STATUS_LABEL[status]}`} onClick={addHere}>
+          +
+        </button>
+      </div>
     </div>
   )
 }
 
 /** Tablero Kanban de un proyecto: columnas de estado en vez de columnas de día, mismo mecanismo de arrastre que `PlannerBoard`. */
-export function KanbanBoard({ tasksByStatus, onRemove, onReorder }: Props) {
+export function KanbanBoard({ tasksByStatus, onRemove, onReorder, onAdd }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
   const findStatus = (taskId: string): ProjectTaskStatus | null => {
@@ -129,6 +172,7 @@ export function KanbanBoard({ tasksByStatus, onRemove, onReorder }: Props) {
               status={status}
               tasks={tasksByStatus[status] ?? []}
               onRemove={onRemove}
+              onAdd={onAdd}
             />
           ))}
         </div>

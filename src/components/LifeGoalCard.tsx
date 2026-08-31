@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { DateKey } from '../domain/date'
-import { pace } from '../domain/lifeGoalProgress'
-import type { Category, Goal, LifeGoal, LifeGoalPriority, LifeGoalStatus } from '../domain/types'
+import { habitsProgressBreakdown, pace } from '../domain/lifeGoalProgress'
+import type { Category, DayRecord, Goal, LifeGoal, LifeGoalPriority, LifeGoalStatus } from '../domain/types'
 import { BAND_COLOR } from './colors'
 import { EditGoalModal } from './EditGoalModal'
 
@@ -10,6 +10,7 @@ interface Props {
   categories: Category[]
   /** Hábitos activos disponibles para vincular (trackingKind === 'habit'). */
   habits: Goal[]
+  days: Record<string, DayRecord>
   today: DateKey
   onUpdate: (patch: Partial<Omit<LifeGoal, 'id'>>) => void
   onRemove: () => void
@@ -49,9 +50,10 @@ function progressBand(progress: number) {
  * `EditGoalModal`, detrás del ícono de lápiz — antes estaban siempre visibles
  * acá, lo que saturaba la vista con cada meta que se agregaba.
  */
-export function LifeGoalCard({ goal, categories, habits, today, onUpdate, onRemove, onMoveUp, onMoveDown }: Props) {
+export function LifeGoalCard({ goal, categories, habits, days, today, onUpdate, onRemove, onMoveUp, onMoveDown }: Props) {
   const [editing, setEditing] = useState(false)
   const goalPace = pace(goal, today)
+  const habitsBreakdown = goal.kind === 'habits' ? habitsProgressBreakdown(goal, days, today) : null
 
   return (
     <div className="lifegoal-card lifegoal-card--minimal">
@@ -97,6 +99,14 @@ export function LifeGoalCard({ goal, categories, habits, today, onUpdate, onRemo
           style={{ width: `${goal.progress}%`, background: BAND_COLOR[progressBand(goal.progress)] }}
         />
       </span>
+
+      {habitsBreakdown && (
+        <p className="card__hint" style={{ marginTop: 6 }}>
+          {habitsBreakdown.linkedHabitCount === 0
+            ? 'Vinculá hábitos (desde el ícono de lápiz) para que el progreso se calcule solo.'
+            : `${goal.progress}% porque cumpliste ${habitsBreakdown.daysCompleted} de ${habitsBreakdown.daysPresent} acciones de tus ${habitsBreakdown.linkedHabitCount} hábito${habitsBreakdown.linkedHabitCount === 1 ? '' : 's'} vinculado${habitsBreakdown.linkedHabitCount === 1 ? '' : 's'} en los últimos ${habitsBreakdown.windowDays} días. Vincular o desvincular un hábito recalcula el % al instante con su historial — no sólo por lo que cumplas hoy.`}
+        </p>
+      )}
 
       {editing && (
         <EditGoalModal

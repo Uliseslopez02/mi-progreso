@@ -1,17 +1,27 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { addDays, formatShortDate, type DateKey } from '../domain/date'
 import { goalCompletionOn, goalStreaks } from '../domain/consistency'
-import type { DayRecord, Goal } from '../domain/types'
+import type { Category, DayRecord, Goal } from '../domain/types'
 import { BAND_COLOR } from './colors'
+import { EditHabitModal } from './EditHabitModal'
 import { Stat } from './Stat'
 
 interface Props {
   habit: Goal
   categoryName: string
+  categories: Category[]
   days: Record<string, DayRecord>
   today: DateKey
+  onUpdate: (patch: Partial<Omit<Goal, 'id'>>) => void
+  onRemove: () => void
   /** Cuántos días mostrar en la grilla (30 por defecto). */
   windowDays?: number
+}
+
+const DIFFICULTY_LABEL: Record<NonNullable<Goal['difficulty']>, string> = {
+  easy: 'Fácil',
+  medium: 'Media',
+  hard: 'Difícil',
 }
 
 const FREQUENCY_LABEL: Record<string, string> = {
@@ -28,8 +38,11 @@ function frequencyLabel(habit: Goal): string {
   return FREQUENCY_LABEL[freq.type] ?? FREQUENCY_LABEL.daily
 }
 
-/** Tarjeta de un hábito: racha actual/mejor, % de cumplimiento y grilla de últimos días. */
-export function HabitCard({ habit, categoryName, days, today, windowDays = 30 }: Props) {
+/** Tarjeta de un hábito: racha actual/mejor, % de cumplimiento y grilla de últimos días.
+ * La edición (nombre/categoría/frecuencia/dificultad/pausar/eliminar) vive detrás del
+ * ícono de lápiz, en `EditHabitModal` — única fuente de verdad, sin duplicar en Ajustes. */
+export function HabitCard({ habit, categoryName, categories, days, today, onUpdate, onRemove, windowDays = 30 }: Props) {
+  const [editing, setEditing] = useState(false)
   const dates = useMemo(
     () => Array.from({ length: windowDays }, (_, i) => addDays(today, -(windowDays - 1 - i))),
     [today, windowDays],
@@ -52,13 +65,19 @@ export function HabitCard({ habit, categoryName, days, today, windowDays = 30 }:
   return (
     <div className="habit-card">
       <div className="habit-card__head">
-        <div>
+        <div style={{ minWidth: 0 }}>
           <p className="habit-card__name">{habit.name}</p>
           <p className="habit-card__category">
             {categoryName} · {frequencyLabel(habit)}
+            {habit.difficulty && ` · ${DIFFICULTY_LABEL[habit.difficulty]}`}
           </p>
         </div>
-        {!habit.active && <span className="habit-card__paused">Pausado</span>}
+        <div className="habit-card__actions">
+          {!habit.active && <span className="habit-card__paused">Pausado</span>}
+          <button type="button" className="icon-btn" aria-label={`Editar ${habit.name}`} onClick={() => setEditing(true)}>
+            ✎
+          </button>
+        </div>
       </div>
 
       <div className="stat-grid">
@@ -81,6 +100,16 @@ export function HabitCard({ habit, categoryName, days, today, windowDays = 30 }:
           )
         })}
       </div>
+
+      {editing && (
+        <EditHabitModal
+          habit={habit}
+          categories={categories}
+          onUpdate={onUpdate}
+          onRemove={onRemove}
+          onClose={() => setEditing(false)}
+        />
+      )}
     </div>
   )
 }

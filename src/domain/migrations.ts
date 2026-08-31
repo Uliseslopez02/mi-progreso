@@ -113,10 +113,12 @@ export function migrateV5ToV6(data: AppData): AppData {
   return { ...data, version: 6, routines: data.routines ?? [], routineRuns: data.routineRuns ?? {} }
 }
 
-/** Migra V6 (sin `lifeWheelSnapshots`) a V7: agrega la lista vacía, nada más cambia. */
+/** Bump de esquema V6→V7 sin cambio de datos: agregaba `lifeWheelSnapshots`
+ * (Rueda de la vida), eliminada del todo — el campo ya no existe en `AppData`.
+ * Se conserva como no-op para no romper la cadena V1→V10 de storage local viejo. */
 export function migrateV6ToV7(data: AppData): AppData {
   if (data.version >= 7) return data
-  return { ...data, version: 7, lifeWheelSnapshots: data.lifeWheelSnapshots ?? [] }
+  return { ...data, version: 7 }
 }
 
 /** Migra V7 (sin `reflections`) a V8: agrega la lista vacía, nada más cambia.

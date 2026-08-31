@@ -2,7 +2,6 @@ import '../styles/showcase.css'
 import { HabitsModule } from './modules/HabitsModule'
 import { TodayRitualModule } from './modules/TodayRitualModule'
 import { GoalModule } from './modules/GoalModule'
-import { LifeWheelModule } from './modules/LifeWheelModule'
 import { StatsModule } from './modules/StatsModule'
 import { MomentoMoriModule } from './modules/MomentoMoriModule'
 import { FocusModule } from './modules/FocusModule'
@@ -40,7 +39,6 @@ export function ProductShowcasePage() {
           <HabitsModule />
           <TodayRitualModule />
           <GoalModule />
-          <LifeWheelModule />
           <StatsModule />
           <DreamsModule />
           <FocusModule />

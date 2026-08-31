@@ -15,6 +15,7 @@ export function PlannerPage() {
   const [newPriority, setNewPriority] = useState<PlannerPriority>('medium')
   const [newTime, setNewTime] = useState('')
   const [newDuration, setNewDuration] = useState(30)
+  const [showMore, setShowMore] = useState(false)
 
   const days = useMemo(() => weekDays(weekStart), [weekStart])
 
@@ -151,84 +152,97 @@ export function PlannerPage() {
               ))}
             </select>
           </div>
-          <div className="field" style={{ flex: '1 1 110px' }}>
-            <label className="field__label" htmlFor="planner-time">
-              Hora (opcional)
-            </label>
-            <input
-              id="planner-time"
-              type="time"
-              className="input"
-              value={newTime}
-              onChange={(e) => setNewTime(e.target.value)}
-            />
-          </div>
-          {newTime && (
-            <div className="field" style={{ flex: '1 1 120px' }}>
-              <label className="field__label" htmlFor="planner-duration">
-                Duración
-              </label>
-              <select
-                id="planner-duration"
-                className="select"
-                value={newDuration}
-                onChange={(e) => setNewDuration(Number(e.target.value))}
-              >
-                {[15, 30, 45, 60, 90, 120].map((minutes) => (
-                  <option key={minutes} value={minutes}>
-                    {minutes} min
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          <div className="field" style={{ flex: '1 1 120px' }}>
-            <label className="field__label" htmlFor="planner-type">
-              Tipo
-            </label>
-            <select
-              id="planner-type"
-              className="select"
-              value={newType}
-              onChange={(e) => setNewType(e.target.value as PlannerItemType)}
-            >
-              <option value="task">Tarea</option>
-              <option value="event">Evento</option>
-            </select>
-          </div>
-          <div className="field" style={{ flex: '1 1 140px' }}>
-            <label className="field__label" htmlFor="planner-category">
-              Categoría
-            </label>
-            <select
-              id="planner-category"
-              className="select"
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value as PlannerCategory)}
-            >
-              <option value="personal">Personal</option>
-              <option value="professional">Profesional</option>
-            </select>
-          </div>
-          <div className="field" style={{ flex: '1 1 140px' }}>
-            <label className="field__label" htmlFor="planner-priority">
-              Prioridad
-            </label>
-            <select
-              id="planner-priority"
-              className="select"
-              value={newPriority}
-              onChange={(e) => setNewPriority(e.target.value as PlannerPriority)}
-            >
-              <option value="low">Baja</option>
-              <option value="medium">Media</option>
-              <option value="high">Alta</option>
-            </select>
-          </div>
+          <button
+            type="button"
+            className="btn btn--ghost"
+            aria-expanded={showMore}
+            onClick={() => setShowMore((v) => !v)}
+          >
+            {showMore ? 'Menos opciones ▴' : 'Más opciones ▾'}
+          </button>
           <button type="button" className="btn btn--primary" onClick={addFromTopForm}>
             Agregar
           </button>
         </div>
+
+        {showMore && (
+          <div className="row" style={{ marginTop: 10 }}>
+            <div className="field" style={{ flex: '1 1 110px' }}>
+              <label className="field__label" htmlFor="planner-time">
+                Hora (opcional)
+              </label>
+              <input
+                id="planner-time"
+                type="time"
+                className="input"
+                value={newTime}
+                onChange={(e) => setNewTime(e.target.value)}
+              />
+            </div>
+            {newTime && (
+              <div className="field" style={{ flex: '1 1 120px' }}>
+                <label className="field__label" htmlFor="planner-duration">
+                  Duración
+                </label>
+                <select
+                  id="planner-duration"
+                  className="select"
+                  value={newDuration}
+                  onChange={(e) => setNewDuration(Number(e.target.value))}
+                >
+                  {[15, 30, 45, 60, 90, 120].map((minutes) => (
+                    <option key={minutes} value={minutes}>
+                      {minutes} min
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div className="field" style={{ flex: '1 1 120px' }}>
+              <label className="field__label" htmlFor="planner-type">
+                Tipo
+              </label>
+              <select
+                id="planner-type"
+                className="select"
+                value={newType}
+                onChange={(e) => setNewType(e.target.value as PlannerItemType)}
+              >
+                <option value="task">Tarea</option>
+                <option value="event">Evento</option>
+              </select>
+            </div>
+            <div className="field" style={{ flex: '1 1 140px' }}>
+              <label className="field__label" htmlFor="planner-category">
+                Categoría
+              </label>
+              <select
+                id="planner-category"
+                className="select"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value as PlannerCategory)}
+              >
+                <option value="personal">Personal</option>
+                <option value="professional">Profesional</option>
+              </select>
+            </div>
+            <div className="field" style={{ flex: '1 1 140px' }}>
+              <label className="field__label" htmlFor="planner-priority">
+                Prioridad
+              </label>
+              <select
+                id="planner-priority"
+                className="select"
+                value={newPriority}
+                onChange={(e) => setNewPriority(e.target.value as PlannerPriority)}
+              >
+                <option value="low">Baja</option>
+                <option value="medium">Media</option>
+                <option value="high">Alta</option>
+              </select>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   )

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeLifeGoalProgress, nextMilestone, pace } from '../domain/lifeGoalProgress'
+import { computeLifeGoalProgress, habitsProgressBreakdown, nextMilestone, pace } from '../domain/lifeGoalProgress'
 import type { DayRecord, LifeGoal } from '../domain/types'
 
 function baseGoal(overrides: Partial<LifeGoal> = {}): LifeGoal {
@@ -95,6 +95,41 @@ describe('computeLifeGoalProgress', () => {
       const goal = baseGoal({ kind: 'habits', linkedHabitIds: ['h-nuevo'] })
       expect(computeLifeGoalProgress(goal, days, '2026-08-21')).toBe(0)
     })
+  })
+})
+
+describe('habitsProgressBreakdown', () => {
+  const habitSnapshot: DayRecord['goals'][number] = {
+    goalId: 'h1',
+    name: 'Meditar',
+    categoryId: 'c1',
+    categoryName: 'Salud',
+    weight: 1,
+    kind: 'boolean',
+    trackingKind: 'habit',
+  }
+  const days: Record<string, DayRecord> = {
+    '2026-08-20': { date: '2026-08-20', goals: [habitSnapshot], goalProgress: { h1: true }, closed: true },
+    '2026-08-21': { date: '2026-08-21', goals: [habitSnapshot], goalProgress: { h1: false }, closed: true },
+  }
+
+  it('el desglose coincide con el % que devuelve computeLifeGoalProgress', () => {
+    const goal = baseGoal({ kind: 'habits', linkedHabitIds: ['h1'], createdAt: '2026-08-01T00:00:00.000Z' })
+    const breakdown = habitsProgressBreakdown(goal, days, '2026-08-21')
+    expect(breakdown).toMatchObject({ linkedHabitCount: 1, daysPresent: 2, daysCompleted: 1, percent: 50 })
+    expect(breakdown.percent).toBe(computeLifeGoalProgress(goal, days, '2026-08-21'))
+  })
+
+  it('sin hábitos vinculados, linkedHabitCount es 0 y no hay días presentes', () => {
+    const goal = baseGoal({ kind: 'habits', linkedHabitIds: [] })
+    const breakdown = habitsProgressBreakdown(goal, days, '2026-08-21')
+    expect(breakdown).toMatchObject({ linkedHabitCount: 0, daysPresent: 0, daysCompleted: 0, percent: 0 })
+  })
+
+  it('windowDays se acota por la fecha de creación de la meta, no siempre 30', () => {
+    const goal = baseGoal({ kind: 'habits', linkedHabitIds: ['h1'], createdAt: '2026-08-20T00:00:00.000Z' })
+    const breakdown = habitsProgressBreakdown(goal, days, '2026-08-21')
+    expect(breakdown.windowDays).toBe(2)
   })
 })
 

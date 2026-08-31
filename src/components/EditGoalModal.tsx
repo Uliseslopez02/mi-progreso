@@ -42,8 +42,10 @@ const STATUS_OPTIONS: Array<{ value: LifeGoalStatus; label: string; color: strin
   { value: 'abandoned', label: 'Abandonada', color: 'var(--text-dim)' },
 ]
 
+// 'percentage' (progreso editado a mano) va al final y marcado como manual a
+// propósito — el resto de los tipos calculan el progreso solos, que es el
+// camino recomendado. Ver GoalsPage.tsx, mismo orden/criterio.
 const KIND_OPTIONS: Array<{ value: LifeGoalKind; label: string }> = [
-  { value: 'percentage', label: 'Porcentaje' },
   { value: 'habits', label: 'Hábitos vinculados' },
   { value: 'quantity', label: 'Cantidad' },
   { value: 'money', label: 'Dinero' },
@@ -51,6 +53,7 @@ const KIND_OPTIONS: Array<{ value: LifeGoalKind; label: string }> = [
   { value: 'sessions', label: 'Sesiones' },
   { value: 'checklist', label: 'Checklist' },
   { value: 'milestones', label: 'Hitos' },
+  { value: 'percentage', label: 'Porcentaje (manual, no recomendado)' },
 ]
 
 const UNIT_LABEL: Partial<Record<LifeGoalKind, string>> = {
@@ -101,7 +104,16 @@ export function EditGoalModal({ goal, categories, habits, onUpdate, onClose }: P
   }
 
   return (
-    <Modal title="Editar meta" onClose={onClose} width={620}>
+    <Modal
+      title="Editar meta"
+      onClose={onClose}
+      width={620}
+      footer={
+        <button type="button" className="btn btn--primary" onClick={onClose}>
+          Listo
+        </button>
+      }
+    >
       <div className="goal-edit-modal">
         <div className="field">
           <label className="field__label" htmlFor={`edit-name-${goal.id}`}>
@@ -336,12 +348,6 @@ export function EditGoalModal({ goal, categories, habits, onUpdate, onClose }: P
               <span className="card__hint">Todavía no tenés hábitos para vincular.</span>
             )}
           </div>
-        </div>
-
-        <div className="row" style={{ justifyContent: 'flex-end' }}>
-          <button type="button" className="btn btn--primary" onClick={onClose}>
-            Listo
-          </button>
         </div>
       </div>
     </Modal>

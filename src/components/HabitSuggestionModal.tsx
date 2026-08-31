@@ -1,24 +1,38 @@
 import { useEffect, useState } from 'react'
 import { suggestHabits } from '../domain/habitSuggestions'
+import type { GoalFrequency } from '../domain/types'
 import { Modal } from './Modal'
 
 interface SuggestionItem {
   text: string
   checked: boolean
+  /** 1-7 veces por semana (7 = todos los días). Editable antes de confirmar. */
+  timesPerWeek: number
+}
+
+export interface ConfirmedHabit {
+  name: string
+  frequency: GoalFrequency | undefined
 }
 
 interface Props {
   goalName: string
   categoryName?: string
-  onConfirm: (habitNames: string[], driveProgress: boolean) => void
+  onConfirm: (habits: ConfirmedHabit[], driveProgress: boolean) => void
   onSkip: () => void
+}
+
+/** 7 veces por semana = diario, igual criterio que `frequencyFrom` en domain/habits.ts. */
+function frequencyForTimesPerWeek(timesPerWeek: number): GoalFrequency | undefined {
+  return timesPerWeek >= 7 ? undefined : { type: 'timesPerWeek', timesPerWeek }
 }
 
 /**
  * Se abre después de crear una meta: pide a la API de Claude (vía
- * `/api/suggest-habits`) hábitos sugeridos para lograrla, y deja elegir/editar
- * cuáles crear y vincular. Nunca bloquea la creación de la meta — si el
- * servicio falla o no hay sugerencias, "Ahora no" cierra sin efecto.
+ * `/api/suggest-habits`) hábitos sugeridos para lograrla, con una frecuencia
+ * propuesta por hábito, y deja elegir/editar cuáles crear, con qué frecuencia,
+ * y vincularlos. Nunca bloquea la creación de la meta — si el servicio falla o
+ * no hay sugerencias, "Ahora no" cierra sin efecto.
  */
 export function HabitSuggestionModal({ goalName, categoryName, onConfirm, onSkip }: Props) {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
@@ -31,7 +45,7 @@ export function HabitSuggestionModal({ goalName, categoryName, onConfirm, onSkip
     suggestHabits(goalName, categoryName).then((result) => {
       if (cancelled) return
       if (result.ok && result.suggestions.length > 0) {
-        setItems(result.suggestions.map((text) => ({ text, checked: true })))
+        setItems(result.suggestions.map((s) => ({ text: s.text, checked: true, timesPerWeek: s.timesPerWeek })))
         setStatus('ready')
       } else {
         setErrorMessage(result.ok ? 'No se generaron sugerencias para esta meta.' : result.error)
@@ -48,18 +62,35 @@ export function HabitSuggestionModal({ goalName, categoryName, onConfirm, onSkip
   }
 
   const confirm = () => {
-    const names = items.filter((i) => i.checked && i.text.trim().length > 0).map((i) => i.text.trim())
-    if (names.length === 0) {
+    const habits = items
+      .filter((i) => i.checked && i.text.trim().length > 0)
+      .map((i) => ({ name: i.text.trim(), frequency: frequencyForTimesPerWeek(i.timesPerWeek) }))
+    if (habits.length === 0) {
       onSkip()
       return
     }
-    onConfirm(names, driveProgress)
+    onConfirm(habits, driveProgress)
   }
 
   return (
-    <Modal title="Hábitos sugeridos" onClose={onSkip}>
+    <Modal
+      title="Hábitos sugeridos"
+      onClose={onSkip}
+      footer={
+        status === 'ready' ? (
+          <>
+            <button type="button" className="btn btn--ghost" onClick={onSkip}>
+              Ahora no
+            </button>
+            <button type="button" className="btn btn--primary" onClick={confirm}>
+              Agregar hábitos
+            </button>
+          </>
+        ) : undefined
+      }
+    >
       <p className="card__hint">
-        Para alcanzar &quot;{goalName}&quot;, te sugerimos incorporar estos hábitos diarios:
+        Para alcanzar &quot;{goalName}&quot;, te sugerimos incorporar estos hábitos:
       </p>
 
       {status === 'loading' && <p className="habit-suggestions__loading">Pensando sugerencias…</p>}
@@ -83,6 +114,21 @@ export function HabitSuggestionModal({ goalName, categoryName, onConfirm, onSkip
                   onChange={(e) => updateItem(index, { text: e.target.value })}
                   aria-label="Nombre del hábito sugerido"
                 />
+                <input
+                  className="input"
+                  type="number"
+                  min={1}
+                  max={7}
+                  style={{ width: 56, flex: 'none' }}
+                  value={item.timesPerWeek}
+                  aria-label={`Veces por semana de ${item.text}`}
+                  onChange={(e) => {
+                    const value = Number(e.target.value)
+                    if (!Number.isFinite(value)) return
+                    updateItem(index, { timesPerWeek: Math.min(7, Math.max(1, value)) })
+                  }}
+                />
+                <span className="card__hint">{item.timesPerWeek === 7 ? 'todos los días' : 'veces/sem'}</span>
               </label>
             ))}
           </div>
@@ -95,15 +141,6 @@ export function HabitSuggestionModal({ goalName, categoryName, onConfirm, onSkip
             />
             <span className="card__hint">Actualizar el % de la meta automáticamente según estos hábitos</span>
           </label>
-
-          <div className="row" style={{ justifyContent: 'flex-end' }}>
-            <button type="button" className="btn btn--ghost" onClick={onSkip}>
-              Ahora no
-            </button>
-            <button type="button" className="btn btn--primary" onClick={confirm}>
-              Agregar hábitos
-            </button>
-          </div>
         </>
       )}
     </Modal>

@@ -136,6 +136,7 @@ export function migrate(input: unknown): AppData | null {
     daysOfWeek: g.daysOfWeek,
     trackingKind: (g as any).trackingKind ?? 'goal',
     frequency: (g as any).frequency,
+    difficulty: (g as any).difficulty,
   }))
   const days = normalizeDays(raw.days)
   const goals = isPristineSampleData(parsedGoals, days)
@@ -158,7 +159,6 @@ export function migrate(input: unknown): AppData | null {
     plannerItems: normalizePlannerItems(raw.plannerItems),
     routines: normalizeRoutines(raw.routines),
     routineRuns: normalizeRoutineRuns(raw.routineRuns),
-    lifeWheelSnapshots: normalizeLifeWheelSnapshots(raw.lifeWheelSnapshots),
     reflections: normalizeReflections(raw.reflections),
     projects: normalizeProjects(raw.projects),
     projectTasks: normalizeProjectTasks(raw.projectTasks),
@@ -217,25 +217,6 @@ function normalizeNotes(notes: AppData['notes'] | undefined): AppData['notes'] {
       title: n.title ? String(n.title) : undefined,
       body: String(n.body ?? ''),
       createdAt: n.createdAt ?? new Date(0).toISOString(),
-    }))
-}
-
-function normalizeLifeWheelSnapshots(
-  snapshots: AppData['lifeWheelSnapshots'] | undefined,
-): AppData['lifeWheelSnapshots'] {
-  if (!Array.isArray(snapshots)) return []
-  return snapshots
-    .filter((s): s is NonNullable<typeof s> => !!s && Array.isArray(s.areas))
-    .map((s) => ({
-      id: String(s.id),
-      date: String(s.date),
-      areas: s.areas.map((a) => ({
-        categoryId: String(a.categoryId),
-        categoryName: String(a.categoryName ?? 'Sin categoría'),
-        score: typeof a.score === 'number' ? Math.min(10, Math.max(1, a.score)) : 5,
-      })),
-      notes: s.notes || undefined,
-      createdAt: s.createdAt ?? new Date(0).toISOString(),
     }))
 }
 

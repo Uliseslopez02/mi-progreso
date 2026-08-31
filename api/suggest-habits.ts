@@ -72,9 +72,12 @@ export default async function handler(request: Request): Promise<Response> {
 
   const prompt = `Meta del usuario: "${goalName}"${categoryName ? ` (categoría: ${categoryName})` : ''}.
 Sugerí entre 3 y 5 hábitos diarios o semanales concretos y accionables que ayuden a lograr esa meta.
-Cada hábito: una frase corta (máximo 6 palabras) en español, empezando con un verbo.
-Respondé ÚNICAMENTE con un array JSON de strings, sin texto adicional ni markdown.
-Ejemplo de formato: ["Entrenar 30 minutos", "Practicar técnica"]`
+Cada hábito: una frase corta (máximo 6 palabras) en español, empezando con un verbo, más una
+frecuencia sugerida en veces por semana (7 = todos los días, menos si tiene sentido que sea
+más espaciado).
+Respondé ÚNICAMENTE con un array JSON de objetos, sin texto adicional ni markdown.
+Cada objeto: {"text": "<hábito>", "timesPerWeek": <entero de 1 a 7>}.
+Ejemplo de formato: [{"text":"Entrenar 30 minutos","timesPerWeek":4},{"text":"Practicar técnica","timesPerWeek":7}]`
 
   let response: Response
   try {
@@ -102,11 +105,25 @@ Ejemplo de formato: ["Entrenar 30 minutos", "Practicar técnica"]`
   const data = (await response.json()) as { content?: Array<{ text?: string }> }
   const text = data.content?.[0]?.text ?? '[]'
 
-  let suggestions: string[] = []
+  interface Suggestion {
+    text: string
+    timesPerWeek: number
+  }
+
+  let suggestions: Suggestion[] = []
   try {
     const parsed = JSON.parse(text)
     if (Array.isArray(parsed)) {
-      suggestions = parsed.filter((s): s is string => typeof s === 'string' && s.trim().length > 0).slice(0, 5)
+      suggestions = parsed
+        .filter(
+          (s): s is { text: unknown; timesPerWeek: unknown } =>
+            !!s && typeof s === 'object' && typeof s.text === 'string' && s.text.trim().length > 0,
+        )
+        .map((s) => ({
+          text: s.text as string,
+          timesPerWeek: Math.min(7, Math.max(1, Math.round(Number(s.timesPerWeek)) || 7)),
+        }))
+        .slice(0, 5)
     }
   } catch {
     suggestions = []

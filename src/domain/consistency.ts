@@ -3,8 +3,18 @@
  * siempre y qué vengo dejando pasar. Todo se calcula sobre los snapshots
  * guardados, así que un objetivo que todavía no existía no baja el porcentaje.
  */
-import { addDays, type DateKey } from './date'
-import type { DayRecord, Goal, TrackingKind } from './types'
+import { addDays, formatWeekday, type DateKey } from './date'
+import type { DayRecord, Goal, GoalSnapshot, TrackingKind } from './types'
+
+/** Único criterio de "cumplido" para un objetivo/hábito en un día: booleano
+ * puro, o cuantitativo/temporal comparado contra su `targetValue`. Compartido
+ * por `goalConsistency`, `goalCompletionOn` y `weekdayConsistency` para que
+ * los tres nunca puedan divergir sobre qué cuenta como cumplido. */
+function isGoalCompleted(snapshot: GoalSnapshot, progress: number | boolean | undefined): boolean {
+  const value = progress ?? 0
+  if (snapshot.kind === 'boolean') return !!value
+  return snapshot.targetValue ? (value as number) >= snapshot.targetValue : !!value
+}
 
 export interface Consistency {
   id: string
@@ -59,13 +69,7 @@ export function goalConsistency(
 
     for (const goal of record.goals) {
       if (trackingKind && (goal.trackingKind ?? 'goal') !== trackingKind) continue
-      const progress = record.goalProgress[goal.goalId] ?? 0
-      const isCompleted =
-        goal.kind === 'boolean'
-          ? !!progress
-          : goal.targetValue
-            ? (progress as number) >= goal.targetValue
-            : !!progress
+      const isCompleted = isGoalCompleted(goal, record.goalProgress[goal.goalId])
 
       const current = accumulators.get(goal.goalId) ?? {
         id: goal.goalId,
@@ -123,9 +127,63 @@ export function goalCompletionOn(record: DayRecord | undefined, goalId: string):
   if (!record) return null
   const snapshot = record.goals.find((g) => g.goalId === goalId)
   if (!snapshot) return null
-  const progress = record.goalProgress[goalId] ?? 0
-  if (snapshot.kind === 'boolean') return !!progress
-  return snapshot.targetValue ? (progress as number) >= snapshot.targetValue : !!progress
+  return isGoalCompleted(snapshot, record.goalProgress[goalId])
+}
+
+/** Días desde el último cumplimiento de un objetivo/hábito (0 = hoy), mirando
+ * hasta `maxLookback` días atrás. `null` = no se cumplió en ese rango (o no
+ * existía). Usado por las sugerencias proactivas de IA para detectar hábitos
+ * abandonados sin guardar ningún dato nuevo. */
+export function daysSinceLastCompletion(
+  days: Record<string, DayRecord>,
+  goalId: string,
+  today: DateKey,
+  maxLookback = 90,
+): number | null {
+  for (let i = 0; i <= maxLookback; i++) {
+    const key = addDays(today, -i)
+    if (goalCompletionOn(days[key], goalId) === true) return i
+  }
+  return null
+}
+
+export interface WeekdayConsistency {
+  /** "Lunes", "Martes", ... — ya en español, listo para mostrar o mandar a la IA. */
+  weekday: string
+  daysPresent: number
+  daysCompleted: number
+  percent: number
+}
+
+/** Igual que `goalConsistency` pero agrupado por día de la semana en vez de
+ * por objetivo — para detectar patrones tipo "cumplís mejor los martes". */
+export function weekdayConsistency(
+  days: Record<string, DayRecord>,
+  keys: DateKey[],
+  trackingKind?: TrackingKind,
+): WeekdayConsistency[] {
+  const accumulators = new Map<string, { present: number; completed: number }>()
+
+  for (const key of keys) {
+    const record = days[key]
+    if (!record) continue
+    const matching = record.goals.filter((g) => !trackingKind || (g.trackingKind ?? 'goal') === trackingKind)
+    if (matching.length === 0) continue
+    const weekday = formatWeekday(key)
+    const current = accumulators.get(weekday) ?? { present: 0, completed: 0 }
+    for (const goal of matching) {
+      current.present += 1
+      if (isGoalCompleted(goal, record.goalProgress[goal.goalId])) current.completed += 1
+    }
+    accumulators.set(weekday, current)
+  }
+
+  return [...accumulators.entries()].map(([weekday, { present, completed }]) => ({
+    weekday,
+    daysPresent: present,
+    daysCompleted: completed,
+    percent: present === 0 ? 0 : Math.round((completed / present) * 100),
+  }))
 }
 
 /**

@@ -8,7 +8,6 @@ import type {
   Goal,
   GoalPeriod,
   LifeGoal,
-  LifeWheelSnapshot,
   Note,
   PeriodRecord,
   PlannerItem,
@@ -41,7 +40,6 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         plannerItemsRes,
         routinesRes,
         routineRunsRes,
-        lifeWheelSnapshotsRes,
         reflectionsRes,
         projectsRes,
         projectTasksRes,
@@ -56,7 +54,6 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         client.from('planner_items').select('*').order('order_index'),
         client.from('routines').select('*').order('order_index'),
         client.from('routine_runs').select('*'),
-        client.from('life_wheel_snapshots').select('*').order('date'),
         client.from('reflections').select('*').order('date'),
         client.from('projects').select('*').order('order_index'),
         client.from('project_tasks').select('*').order('order_index'),
@@ -73,7 +70,6 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         plannerItemsRes,
         routinesRes,
         routineRunsRes,
-        lifeWheelSnapshotsRes,
         reflectionsRes,
         projectsRes,
         projectTasksRes,
@@ -104,6 +100,7 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         daysOfWeek: row.days_of_week ?? undefined,
         trackingKind: (row.tracking_kind ?? 'goal') as any,
         frequency: row.frequency ?? undefined,
+        difficulty: row.difficulty ?? undefined,
       }))
 
       // Recién registrado: hay fila de settings (la crea el trigger) pero
@@ -193,14 +190,6 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         routineRuns[`${run.routineId}:${run.date}`] = run
       }
 
-      const lifeWheelSnapshots: LifeWheelSnapshot[] = (lifeWheelSnapshotsRes.data ?? []).map((row) => ({
-        id: row.id,
-        date: row.date,
-        areas: row.areas ?? [],
-        notes: row.notes ?? undefined,
-        createdAt: row.created_at,
-      }))
-
       const reflections: Reflection[] = (reflectionsRes.data ?? []).map((row) => ({
         id: row.id,
         date: row.date,
@@ -253,7 +242,6 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
         plannerItems,
         routines,
         routineRuns,
-        lifeWheelSnapshots,
         reflections,
         projects,
         projectTasks,

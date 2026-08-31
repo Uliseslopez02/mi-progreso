@@ -8,7 +8,6 @@ import type {
   Category,
   Goal,
   LifeGoal,
-  LifeWheelSnapshot,
   Note,
   PlannerItem,
   Project,
@@ -72,8 +71,6 @@ export type Action =
   | { type: 'removeRoutine'; id: string }
   | { type: 'moveRoutine'; id: string; direction: -1 | 1 }
   | { type: 'toggleRoutineStep'; date: DateKey; routineId: string; stepId: string }
-  | { type: 'addLifeWheelSnapshot'; snapshot: LifeWheelSnapshot }
-  | { type: 'removeLifeWheelSnapshot'; id: string }
   | { type: 'addReflection'; reflection: Reflection }
   | { type: 'removeReflection'; id: string }
   | { type: 'addNote'; note: Note }
@@ -369,18 +366,6 @@ export function reducer(state: AppState, action: Action): AppState {
       }
       return withData(state, { ...data, routineRuns: { ...data.routineRuns, [key]: run } })
     }
-
-    case 'addLifeWheelSnapshot':
-      return withData(state, {
-        ...data,
-        lifeWheelSnapshots: [...data.lifeWheelSnapshots, action.snapshot],
-      })
-
-    case 'removeLifeWheelSnapshot':
-      return withData(state, {
-        ...data,
-        lifeWheelSnapshots: data.lifeWheelSnapshots.filter((s) => s.id !== action.id),
-      })
 
     case 'addReflection':
       return withData(state, { ...data, reflections: [...data.reflections, action.reflection] })

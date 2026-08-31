@@ -421,6 +421,7 @@ describe('Mi Progreso', () => {
     await user.click(screen.getByRole('button', { name: 'Metas' }))
     await user.type(screen.getByLabelText('Nombre'), 'Mejorar mi condición física')
     await chooseSelectMenu(user, 'Ámbito', 'Personal')
+    await chooseSelectMenu(user, 'Tipo', 'Porcentaje (manual, no recomendado)')
     await user.click(screen.getByRole('button', { name: 'Crear meta' }))
     await dismissHabitSuggestions(user)
 
@@ -517,6 +518,7 @@ describe('Mi Progreso', () => {
     await user.click(screen.getByRole('button', { name: 'Agenda' }))
     await user.click(screen.getByRole('button', { name: 'Planificador' }))
     await user.type(screen.getByLabelText('Título'), 'Revisar propuesta')
+    await user.click(screen.getByRole('button', { name: 'Más opciones ▾' }))
     await user.selectOptions(screen.getByLabelText('Prioridad'), 'Alta')
     await user.click(screen.getByRole('button', { name: 'Agregar' }))
 
@@ -583,9 +585,9 @@ describe('Mi Progreso', () => {
     const { repository } = renderApp()
     await screen.findByText('Objetivos de hoy')
 
-    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
-    await user.type(screen.getByLabelText('Nuevo hábito'), 'Meditar')
-    await user.click(screen.getByRole('button', { name: 'Agregar hábito' }))
+    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.type(screen.getByLabelText('Nombre'), 'Meditar')
+    await user.click(screen.getByRole('button', { name: 'Crear hábito' }))
 
     await user.click(screen.getByRole('button', { name: 'Agenda' }))
     await user.type(screen.getByLabelText('Título'), 'Sesión de meditación')
@@ -726,106 +728,15 @@ describe('Mi Progreso', () => {
     })
   })
 
-  it('un snapshot de la Rueda de la vida se crea con los puntajes por categoría y persiste', async () => {
-    const user = userEvent.setup()
-    const { repository } = renderApp()
-    await screen.findByText('Objetivos de hoy')
-
-    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
-    await user.click(screen.getByRole('button', { name: 'Rueda de la vida' }))
-    fireEvent.change(screen.getByLabelText('Salud'), { target: { value: '8' } })
-    await user.type(screen.getByLabelText('Notas (opcional)'), 'Primer registro')
-    await user.click(screen.getByRole('button', { name: 'Guardar snapshot' }))
-
-    expect(await screen.findByText(/Promedio/)).toBeInTheDocument()
-
-    await waitFor(async () => {
-      const stored = await repository.load()
-      expect(stored?.lifeWheelSnapshots).toHaveLength(1)
-      const snapshot = stored!.lifeWheelSnapshots[0]
-      expect(snapshot.date).toBe(todayKey())
-      expect(snapshot.notes).toBe('Primer registro')
-      expect(snapshot.areas.find((a) => a.categoryName === 'Salud')).toMatchObject({ score: 8 })
-    })
-
-    await user.click(screen.getByRole('button', { name: /Eliminar snapshot del/ }))
-    await waitFor(async () => {
-      const stored = await repository.load()
-      expect(stored?.lifeWheelSnapshots).toHaveLength(0)
-    })
-  })
-
-  it('elegir un color de categoría en Ajustes persiste y se ve en la Rueda de la vida', async () => {
-    const user = userEvent.setup()
-    const { unmount, repository } = renderApp()
-    await screen.findByText('Objetivos de hoy')
-
-    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
-    await user.click(screen.getByRole('button', { name: 'Usar celeste para Salud' }))
-
-    await waitFor(async () => {
-      const stored = await repository.load()
-      expect(stored?.categories.find((c) => c.name === 'Salud')).toMatchObject({ color: '#38bdf8' })
-    })
-
-    unmount()
-    renderApp()
-    expect(await screen.findByRole('button', { name: 'Usar celeste para Salud' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
-
-    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
-    await user.click(screen.getByRole('button', { name: 'Rueda de la vida' }))
-    expect(screen.getByText('Salud (5)')).toHaveAttribute('fill', '#38bdf8')
-
-    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
-    await user.click(screen.getByRole('button', { name: 'Usar celeste para Salud' }))
-    await waitFor(async () => {
-      const stored = await repository.load()
-      expect(stored?.categories.find((c) => c.name === 'Salud')?.color).toBeUndefined()
-    })
-
-    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
-    await user.click(screen.getByRole('button', { name: 'Rueda de la vida' }))
-    expect(screen.getByText('Salud (5)')).not.toHaveAttribute('fill')
-  })
-
-  it('hacer click en un área de la Rueda muestra el detalle con sus hábitos de hoy', async () => {
-    const user = userEvent.setup()
-    renderApp()
-    await screen.findByText('Objetivos de hoy')
-
-    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
-    await user.type(screen.getByLabelText('Nuevo hábito'), 'Meditar')
-    await user.click(screen.getByRole('button', { name: 'Agregar hábito' }))
-
-    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
-    await user.click(screen.getByRole('button', { name: 'Rueda de la vida' }))
-    fireEvent.change(screen.getByLabelText('Salud'), { target: { value: '8' } })
-    await user.click(screen.getByRole('button', { name: 'Guardar snapshot' }))
-
-    await screen.findByText(/Promedio/)
-    await user.click(screen.getByRole('button', { name: 'Ver detalle de Salud' }))
-
-    expect(await screen.findByRole('heading', { name: /Salud/ })).toBeInTheDocument()
-    expect(screen.getByText('Meditar')).toBeInTheDocument()
-    expect(screen.getByText('✗')).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: 'Cerrar detalle' }))
-    expect(screen.queryByText('Meditar')).not.toBeInTheDocument()
-  })
-
   it('el mapa anual de un hábito muestra su cumplimiento y se puede filtrar por categoría', async () => {
     const user = userEvent.setup()
     renderApp()
     await screen.findByText('Objetivos de hoy')
 
-    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
-    await user.type(screen.getByLabelText('Nuevo hábito'), 'Meditar')
-    await user.click(screen.getByRole('button', { name: 'Agregar hábito' }))
-
     await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.type(screen.getByLabelText('Nombre'), 'Meditar')
+    await user.click(screen.getByRole('button', { name: 'Crear hábito' }))
+
     await user.click(screen.getByRole('checkbox', { name: 'Meditar' }))
 
     await user.click(screen.getByRole('button', { name: 'Historial' }))
@@ -861,6 +772,7 @@ describe('Mi Progreso', () => {
     await user.click(screen.getByRole('button', { name: 'Agenda' }))
     await user.click(screen.getByRole('button', { name: 'Planificador' }))
     await user.type(screen.getByLabelText('Título'), 'Revisar propuesta')
+    await user.click(screen.getByRole('button', { name: 'Más opciones ▾' }))
     await user.selectOptions(screen.getByLabelText('Prioridad'), 'Alta')
     await user.click(screen.getByRole('button', { name: 'Agregar' }))
     await screen.findByRole('checkbox', { name: 'Revisar propuesta' })
@@ -934,6 +846,7 @@ describe('Mi Progreso', () => {
 
     await user.click(screen.getByRole('button', { name: 'Agenda' }))
     await user.click(screen.getByRole('button', { name: 'Planificador' }))
+    await user.click(screen.getByRole('button', { name: 'Más opciones ▾' }))
 
     await user.type(screen.getByLabelText('Título'), 'Hacer ahora TEST')
     await user.selectOptions(screen.getByLabelText('Prioridad'), 'Alta')

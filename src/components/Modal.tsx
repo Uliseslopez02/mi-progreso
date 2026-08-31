@@ -4,12 +4,17 @@ interface Props {
   title: string
   onClose: () => void
   children: ReactNode
+  /** Fila de acciones (Guardar/Cancelar/Eliminar) fija al fondo del panel,
+   * fuera del área que hace scroll — para que nunca quede oculta en modales
+   * largos (antes cada modal la ponía como último hijo de `children`, dentro
+   * del mismo scroll que el resto del contenido). */
+  footer?: ReactNode
   /** Ancho del panel. Por defecto 560px. */
   width?: number
 }
 
 /** Modal genérico: backdrop + panel centrado, cierra con click afuera o Escape. */
-export function Modal({ title, onClose, children, width = 560 }: Props) {
+export function Modal({ title, onClose, children, footer, width = 560 }: Props) {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -35,6 +40,7 @@ export function Modal({ title, onClose, children, width = 560 }: Props) {
           </button>
         </div>
         <div className="modal__body">{children}</div>
+        {footer && <div className="modal__footer">{footer}</div>}
       </div>
     </div>
   )

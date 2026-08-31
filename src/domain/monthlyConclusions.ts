@@ -1,7 +1,7 @@
 /**
  * Frases fijas armadas sobre los campos reales de `MonthlyReport`. Mismo criterio que
- * `messageForPercent` (scoring.ts) y `areaSuggestion` (lifeWheelInsights.ts): cada frase
- * sólo aparece si el dato que necesita existe — nunca texto inventado.
+ * `messageForPercent` (scoring.ts): cada frase sólo aparece si el dato que necesita
+ * existe — nunca texto inventado.
  */
 import type { MonthlyReport } from './monthlyReport'
 

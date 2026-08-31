@@ -13,6 +13,10 @@
 export type GoalPeriod = 'daily' | 'weekly' | 'monthly'
 export type GoalKind = 'boolean' | 'quantitative' | 'timed'
 
+/** Percepción subjetiva de dificultad de un hábito. Cosmética: no afecta racha,
+ * consistencia ni el cálculo de progreso de ninguna meta — sólo se muestra. */
+export type GoalDifficulty = 'easy' | 'medium' | 'hard'
+
 /** 'goal' puntúa el día (objetivo diario clásico). 'habit' se trackea con racha y
  * % de cumplimiento propios, pero no suma al porcentaje ponderado del día. */
 export type TrackingKind = 'goal' | 'habit'
@@ -62,6 +66,8 @@ export interface Goal {
   trackingKind?: TrackingKind
   /** Frecuencia del objetivo/hábito. Si no está definida, se interpreta como diaria. */
   frequency?: GoalFrequency
+  /** Sólo relevante para hábitos (`trackingKind === 'habit'`). Ver `GoalDifficulty`. */
+  difficulty?: GoalDifficulty
 }
 
 /** Copia congelada de un objetivo tal como estaba el día en que se registró. */
@@ -290,31 +296,6 @@ export interface FocusSession {
   linkedPlannerItemId?: string
 }
 
-/** Copia congelada de la categoría al momento del snapshot — mismo criterio que
- * `GoalSnapshot`: si la categoría se renombra o se borra después, el historial
- * de la rueda no cambia retroactivamente. */
-export interface LifeWheelAreaScore {
-  categoryId: string
-  categoryName: string
-  /** Puntaje 1-10. */
-  score: number
-}
-
-/**
- * Snapshot de la Rueda de la vida en una fecha dada: un puntaje 1-10 por cada
- * categoría vigente en ese momento. Las áreas son las `Category` reales del
- * usuario (no una lista fija de áreas genéricas), para que la rueda refleje
- * las mismas categorías que ya usa en el resto de la app.
- */
-export interface LifeWheelSnapshot {
-  id: string
-  /** Fecha local YYYY-MM-DD del snapshot. */
-  date: string
-  areas: LifeWheelAreaScore[]
-  notes?: string
-  createdAt: string
-}
-
 export interface Settings {
   appName: string
   /** Porcentaje mínimo para que un día cuente en la racha. */
@@ -374,8 +355,6 @@ export interface AppData {
   routines: Routine[]
   /** Ejecuciones por rutina y día, indexadas por `${routineId}:${date}`. */
   routineRuns: Record<string, RoutineRun>
-  /** Snapshots de la Rueda de la vida a lo largo del tiempo. */
-  lifeWheelSnapshots: LifeWheelSnapshot[]
   /** Reflexiones (Momento Mori y futuros usos). */
   reflections: Reflection[]
   /** Proyectos (agrupan tareas propias, sin fecha). */

@@ -33,21 +33,20 @@ export function ProjectDetailPage({ project, onBack }: Props) {
     return groups
   }, [data.projectTasks, project.id])
 
-  const addTask = () => {
-    const title = newTitle.trim()
-    if (!title) return
+  const addTask = (status: ProjectTaskStatus, title: string) => {
+    const trimmed = title.trim()
+    if (!trimmed) return
     dispatch({
       type: 'addProjectTask',
       task: {
         id: createId('tarea'),
         projectId: project.id,
-        title,
-        status: 'todo',
-        order: tasksByStatus.todo.length,
+        title: trimmed,
+        status,
+        order: tasksByStatus[status].length,
         createdAt: new Date().toISOString(),
       },
     })
-    setNewTitle('')
   }
 
   return (
@@ -93,11 +92,21 @@ export function ProjectDetailPage({ project, onBack }: Props) {
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') addTask()
+                if (e.key === 'Enter') {
+                  addTask('todo', newTitle)
+                  setNewTitle('')
+                }
               }}
             />
           </div>
-          <button type="button" className="btn btn--primary" onClick={addTask}>
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={() => {
+              addTask('todo', newTitle)
+              setNewTitle('')
+            }}
+          >
             Agregar
           </button>
         </div>
@@ -106,6 +115,7 @@ export function ProjectDetailPage({ project, onBack }: Props) {
           tasksByStatus={tasksByStatus}
           onRemove={(id) => dispatch({ type: 'removeProjectTask', id })}
           onReorder={(updates) => dispatch({ type: 'reorderProjectTasks', updates })}
+          onAdd={addTask}
         />
       </section>
     </div>

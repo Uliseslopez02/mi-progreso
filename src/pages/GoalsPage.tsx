@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { HabitSuggestionModal } from '../components/HabitSuggestionModal'
+import { HabitSuggestionModal, type ConfirmedHabit } from '../components/HabitSuggestionModal'
 import { LifeGoalCard } from '../components/LifeGoalCard'
 import { SelectMenu } from '../components/SelectMenu'
 import { createId } from '../domain/id'
@@ -25,8 +25,10 @@ const PRIORITY_OPTIONS: Array<{ value: LifeGoalPriority; label: string; color: s
   { value: 'high', label: 'Prioridad alta', color: 'var(--band-low)' },
 ]
 
+// 'percentage' (progreso editado a mano) va al final y marcado como manual a
+// propósito — el resto de los tipos calculan el progreso solos, que es el
+// camino recomendado. Ver EditGoalModal.tsx, mismo orden/criterio.
 const KIND_OPTIONS: Array<{ value: LifeGoalKind; label: string }> = [
-  { value: 'percentage', label: 'Porcentaje' },
   { value: 'habits', label: 'Hábitos vinculados' },
   { value: 'quantity', label: 'Cantidad' },
   { value: 'money', label: 'Dinero' },
@@ -34,6 +36,7 @@ const KIND_OPTIONS: Array<{ value: LifeGoalKind; label: string }> = [
   { value: 'sessions', label: 'Sesiones' },
   { value: 'checklist', label: 'Checklist' },
   { value: 'milestones', label: 'Hitos' },
+  { value: 'percentage', label: 'Porcentaje (manual, no recomendado)' },
 ]
 
 const VALUE_KINDS: LifeGoalKind[] = ['quantity', 'money', 'hours', 'sessions']
@@ -45,7 +48,10 @@ export function GoalsPage() {
   const [newName, setNewName] = useState('')
   const [newScope, setNewScope] = useState<LifeGoalScope>('personal')
   const [newPriority, setNewPriority] = useState<LifeGoalPriority>('medium')
-  const [newKind, setNewKind] = useState<LifeGoalKind>('percentage')
+  // 'habits' por defecto: al crear una meta, la app propone hábitos con IA
+  // (ver HabitSuggestionModal más abajo) y el progreso se calcula solo. El
+  // usuario puede cambiar a cualquier otro tipo, incluido 'percentage' manual.
+  const [newKind, setNewKind] = useState<LifeGoalKind>('habits')
   const [newTargetValue, setNewTargetValue] = useState(10)
   const [newUnit, setNewUnit] = useState('')
   const [suggestingFor, setSuggestingFor] = useState<{ id: string; name: string } | null>(null)
@@ -101,10 +107,10 @@ export function GoalsPage() {
     return id
   }
 
-  const confirmSuggestedHabits = (habitNames: string[], driveProgress: boolean) => {
+  const confirmSuggestedHabits = (suggested: ConfirmedHabit[], driveProgress: boolean) => {
     if (!suggestingFor) return
     const categoryId = ensureCategoryId()
-    const createdIds = habitNames.map((name) => {
+    const createdIds = suggested.map(({ name, frequency }, index) => {
       const habitId = createId('habit')
       dispatch({
         type: 'addGoal',
@@ -115,10 +121,11 @@ export function GoalsPage() {
           weight: 1,
           active: true,
           period: 'daily',
-          order: habits.length,
+          order: habits.length + index,
           createdAt: new Date().toISOString(),
           kind: 'boolean',
           trackingKind: 'habit',
+          frequency,
         },
       })
       return habitId
@@ -168,6 +175,7 @@ export function GoalsPage() {
               goal={goal}
               categories={data.categories}
               habits={habits}
+              days={data.days}
               today={today}
               onUpdate={(patch) => dispatch({ type: 'updateLifeGoal', id: goal.id, patch })}
               onRemove={() => dispatch({ type: 'removeLifeGoal', id: goal.id })}

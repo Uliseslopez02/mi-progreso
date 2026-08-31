@@ -14,24 +14,57 @@ const clampPercent = (n: number): number => Math.max(0, Math.min(100, Math.round
 /** Ventana móvil para el cálculo de `kind: 'habits'` — ver `habitsProgress`. */
 const HABITS_WINDOW_DAYS = 30
 
-/**
- * Progreso de una meta tipo `'habits'`: promedio de cumplimiento de sus
- * hábitos vinculados (`linkedHabitIds`) en los últimos 30 días, o desde que
- * se creó la meta si es más reciente que eso (no penaliza días previos a su
- * creación). Reusa `goalConsistency` (ya usada por Historial/Informes) en vez
- * de reimplementar el conteo de días cumplidos.
- */
-function habitsProgress(goal: LifeGoal, days: Record<string, DayRecord>, today: DateKey): number {
-  if (goal.linkedHabitIds.length === 0) return 0
+/** Punto de partida de la ventana de 30 días, acotado por la fecha de creación
+ * de la meta si es más reciente (no penaliza días previos a su creación). */
+function habitsWindowStart(goal: LifeGoal, today: DateKey): DateKey {
   const createdOn = goal.createdAt.slice(0, 10)
   const windowStart = addDays(today, -(HABITS_WINDOW_DAYS - 1))
-  const from = createdOn > windowStart ? createdOn : windowStart
+  return createdOn > windowStart ? createdOn : windowStart
+}
+
+export interface HabitsProgressBreakdown {
+  /** Cuántos hábitos tiene vinculados la meta ahora mismo. */
+  linkedHabitCount: number
+  /** Días reales considerados en la ventana (puede ser menor a 30 si la meta es nueva). */
+  windowDays: number
+  /** Suma de días en que los hábitos vinculados estaban vigentes, en la ventana. */
+  daysPresent: number
+  /** De esos, cuántos se cumplieron. */
+  daysCompleted: number
+  percent: number
+}
+
+/**
+ * Desglose real detrás del % de una meta `kind: 'habits'` — única fuente de
+ * verdad tanto para `habitsProgress` (usado por el reducer) como para la
+ * explicación en la UI ("cumpliste X de Y") y los agregados que recibe la IA
+ * de sugerencias proactivas: ningún consumidor puede mostrar un número que
+ * contradiga a otro, porque todos parten de este mismo cálculo.
+ */
+export function habitsProgressBreakdown(
+  goal: LifeGoal,
+  days: Record<string, DayRecord>,
+  today: DateKey,
+): HabitsProgressBreakdown {
+  const from = habitsWindowStart(goal, today)
+  const windowDays = diffDays(from, today) + 1
+  if (goal.linkedHabitIds.length === 0) {
+    return { linkedHabitCount: 0, windowDays, daysPresent: 0, daysCompleted: 0, percent: 0 }
+  }
   const keys = rangeKeys(from, today)
   const consistency = goalConsistency(days, keys, 'habit').filter((c) => goal.linkedHabitIds.includes(c.id))
-  const present = consistency.reduce((sum, c) => sum + c.daysPresent, 0)
-  if (present === 0) return 0
-  const completed = consistency.reduce((sum, c) => sum + c.daysCompleted, 0)
-  return clampPercent((completed / present) * 100)
+  const daysPresent = consistency.reduce((sum, c) => sum + c.daysPresent, 0)
+  const daysCompleted = consistency.reduce((sum, c) => sum + c.daysCompleted, 0)
+  const percent = daysPresent === 0 ? 0 : clampPercent((daysCompleted / daysPresent) * 100)
+  return { linkedHabitCount: goal.linkedHabitIds.length, windowDays, daysPresent, daysCompleted, percent }
+}
+
+/**
+ * Progreso de una meta tipo `'habits'`: promedio de cumplimiento de sus
+ * hábitos vinculados (`linkedHabitIds`) en la ventana de `habitsProgressBreakdown`.
+ */
+function habitsProgress(goal: LifeGoal, days: Record<string, DayRecord>, today: DateKey): number {
+  return habitsProgressBreakdown(goal, days, today).percent
 }
 
 export function computeLifeGoalProgress(

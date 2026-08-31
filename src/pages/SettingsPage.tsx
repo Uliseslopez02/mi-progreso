@@ -4,8 +4,7 @@ import { CATEGORY_COLOR_NAMES, CATEGORY_PALETTE } from '../domain/categoryColors
 import { createEmptyData } from '../domain/defaults'
 import { NAV_TABS, orderTabs } from '../domain/navigation'
 import { createId } from '../domain/id'
-import { WEEKDAY_KEYS, weekdayInitials } from '../domain/date'
-import type { GoalFrequency, GoalKind, GoalPeriod } from '../domain/types'
+import type { GoalKind, GoalPeriod } from '../domain/types'
 import { signOut } from '../auth/supabaseAuth'
 import { backupFileName, parseBackup, readFileText, serializeBackup } from '../storage/backup'
 import { saveTextFile } from '../storage/claudeDownloads'
@@ -23,26 +22,6 @@ const KIND_LABEL: Record<GoalKind, string> = {
   timed: 'Tiempo',
 }
 
-type FrequencyType = GoalFrequency['type']
-
-const FREQUENCY_TYPE_LABEL: Record<FrequencyType, string> = {
-  daily: 'Todos los días',
-  daysOfWeek: 'Días específicos',
-  timesPerWeek: 'N veces por semana',
-  monthly: 'Mensual',
-}
-
-function frequencyFrom(
-  type: FrequencyType,
-  days: string[],
-  timesPerWeek: number,
-): GoalFrequency | undefined {
-  if (type === 'daily') return undefined
-  if (type === 'daysOfWeek') return { type, days }
-  if (type === 'timesPerWeek') return { type, timesPerWeek }
-  return { type }
-}
-
 export function SettingsPage() {
   const { data, plan, dispatch } = useAppData()
   const [newGoalName, setNewGoalName] = useState('')
@@ -53,11 +32,6 @@ export function SettingsPage() {
   const [newGoalTarget, setNewGoalTarget] = useState(10)
   const [newGoalUnit, setNewGoalUnit] = useState('')
   const [newCategory, setNewCategory] = useState('')
-  const [newHabitName, setNewHabitName] = useState('')
-  const [newHabitCategory, setNewHabitCategory] = useState(data.categories[0]?.id ?? '')
-  const [newHabitFrequencyType, setNewHabitFrequencyType] = useState<FrequencyType>('daily')
-  const [newHabitDays, setNewHabitDays] = useState<string[]>([])
-  const [newHabitTimesPerWeek, setNewHabitTimesPerWeek] = useState(3)
   const [backupMessage, setBackupMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(
     null,
   )
@@ -98,7 +72,6 @@ export function SettingsPage() {
 
   const allGoals = [...data.goals].sort((a, b) => a.order - b.order)
   const goals = allGoals.filter((g) => g.trackingKind !== 'habit')
-  const habits = allGoals.filter((g) => g.trackingKind === 'habit')
   const categories = [...data.categories].sort((a, b) => a.order - b.order)
 
   const addGoal = () => {
@@ -127,37 +100,6 @@ export function SettingsPage() {
     setNewGoalKind('boolean')
     setNewGoalTarget(10)
     setNewGoalUnit('')
-  }
-
-  const addHabit = () => {
-    const name = newHabitName.trim()
-    if (!name || !newHabitCategory) return
-    dispatch({
-      type: 'addGoal',
-      goal: {
-        id: createId('habit'),
-        name,
-        categoryId: newHabitCategory,
-        weight: 1,
-        active: true,
-        period: 'daily',
-        order: habits.length,
-        createdAt: new Date().toISOString(),
-        kind: 'boolean',
-        trackingKind: 'habit',
-        frequency: frequencyFrom(newHabitFrequencyType, newHabitDays, newHabitTimesPerWeek),
-      },
-    })
-    setNewHabitName('')
-    setNewHabitFrequencyType('daily')
-    setNewHabitDays([])
-    setNewHabitTimesPerWeek(3)
-  }
-
-  const toggleNewHabitDay = (day: string) => {
-    setNewHabitDays((current) =>
-      current.includes(day) ? current.filter((d) => d !== day) : [...current, day],
-    )
   }
 
   const navTabs = orderTabs(NAV_TABS, data.settings.navOrder)
@@ -564,227 +506,6 @@ export function SettingsPage() {
           )}
           <button type="button" className="btn btn--primary" onClick={addGoal}>
             Agregar
-          </button>
-        </div>
-      </section>
-
-      <section className="card">
-        <div className="card__header">
-          <h2 className="card__title">Hábitos</h2>
-          <span className="card__hint">
-            {habits.filter((h) => h.active).length} activos de {habits.length}
-          </span>
-        </div>
-
-        <div className="goal-list">
-          {habits.map((habit) => (
-            <div
-              key={habit.id}
-              className={`settings-goal${habit.active ? '' : ' settings-goal--inactive'}`}
-            >
-              <input
-                className="input"
-                aria-label={`Nombre de ${habit.name}`}
-                value={habit.name}
-                onChange={(e) =>
-                  dispatch({ type: 'updateGoal', id: habit.id, patch: { name: e.target.value } })
-                }
-              />
-              <select
-                className="select"
-                aria-label={`Categoría de ${habit.name}`}
-                value={habit.categoryId}
-                onChange={(e) =>
-                  dispatch({
-                    type: 'updateGoal',
-                    id: habit.id,
-                    patch: { categoryId: e.target.value },
-                  })
-                }
-              >
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="select"
-                aria-label={`Repetición de ${habit.name}`}
-                value={habit.frequency?.type ?? 'daily'}
-                onChange={(e) => {
-                  const type = e.target.value as FrequencyType
-                  const days = habit.frequency?.type === 'daysOfWeek' ? habit.frequency.days : []
-                  const timesPerWeek =
-                    habit.frequency?.type === 'timesPerWeek' ? habit.frequency.timesPerWeek : 3
-                  dispatch({
-                    type: 'updateGoal',
-                    id: habit.id,
-                    patch: { frequency: frequencyFrom(type, days, timesPerWeek) },
-                  })
-                }}
-              >
-                {(Object.keys(FREQUENCY_TYPE_LABEL) as FrequencyType[]).map((type) => (
-                  <option key={type} value={type}>
-                    {FREQUENCY_TYPE_LABEL[type]}
-                  </option>
-                ))}
-              </select>
-              {habit.frequency?.type === 'daysOfWeek' && (
-                <div className="chip-list" role="group" aria-label={`Días de ${habit.name}`}>
-                  {WEEKDAY_KEYS.map((day, i) => {
-                    const days = habit.frequency?.type === 'daysOfWeek' ? habit.frequency.days : []
-                    const active = days.includes(day)
-                    return (
-                      <button
-                        key={day}
-                        type="button"
-                        className={`btn btn--ghost${active ? ' btn--primary' : ''}`}
-                        style={{ padding: '4px 10px' }}
-                        onClick={() => {
-                          const next = active ? days.filter((d) => d !== day) : [...days, day]
-                          dispatch({
-                            type: 'updateGoal',
-                            id: habit.id,
-                            patch: { frequency: { type: 'daysOfWeek', days: next } },
-                          })
-                        }}
-                      >
-                        {weekdayInitials[i]}
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-              {habit.frequency?.type === 'timesPerWeek' && (
-                <input
-                  className="input"
-                  type="number"
-                  min={1}
-                  max={7}
-                  style={{ width: 70 }}
-                  aria-label={`Veces por semana de ${habit.name}`}
-                  value={habit.frequency.timesPerWeek}
-                  onChange={(e) => {
-                    const value = Number(e.target.value)
-                    if (!Number.isFinite(value) || value < 1) return
-                    dispatch({
-                      type: 'updateGoal',
-                      id: habit.id,
-                      patch: { frequency: { type: 'timesPerWeek', timesPerWeek: Math.min(7, value) } },
-                    })
-                  }}
-                />
-              )}
-              <div className="settings-goal__actions">
-                <button
-                  type="button"
-                  className="btn btn--ghost"
-                  onClick={() =>
-                    dispatch({ type: 'updateGoal', id: habit.id, patch: { active: !habit.active } })
-                  }
-                >
-                  {habit.active ? 'Pausar' : 'Reanudar'}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn--danger"
-                  aria-label={`Eliminar ${habit.name}`}
-                  onClick={() => dispatch({ type: 'removeGoal', id: habit.id })}
-                >
-                  Eliminar
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="row" style={{ marginTop: 18 }}>
-          <div className="field" style={{ flex: '2 1 240px' }}>
-            <label className="field__label" htmlFor="new-habit">
-              Nuevo hábito
-            </label>
-            <input
-              id="new-habit"
-              className="input"
-              placeholder="Ej. Meditar"
-              value={newHabitName}
-              onChange={(e) => setNewHabitName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') addHabit()
-              }}
-            />
-          </div>
-          <div className="field" style={{ flex: '1 1 170px' }}>
-            <label className="field__label" htmlFor="new-habit-category">
-              Categoría
-            </label>
-            <select
-              id="new-habit-category"
-              className="select"
-              value={newHabitCategory}
-              onChange={(e) => setNewHabitCategory(e.target.value)}
-            >
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field" style={{ flex: '1 1 170px' }}>
-            <label className="field__label" htmlFor="new-habit-frequency">
-              Repetición
-            </label>
-            <select
-              id="new-habit-frequency"
-              className="select"
-              value={newHabitFrequencyType}
-              onChange={(e) => setNewHabitFrequencyType(e.target.value as FrequencyType)}
-            >
-              {(Object.keys(FREQUENCY_TYPE_LABEL) as FrequencyType[]).map((type) => (
-                <option key={type} value={type}>
-                  {FREQUENCY_TYPE_LABEL[type]}
-                </option>
-              ))}
-            </select>
-          </div>
-          {newHabitFrequencyType === 'daysOfWeek' && (
-            <div className="chip-list" role="group" aria-label="Días del nuevo hábito">
-              {WEEKDAY_KEYS.map((day, i) => (
-                <button
-                  key={day}
-                  type="button"
-                  className={`btn btn--ghost${newHabitDays.includes(day) ? ' btn--primary' : ''}`}
-                  style={{ padding: '4px 10px' }}
-                  onClick={() => toggleNewHabitDay(day)}
-                >
-                  {weekdayInitials[i]}
-                </button>
-              ))}
-            </div>
-          )}
-          {newHabitFrequencyType === 'timesPerWeek' && (
-            <div className="field" style={{ flex: '0 0 90px' }}>
-              <label className="field__label" htmlFor="new-habit-times">
-                Veces
-              </label>
-              <input
-                id="new-habit-times"
-                className="input"
-                type="number"
-                min={1}
-                max={7}
-                value={newHabitTimesPerWeek}
-                onChange={(e) => {
-                  const value = Number(e.target.value)
-                  setNewHabitTimesPerWeek(Number.isFinite(value) ? Math.min(7, Math.max(1, value)) : 3)
-                }}
-              />
-            </div>
-          )}
-          <button type="button" className="btn btn--primary" onClick={addHabit}>
-            Agregar hábito
           </button>
         </div>
       </section>

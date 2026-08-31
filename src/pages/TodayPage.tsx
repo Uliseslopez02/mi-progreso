@@ -205,15 +205,6 @@ export function TodayPage({ onNavigate }: Props) {
             <button type="button" className="btn btn--ghost" onClick={() => onNavigate('/agenda')}>
               Agregar tarea
             </button>
-            <button
-              type="button"
-              className="btn btn--ghost"
-              onClick={() =>
-                document.getElementById('objetivos-de-hoy')?.scrollIntoView({ behavior: 'smooth' })
-              }
-            >
-              Registrar progreso
-            </button>
           </div>
         </section>
       </div>
