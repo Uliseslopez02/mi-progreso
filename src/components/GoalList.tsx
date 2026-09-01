@@ -6,7 +6,7 @@ interface Props {
   onToggle: (goalId: string) => void
   onProgressChange?: (goalId: string, value: number) => void
   disabled?: boolean
-  /** Estado vacío por defecto: "No hay objetivos activos. Agregá los tuyos en Ajustes." */
+  /** Estado vacío por defecto: "No hay objetivos activos. Agregá los tuyos en Objetivos → Editar." */
   emptyMessage?: string
   /** Si se pasa, reemplaza el texto de estado vacío por un botón de creación directa. */
   emptyAction?: { label: string; onClick: () => void }
@@ -38,7 +38,7 @@ export function GoalList({
   onToggle,
   onProgressChange,
   disabled = false,
-  emptyMessage = 'No hay objetivos activos. Agregá los tuyos en Ajustes.',
+  emptyMessage = 'No hay objetivos activos. Agregá los tuyos en Objetivos → Editar.',
   emptyAction,
 }: Props) {
   if (goals.length === 0) {

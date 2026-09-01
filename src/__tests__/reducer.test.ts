@@ -58,7 +58,7 @@ describe('reducer: objetivos semanales', () => {
     expect(next).toBe(state)
   })
 
-  it('un objetivo semanal creado desde Ajustes entra a la semana vigente', () => {
+  it('un objetivo semanal creado desde Objetivos → Editar entra a la semana vigente', () => {
     let state = reducer(
       { status: 'loading', data: null, today: TODAY, error: null, plan: 'free' },
       { type: 'hydrate', data: createInitialData('2026-08-01T10:00:00.000Z'), today: TODAY },

@@ -10,6 +10,7 @@ import { LogoMark } from './components/Logo'
 import { NAV_TABS, orderTabs } from './domain/navigation'
 import { CalendarPage } from './pages/CalendarPage'
 import { DayAgendaPage } from './pages/DayAgendaPage'
+import { EditGoalsPage } from './pages/EditGoalsPage'
 import { EisenhowerPage } from './pages/EisenhowerPage'
 import { FocusPage } from './pages/FocusPage'
 import { GoalsPage } from './pages/GoalsPage'
@@ -42,6 +43,7 @@ const OBJETIVOS_ITEMS = [
   { to: '/objetivos', label: 'Hábitos' },
   { to: '/objetivos/metas', label: 'Metas' },
   { to: '/objetivos/rutinas', label: 'Rutinas' },
+  { to: '/objetivos/editar', label: 'Editar' },
 ]
 
 const HISTORIAL_ITEMS = [
@@ -219,6 +221,7 @@ function AppShell() {
               <Route index element={<HabitsPage />} />
               <Route path="metas" element={<GoalsPage />} />
               <Route path="rutinas" element={<RoutinesPage />} />
+              <Route path="editar" element={<EditGoalsPage />} />
             </Route>
             <Route path="/historial" element={<SectionLayout items={HISTORIAL_ITEMS} ariaLabel="Historial" />}>
               <Route index element={<HistoryPage />} />

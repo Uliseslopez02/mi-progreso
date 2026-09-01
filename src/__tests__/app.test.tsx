@@ -157,12 +157,13 @@ describe('Mi Progreso', () => {
     expect(ringPercent()).toBe('9%')
   })
 
-  it('un objetivo creado en Ajustes aparece hoy', async () => {
+  it('un objetivo creado en Objetivos → Editar aparece hoy', async () => {
     const user = userEvent.setup()
     renderApp()
     await screen.findByText('Objetivos de hoy')
 
-    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
+    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.click(screen.getByRole('button', { name: 'Editar' }))
     await user.type(screen.getByLabelText('Nuevo objetivo'), 'Meditar 10 minutos')
     await user.click(screen.getByRole('button', { name: 'Agregar' }))
 
@@ -214,12 +215,13 @@ describe('Mi Progreso', () => {
     expect(within(navAfterReload).getAllByRole('button').map((b) => b.textContent)).toEqual(swappedOrder)
   })
 
-  it('eliminar un objetivo en Ajustes lo saca del día', async () => {
+  it('eliminar un objetivo en Objetivos → Editar lo saca del día', async () => {
     const user = userEvent.setup()
     renderApp()
     await screen.findByText('Objetivos de hoy')
 
-    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
+    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.click(screen.getByRole('button', { name: 'Editar' }))
     await user.click(screen.getByRole('button', { name: 'Eliminar 📖 Leer 20 minutos' }))
 
     await user.click(screen.getByRole('button', { name: 'Hoy' }))
@@ -232,7 +234,8 @@ describe('Mi Progreso', () => {
     renderApp()
     await screen.findByText('Objetivos de hoy')
 
-    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
+    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.click(screen.getByRole('button', { name: 'Editar' }))
     fireEvent.change(screen.getByLabelText('Peso de 💊 Tomar creatina'), {
       target: { value: '30' },
     })
@@ -349,12 +352,13 @@ describe('Mi Progreso', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Mi Progreso' })).toBeInTheDocument()
   })
 
-  it('un objetivo semanal creado en Ajustes aparece en Hoy y se puede marcar', async () => {
+  it('un objetivo semanal creado en Objetivos → Editar aparece en Hoy y se puede marcar', async () => {
     const user = userEvent.setup()
     renderApp()
     await screen.findByText('Objetivos de hoy')
 
-    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
+    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.click(screen.getByRole('button', { name: 'Editar' }))
     await user.type(screen.getByLabelText('Nuevo objetivo'), 'Planificar la semana')
     await user.selectOptions(screen.getByLabelText('Frecuencia'), 'Semanal')
     await user.click(screen.getByRole('button', { name: 'Agregar' }))
@@ -373,12 +377,13 @@ describe('Mi Progreso', () => {
     expect(ringPercent()).toBe('0%')
   })
 
-  it('un objetivo cuantitativo se crea desde Ajustes, se puede cargar progreso y persiste', async () => {
+  it('un objetivo cuantitativo se crea desde Objetivos → Editar, se puede cargar progreso y persiste', async () => {
     const user = userEvent.setup()
     const { repository } = renderApp()
     await screen.findByText('Objetivos de hoy')
 
-    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
+    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.click(screen.getByRole('button', { name: 'Editar' }))
     await user.type(screen.getByLabelText('Nuevo objetivo'), 'Tomar agua')
     await user.selectOptions(screen.getByLabelText('Tipo'), 'Cantidad')
     fireEvent.change(screen.getByLabelText('Meta'), { target: { value: '2' } })
