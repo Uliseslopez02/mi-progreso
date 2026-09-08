@@ -4,6 +4,14 @@ interface RequestBody {
   planTier?: 'premium_monthly' | 'premium_yearly'
 }
 
+const PLAN_CONFIG: Record<
+  'premium_monthly' | 'premium_yearly',
+  { reason: string; frequency: number; envVar: string }
+> = {
+  premium_monthly: { reason: 'Mi Progreso Premium Mensual', frequency: 1, envVar: 'MP_PRICE_MONTHLY_ARS' },
+  premium_yearly: { reason: 'Mi Progreso Premium Anual', frequency: 12, envVar: 'MP_PRICE_YEARLY_ARS' },
+}
+
 function jsonResponse(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
 }
@@ -33,8 +41,15 @@ async function getAuthenticatedUser(request: Request): Promise<{ id: string; ema
 /**
  * Crea una suscripción (preapproval) de Mercado Pago para el plan elegido y
  * devuelve la URL de checkout hosteada por MP para redirigir al usuario.
- * Los montos reales en ARS viven en los `preapproval_plan` de MP (creados una
- * sola vez fuera de este código, IDs en env vars) — nunca hardcodeados acá.
+ *
+ * IMPORTANTE: una suscripción con `preapproval_plan_id` (plan asociado) exige
+ * que el propio backend ya tenga un `card_token_id` (tarjeta tokenizada) y
+ * `status: 'authorized'` — MP no ofrece ahí un checkout hosteado pendiente.
+ * Por eso NO se usa `preapproval_plan_id` acá: se crea una suscripción "sin
+ * plan asociado", con `auto_recurring` inline y `status: 'pending'`, que es
+ * el único modo que devuelve un `init_point` para que el usuario ponga su
+ * tarjeta del lado de Mercado Pago (nunca la vemos nosotros). El monto real
+ * en ARS vive en una env var (`MP_PRICE_*_ARS`), nunca hardcodeado acá.
  */
 export default async function handler(request: Request): Promise<Response> {
   if (request.method !== 'POST') {
@@ -47,10 +62,6 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   const accessToken = process.env.MP_ACCESS_TOKEN
-  const planIds: Record<'premium_monthly' | 'premium_yearly', string | undefined> = {
-    premium_monthly: process.env.MP_PLAN_ID_MONTHLY,
-    premium_yearly: process.env.MP_PLAN_ID_YEARLY,
-  }
   if (!accessToken) {
     return jsonResponse({ error: 'Falta configurar MP_ACCESS_TOKEN en el servidor.' }, 500)
   }
@@ -63,9 +74,10 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   const planTier = body.planTier
-  const planId = planTier ? planIds[planTier] : undefined
-  if (!planTier || !planId) {
-    return jsonResponse({ error: 'Plan inválido.' }, 400)
+  const plan = planTier ? PLAN_CONFIG[planTier] : undefined
+  const amount = plan ? Number(process.env[plan.envVar]) : NaN
+  if (!plan || !amount) {
+    return jsonResponse({ error: 'Plan inválido o precio sin configurar.' }, 400)
   }
 
   const origin = new URL(request.url).origin
@@ -79,14 +91,17 @@ export default async function handler(request: Request): Promise<Response> {
         authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
-        preapproval_plan_id: planId,
+        reason: plan.reason,
         payer_email: user.email,
         external_reference: user.id,
         back_url: `${origin}/premium/confirmacion`,
-        // Sin card_token_id (no recibimos ni tocamos datos de tarjeta acá):
-        // 'pending' es lo que le pide a MP devolver un init_point de checkout
-        // hosteado para que el usuario autorice el pago del lado de MP.
         status: 'pending',
+        auto_recurring: {
+          frequency: plan.frequency,
+          frequency_type: 'months',
+          transaction_amount: amount,
+          currency_id: 'ARS',
+        },
       }),
     })
   } catch {
