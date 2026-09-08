@@ -16,6 +16,19 @@ function jsonResponse(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
 }
 
+/**
+ * El monto de la suscripción viene de una env var en ARS y siempre es entero
+ * (sin centavos). Se parsea tolerante — igual criterio que `parseWholePesos`
+ * en src/domain/premiumPricing.ts — para aceptar cualquier formato razonable
+ * que se haya cargado en Vercel: "3900", "3.900", "$3.900", "3.900 ARS".
+ * `Number("$3.900")` daría NaN y `Number("3.900")` daría 3.9 — ambos rompían
+ * el checkout con "precio sin configurar" aunque la variable estuviera puesta.
+ */
+function parseArsAmount(raw: string | undefined): number {
+  if (!raw) return NaN
+  return Number(raw.replace(/[^0-9]/g, ''))
+}
+
 /** Ver la misma función en api/suggest-habits.ts — mismo criterio de auth, pero acá
  * además necesitamos el id/email reales del usuario, no sólo un booleano. */
 async function getAuthenticatedUser(request: Request): Promise<{ id: string; email: string } | null> {
@@ -75,9 +88,14 @@ export default async function handler(request: Request): Promise<Response> {
 
   const planTier = body.planTier
   const plan = planTier ? PLAN_CONFIG[planTier] : undefined
-  const amount = plan ? Number(process.env[plan.envVar]) : NaN
-  if (!plan || !amount) {
-    return jsonResponse({ error: 'Plan inválido o precio sin configurar.' }, 400)
+  if (!plan) {
+    return jsonResponse({ error: 'Plan inválido.' }, 400)
+  }
+  const rawAmount = process.env[plan.envVar]
+  const amount = parseArsAmount(rawAmount)
+  if (!amount || !Number.isFinite(amount)) {
+    console.error('checkout: precio sin configurar', { envVar: plan.envVar, rawAmount, parsed: amount })
+    return jsonResponse({ error: `Precio sin configurar (${plan.envVar}).` }, 400)
   }
 
   const origin = new URL(request.url).origin
