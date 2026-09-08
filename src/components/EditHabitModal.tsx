@@ -49,6 +49,7 @@ export function EditHabitModal({ habit, categories, onUpdate, onRemove, onClose 
               className="btn btn--danger"
               aria-label={`Eliminar ${habit.name}`}
               onClick={() => {
+                if (!window.confirm(`Vas a eliminar "${habit.name}" y perder su historial de cumplimiento. Esta acción no se puede deshacer. ¿Continuar?`)) return
                 onRemove()
                 onClose()
               }}

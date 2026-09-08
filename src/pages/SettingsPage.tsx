@@ -244,7 +244,10 @@ export function SettingsPage() {
                   type="button"
                   className="icon-btn"
                   aria-label={`Eliminar ${category.name}`}
-                  onClick={() => dispatch({ type: 'removeCategory', id: category.id })}
+                  onClick={() => {
+                    if (!window.confirm(`Vas a eliminar la categoría "${category.name}" y todos los objetivos/hábitos que tiene asignados. Esta acción no se puede deshacer. ¿Continuar?`)) return
+                    dispatch({ type: 'removeCategory', id: category.id })
+                  }}
                 >
                   ×
                 </button>

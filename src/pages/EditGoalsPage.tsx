@@ -228,7 +228,10 @@ export function EditGoalsPage() {
                   type="button"
                   className="btn btn--danger"
                   aria-label={`Eliminar ${goal.name}`}
-                  onClick={() => dispatch({ type: 'removeGoal', id: goal.id })}
+                  onClick={() => {
+                    if (!window.confirm(`Vas a eliminar "${goal.name}" y perder su historial de cumplimiento. Esta acción no se puede deshacer. ¿Continuar?`)) return
+                    dispatch({ type: 'removeGoal', id: goal.id })
+                  }}
                 >
                   Eliminar
                 </button>

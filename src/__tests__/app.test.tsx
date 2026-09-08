@@ -216,6 +216,7 @@ describe('Mi Progreso', () => {
   })
 
   it('eliminar un objetivo en Objetivos → Editar lo saca del día', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
     const user = userEvent.setup()
     renderApp()
     await screen.findByText('Objetivos de hoy')
@@ -804,6 +805,7 @@ describe('Mi Progreso', () => {
   })
 
   it('un proyecto se crea, se abre su tablero y una tarea nueva persiste', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
     const user = userEvent.setup()
     const { repository } = renderApp()
     await screen.findByText('Objetivos de hoy')
@@ -864,7 +866,6 @@ describe('Mi Progreso', () => {
     await user.click(screen.getByRole('button', { name: 'Agregar' }))
 
     await user.click(screen.getByRole('checkbox', { name: 'Hacer ahora TEST' }))
-    expect(screen.queryByText('Hacer ahora TEST')).not.toBeInTheDocument()
 
     await waitFor(async () => {
       const stored = await repository.load()

@@ -178,7 +178,10 @@ export function GoalsPage() {
               days={data.days}
               today={today}
               onUpdate={(patch) => dispatch({ type: 'updateLifeGoal', id: goal.id, patch })}
-              onRemove={() => dispatch({ type: 'removeLifeGoal', id: goal.id })}
+              onRemove={() => {
+                if (!window.confirm(`Vas a eliminar la meta "${goal.name}". Esta acción no se puede deshacer. ¿Continuar?`)) return
+                dispatch({ type: 'removeLifeGoal', id: goal.id })
+              }}
               onMoveUp={() => move(goal.id, -1)}
               onMoveDown={() => move(goal.id, 1)}
             />

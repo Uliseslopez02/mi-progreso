@@ -839,13 +839,6 @@ main { flex: 1; padding: 28px 0 72px; }
 
 .planner-item--static { cursor: default; }
 
-/* ---------- Matriz Eisenhower ---------- */
-.eisenhower-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 14px;
-}
-
 .planner-day__add {
   display: flex;
   gap: 4px;
@@ -1040,6 +1033,25 @@ main { flex: 1; padding: 28px 0 72px; }
 .calendar__day--selected { box-shadow: 0 0 0 2px var(--accent); color: var(--text); }
 
 .calendar__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--band-none); }
+
+.calendar__day-badge {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--band-none);
+  color: var(--surface);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .calendar__grid { gap: 4px; }
+  .calendar__day { border-radius: 10px; font-size: 0.74rem; gap: 2px; }
+  .calendar__day-badge { min-width: 14px; height: 14px; font-size: 0.56rem; line-height: 14px; }
+}
 
 .legend {
   display: flex;
@@ -2015,6 +2027,43 @@ main { flex: 1; padding: 28px 0 72px; }
 .project-row__handle:hover { color: var(--text-muted); }
 .drag-handle:active,
 .project-row__handle:active { cursor: grabbing; }
+
+/* ---------- Kanban de Proyectos (touch + mouse) ---------- */
+.kanban-column {
+  transition: border-color 0.15s var(--ease), background-color 0.15s var(--ease);
+}
+
+.kanban-column--over {
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb, 52, 211, 153), 0.08);
+}
+
+.kanban-column__empty {
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 10px 8px;
+  font-size: 0.76rem;
+  color: var(--text-dim);
+  text-align: center;
+  list-style: none;
+}
+
+/* Toda la tarjeta es el asa de arrastre: mantener presionado (touch) o
+ * click-and-drag (mouse) desde cualquier punto que no sea el botón "×". */
+.kanban-card {
+  cursor: grab;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.kanban-card:active { cursor: grabbing; }
+.kanban-card .drag-handle { touch-action: auto; cursor: inherit; }
+
+.kanban-card--overlay {
+  box-shadow: var(--shadow);
+  cursor: grabbing;
+  opacity: 0.95;
+}
 
 .project-row__name-col {
   display: flex;

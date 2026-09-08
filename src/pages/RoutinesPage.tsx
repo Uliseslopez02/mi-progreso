@@ -85,7 +85,10 @@ export function RoutinesPage() {
               key={routine.id}
               routine={routine}
               onUpdate={(patch) => dispatch({ type: 'updateRoutine', id: routine.id, patch })}
-              onRemove={() => dispatch({ type: 'removeRoutine', id: routine.id })}
+              onRemove={() => {
+                if (!window.confirm(`Vas a eliminar la rutina "${routine.name}". Esta acción no se puede deshacer. ¿Continuar?`)) return
+                dispatch({ type: 'removeRoutine', id: routine.id })
+              }}
               onMoveUp={() => move(routine.id, -1)}
               onMoveDown={() => move(routine.id, 1)}
             />

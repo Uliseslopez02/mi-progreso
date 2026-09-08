@@ -49,10 +49,11 @@ export function MonthAgenda({ monthKey, today, itemsByDay, onSelect, onMonthChan
         {dates.map((date) => {
           const items = itemsByDay[date] ?? []
           const done = items.filter((i) => i.done).length
+          const pending = items.length - done
           const classes = ['calendar__day', date === today ? 'calendar__day--today' : ''].filter(Boolean).join(' ')
 
           let dotColor: string | null = null
-          if (items.length > 0) dotColor = done === items.length ? 'var(--accent)' : 'var(--text-dim)'
+          if (items.length > 0) dotColor = done === items.length ? 'var(--accent)' : 'var(--band-good)'
 
           return (
             <button
@@ -63,10 +64,25 @@ export function MonthAgenda({ monthKey, today, itemsByDay, onSelect, onMonthChan
               aria-label={`${fromDateKey(date).getDate()} — ${items.length === 0 ? 'sin actividades' : `${done} de ${items.length} realizadas`}`}
             >
               <span className="numeric">{fromDateKey(date).getDate()}</span>
-              {dotColor && <span className="calendar__dot" style={{ background: dotColor }} />}
+              {items.length > 0 && (
+                <span className="calendar__day-badge" style={{ background: dotColor ?? undefined }}>
+                  {pending > 0 ? pending : '✓'}
+                </span>
+              )}
             </button>
           )
         })}
+      </div>
+
+      <div className="legend">
+        <span className="legend__item">
+          <span className="legend__swatch" style={{ background: 'var(--band-good)' }} />
+          Con pendientes
+        </span>
+        <span className="legend__item">
+          <span className="legend__swatch" style={{ background: 'var(--accent)' }} />
+          Todo hecho
+        </span>
       </div>
     </div>
   )
