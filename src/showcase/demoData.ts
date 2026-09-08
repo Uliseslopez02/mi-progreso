@@ -6,7 +6,7 @@
  */
 import { addDays, todayKey, type DateKey } from '../domain/date'
 import { snapshotGoals } from '../domain/day'
-import type { Category, DayRecord, Goal, LifeGoal } from '../domain/types'
+import type { Category, DayRecord, Goal, LifeGoal, Project, ProjectTask } from '../domain/types'
 
 export const TODAY: DateKey = todayKey()
 export const DAYS_BACK = 20
@@ -19,7 +19,9 @@ export const DEMO_CATEGORIES: Category[] = [
 /** Objetivos diarios "que puntúan" — alimentan el % de hoy (Módulos 2 y 9). */
 export const DEMO_GOALS: Goal[] = [
   {
-    id: 'goal-train', name: 'Entrenar', categoryId: 'sc-salud', weight: 1, active: true,
+    // Pesa el doble a propósito: da un caso real de ponderación para el módulo
+    // "Sistema de porcentajes" (el resto pesa 1).
+    id: 'goal-train', name: 'Entrenar', categoryId: 'sc-salud', weight: 2, active: true,
     period: 'daily', order: 0, createdAt: TODAY, kind: 'boolean', trackingKind: 'goal',
     frequency: { type: 'daily' },
   },
@@ -167,6 +169,26 @@ export function buildDemoDreams(): LifeGoal[] {
       order: 2,
       createdAt: TODAY,
     },
+  ]
+}
+
+/** Proyecto de ejemplo para el tablero Kanban — tareas sin fecha fija, se mueven de columna a mano. */
+export const DEMO_PROJECT: Project = {
+  id: 'sc-proj-lanzamiento',
+  name: 'Lanzar mi proyecto personal',
+  description: 'De la idea a los primeros usuarios reales.',
+  status: 'active',
+  order: 0,
+  createdAt: TODAY,
+}
+
+export function buildDemoProjectTasks(): ProjectTask[] {
+  return [
+    { id: 'sc-pt-1', projectId: DEMO_PROJECT.id, title: 'Definir el problema que resuelve', status: 'done', order: 0, createdAt: TODAY },
+    { id: 'sc-pt-2', projectId: DEMO_PROJECT.id, title: 'Armar el primer prototipo', status: 'done', order: 1, createdAt: TODAY },
+    { id: 'sc-pt-3', projectId: DEMO_PROJECT.id, title: 'Probarlo con 5 personas', status: 'doing', order: 0, createdAt: TODAY },
+    { id: 'sc-pt-4', projectId: DEMO_PROJECT.id, title: 'Ajustar según el feedback', status: 'todo', order: 0, createdAt: TODAY },
+    { id: 'sc-pt-5', projectId: DEMO_PROJECT.id, title: 'Publicarlo', status: 'todo', order: 1, createdAt: TODAY },
   ]
 }
 
