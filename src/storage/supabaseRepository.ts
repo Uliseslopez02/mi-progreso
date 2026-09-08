@@ -17,6 +17,7 @@ import type {
   Reflection,
   Routine,
   RoutineRun,
+  SubscriptionSummary,
   UserPlan,
 } from '../domain/types'
 import { supabase } from '../lib/supabaseClient'
@@ -300,6 +301,26 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
       const { data, error } = await client.from('profiles').select('plan').single()
       if (error) throw error
       return (data?.plan as UserPlan | undefined) ?? 'free'
+    },
+
+    async getSubscriptionSummary() {
+      const yearMonth = new Date().toISOString().slice(0, 7)
+      const [profileRes, subscriptionRes, usageRes] = await Promise.all([
+        client.from('profiles').select('plan').single(),
+        client.from('subscriptions').select('status, plan_tier, current_period_end').maybeSingle(),
+        client.from('ai_usage').select('count').eq('year_month', yearMonth).maybeSingle(),
+      ])
+      if (profileRes.error) throw profileRes.error
+      if (subscriptionRes.error) throw subscriptionRes.error
+      if (usageRes.error) throw usageRes.error
+
+      const plan = (profileRes.data?.plan as UserPlan | undefined) ?? 'free'
+      return {
+        status: (subscriptionRes.data?.status as SubscriptionSummary['status'] | undefined) ?? 'free',
+        planTier: (subscriptionRes.data?.plan_tier as SubscriptionSummary['planTier'] | undefined) ?? 'free',
+        currentPeriodEnd: subscriptionRes.data?.current_period_end ?? null,
+        aiUsage: plan === 'premium' ? null : { count: usageRes.data?.count ?? 0, limit: 3 },
+      }
     },
 
     async getOnboardingCompleted() {

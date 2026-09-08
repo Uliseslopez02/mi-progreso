@@ -178,7 +178,7 @@ describe('Mi Progreso', () => {
     await screen.findByText('Objetivos de hoy')
 
     await user.click(screen.getByRole('button', { name: 'Ajustes' }))
-    expect(await screen.findByText('Free')).toBeInTheDocument()
+    expect(await screen.findByText('Free · Ver planes')).toBeInTheDocument()
   })
 
   it('reordenar la navegación en Ajustes cambia la barra superior y persiste', async () => {
@@ -844,7 +844,7 @@ describe('Mi Progreso', () => {
     })
   })
 
-  it('la matriz Eisenhower clasifica las tareas de Agenda por urgencia/importancia', async () => {
+  it('una tarea de Agenda se marca como hecha y se elimina, y persiste', async () => {
     const user = userEvent.setup()
     const { repository } = renderApp()
     await screen.findByText('Objetivos de hoy')
@@ -862,13 +862,6 @@ describe('Mi Progreso', () => {
     await user.selectOptions(screen.getByLabelText('Día'), formatShortDate(tomorrow))
     await user.selectOptions(screen.getByLabelText('Prioridad'), 'Baja')
     await user.click(screen.getByRole('button', { name: 'Agregar' }))
-
-    await user.click(screen.getByRole('button', { name: 'Matriz' }))
-
-    const doQuadrant = screen.getByText('Hacer ahora').closest('.card') as HTMLElement
-    expect(within(doQuadrant).getByText('Hacer ahora TEST')).toBeInTheDocument()
-    const eliminateQuadrant = screen.getByText('Eliminar').closest('.card') as HTMLElement
-    expect(within(eliminateQuadrant).getByText('Eliminar TEST')).toBeInTheDocument()
 
     await user.click(screen.getByRole('checkbox', { name: 'Hacer ahora TEST' }))
     expect(screen.queryByText('Hacer ahora TEST')).not.toBeInTheDocument()

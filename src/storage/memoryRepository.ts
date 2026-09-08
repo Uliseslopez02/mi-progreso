@@ -29,6 +29,14 @@ export function createMemoryRepository(
     async getUserPlan() {
       return plan
     },
+    async getSubscriptionSummary() {
+      return {
+        status: plan === 'premium' ? 'active' : 'free',
+        planTier: plan === 'premium' ? 'premium_monthly' : 'free',
+        currentPeriodEnd: null,
+        aiUsage: plan === 'premium' ? null : { count: 0, limit: 3 },
+      }
+    },
     async getOnboardingCompleted() {
       return onboardingCompleted
     },

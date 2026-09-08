@@ -374,3 +374,16 @@ export const SCHEMA_VERSION = 10
  * de cuenta que se lee aparte (ver `ProgressRepository.getUserPlan`).
  */
 export type UserPlan = 'free' | 'premium'
+
+/**
+ * Estado de facturación real (tabla `subscriptions`, ver migración
+ * 0023_subscriptions.sql). `aiUsage` sólo trae datos cuando el plan efectivo
+ * es 'free' (Premium no tiene límite, no hace falta contar) — `count`/`limit`
+ * son mes calendario, se resetean solos el día 1.
+ */
+export interface SubscriptionSummary {
+  status: 'free' | 'trial' | 'active' | 'past_due' | 'canceled' | 'expired'
+  planTier: 'free' | 'premium_monthly' | 'premium_yearly'
+  currentPeriodEnd: string | null
+  aiUsage: { count: number; limit: number } | null
+}

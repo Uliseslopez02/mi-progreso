@@ -8,7 +8,7 @@ export interface SuggestedHabit {
 
 export type HabitSuggestionResult =
   | { ok: true; suggestions: SuggestedHabit[] }
-  | { ok: false; error: string }
+  | { ok: false; error: string; code?: string }
 
 /**
  * Pide sugerencias de hábitos para una meta recién creada, vía la Edge
@@ -32,8 +32,8 @@ export async function suggestHabits(goalName: string, categoryName?: string): Pr
       body: JSON.stringify({ goalName, categoryName }),
     })
     if (!res.ok) {
-      const body = (await res.json().catch(() => null)) as { error?: string } | null
-      return { ok: false, error: body?.error ?? 'No se pudieron generar sugerencias.' }
+      const body = (await res.json().catch(() => null)) as { error?: string; code?: string } | null
+      return { ok: false, error: body?.error ?? 'No se pudieron generar sugerencias.', code: body?.code }
     }
     const data = (await res.json()) as { suggestions?: unknown }
     const suggestions = Array.isArray(data.suggestions)

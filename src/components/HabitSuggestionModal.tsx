@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { suggestHabits } from '../domain/habitSuggestions'
 import type { GoalFrequency } from '../domain/types'
+import { AiUpsellCard } from './AiUpsellCard'
 import { Modal } from './Modal'
 
 interface SuggestionItem {
@@ -37,6 +38,7 @@ function frequencyForTimesPerWeek(timesPerWeek: number): GoalFrequency | undefin
 export function HabitSuggestionModal({ goalName, categoryName, onConfirm, onSkip }: Props) {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [errorMessage, setErrorMessage] = useState('')
+  const [errorCode, setErrorCode] = useState<string | undefined>()
   const [items, setItems] = useState<SuggestionItem[]>([])
   const [driveProgress, setDriveProgress] = useState(true)
 
@@ -49,6 +51,7 @@ export function HabitSuggestionModal({ goalName, categoryName, onConfirm, onSkip
         setStatus('ready')
       } else {
         setErrorMessage(result.ok ? 'No se generaron sugerencias para esta meta.' : result.error)
+        setErrorCode(result.ok ? undefined : result.code)
         setStatus('error')
       }
     })
@@ -95,7 +98,8 @@ export function HabitSuggestionModal({ goalName, categoryName, onConfirm, onSkip
 
       {status === 'loading' && <p className="habit-suggestions__loading">Pensando sugerencias…</p>}
 
-      {status === 'error' && <p className="empty">{errorMessage}</p>}
+      {status === 'error' && errorCode === 'ai_limit_reached' && <AiUpsellCard feature="suggest_habits" />}
+      {status === 'error' && errorCode !== 'ai_limit_reached' && <p className="empty">{errorMessage}</p>}
 
       {status === 'ready' && (
         <>

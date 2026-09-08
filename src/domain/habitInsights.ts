@@ -70,7 +70,9 @@ export function buildHabitInsightsPayload(data: AppData, today: DateKey): HabitI
   return { habits: habitAggregates, weekdays, categories }
 }
 
-export type HabitInsightsResult = { ok: true; insights: string[] } | { ok: false; error: string }
+export type HabitInsightsResult =
+  | { ok: true; insights: string[] }
+  | { ok: false; error: string; code?: string }
 
 /**
  * Pide sugerencias proactivas basadas en el historial de hábitos, vía la Edge
@@ -90,8 +92,8 @@ export async function fetchHabitInsights(payload: HabitInsightsPayload): Promise
       body: JSON.stringify(payload),
     })
     if (!res.ok) {
-      const body = (await res.json().catch(() => null)) as { error?: string } | null
-      return { ok: false, error: body?.error ?? 'No se pudieron generar sugerencias.' }
+      const body = (await res.json().catch(() => null)) as { error?: string; code?: string } | null
+      return { ok: false, error: body?.error ?? 'No se pudieron generar sugerencias.', code: body?.code }
     }
     const data = (await res.json()) as { insights?: unknown }
     const insights = Array.isArray(data.insights)

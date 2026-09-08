@@ -11,7 +11,6 @@ import { NAV_TABS, orderTabs } from './domain/navigation'
 import { CalendarPage } from './pages/CalendarPage'
 import { DayAgendaPage } from './pages/DayAgendaPage'
 import { EditGoalsPage } from './pages/EditGoalsPage'
-import { EisenhowerPage } from './pages/EisenhowerPage'
 import { FocusPage } from './pages/FocusPage'
 import { GoalsPage } from './pages/GoalsPage'
 import { HabitsPage } from './pages/HabitsPage'
@@ -22,6 +21,8 @@ import { MonthAgendaPage } from './pages/MonthAgendaPage'
 import { MonthlyReviewPage } from './pages/MonthlyReviewPage'
 import { NotesPage } from './pages/NotesPage'
 import { PlannerPage } from './pages/PlannerPage'
+import { PremiumConfirmationPage } from './pages/PremiumConfirmationPage'
+import { PremiumPage } from './pages/PremiumPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { RoutinesPage } from './pages/RoutinesPage'
 import { SettingsPage } from './pages/SettingsPage'
@@ -33,10 +34,9 @@ import { useAppContext } from './state/context'
 
 const AGENDA_ITEMS = [
   { to: '/agenda', label: 'Día' },
-  { to: '/agenda/semana', label: 'Planificador' },
   { to: '/agenda/mes', label: 'Mes' },
+  { to: '/agenda/semana', label: 'Planificador' },
   { to: '/agenda/enfoque', label: 'Enfoque' },
-  { to: '/agenda/matriz', label: 'Matriz' },
 ]
 
 const OBJETIVOS_ITEMS = [
@@ -211,10 +211,9 @@ function AppShell() {
             <Route path="/" element={<TodayPage onNavigate={navigate} />} />
             <Route path="/agenda" element={<SectionLayout items={AGENDA_ITEMS} ariaLabel="Agenda" />}>
               <Route index element={<DayAgendaPage />} />
-              <Route path="semana" element={<PlannerPage />} />
               <Route path="mes" element={<MonthAgendaPage />} />
+              <Route path="semana" element={<PlannerPage />} />
               <Route path="enfoque" element={<FocusPage />} />
-              <Route path="matriz" element={<EisenhowerPage />} />
             </Route>
             <Route path="/proyectos" element={<ProjectsPage />} />
             <Route path="/objetivos" element={<SectionLayout items={OBJETIVOS_ITEMS} ariaLabel="Objetivos" />}>
@@ -234,6 +233,8 @@ function AppShell() {
               <Route path="revision" element={<MonthlyReviewPage />} />
             </Route>
             <Route path="/ajustes" element={<SettingsPage />} />
+            <Route path="/premium" element={<PremiumPage />} />
+            <Route path="/premium/confirmacion" element={<PremiumConfirmationPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { DateKey } from '../domain/date'
 import { buildHabitInsightsPayload, fetchHabitInsights } from '../domain/habitInsights'
 import type { AppData } from '../domain/types'
+import { AiUpsellCard } from './AiUpsellCard'
 
 const CACHE_PREFIX = 'mi-progreso:habit-insights:'
 
@@ -39,6 +40,7 @@ export function HabitInsightsCard({ data, today }: Props) {
   const [insights, setInsights] = useState<string[] | null>(() => readCache(today))
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
+  const [errorCode, setErrorCode] = useState<string | undefined>()
 
   useEffect(() => {
     setInsights(readCache(today))
@@ -55,6 +57,7 @@ export function HabitInsightsCard({ data, today }: Props) {
       setStatus('idle')
     } else {
       setErrorMessage(result.error)
+      setErrorCode(result.code)
       setStatus('error')
     }
   }
@@ -68,7 +71,8 @@ export function HabitInsightsCard({ data, today }: Props) {
         </button>
       </div>
 
-      {status === 'error' && <p className="empty">{errorMessage}</p>}
+      {status === 'error' && errorCode === 'ai_limit_reached' && <AiUpsellCard feature="habit_insights" />}
+      {status === 'error' && errorCode !== 'ai_limit_reached' && <p className="empty">{errorMessage}</p>}
 
       {status !== 'error' && insights === null && (
         <p className="card__hint">

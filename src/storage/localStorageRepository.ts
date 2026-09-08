@@ -63,6 +63,12 @@ export function createLocalStorageRepository(
       // No hay concepto de cuenta/plan sin Supabase — localStorage es siempre 'free'.
       return 'free'
     },
+    async getSubscriptionSummary() {
+      // Mismo criterio que getUserPlan: sin cuenta real no hay facturación
+      // posible, siempre 'free' sin límite aplicado (no tiene sentido bloquear
+      // IA en un modo que ni siquiera llega a los Edge Functions con sesión).
+      return { status: 'free', planTier: 'free', currentPeriodEnd: null, aiUsage: { count: 0, limit: 3 } }
+    },
     async getOnboardingCompleted() {
       // Sin cuenta real no hay perfil server-side — la señal local
       // (onboarding/onboardingStatus.ts) es la única fuente en este modo.

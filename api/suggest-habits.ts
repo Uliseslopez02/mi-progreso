@@ -38,6 +38,37 @@ async function isAuthenticated(request: Request): Promise<boolean> {
 }
 
 /**
+ * Gating de IA (ver migración 0023_subscriptions.sql, función
+ * `increment_ai_usage`): Premium siempre permitido; Free hasta 3 usos por
+ * mes calendario. Se llama con el mismo token del usuario (RLS/security
+ * definer resuelven todo server-side, sin service-role key acá).
+ */
+async function checkAiUsageAllowed(request: Request): Promise<boolean> {
+  const auth = request.headers.get('authorization')
+  const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null
+  const supabaseUrl = process.env.VITE_SUPABASE_URL
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY
+  if (!token || !supabaseUrl || !anonKey) return false
+
+  try {
+    const res = await fetch(`${supabaseUrl}/rest/v1/rpc/increment_ai_usage`, {
+      method: 'POST',
+      headers: {
+        apikey: anonKey,
+        authorization: `Bearer ${token}`,
+        'content-type': 'application/json',
+      },
+      body: '{}',
+    })
+    if (!res.ok) return false
+    const data = (await res.json()) as { allowed?: boolean }
+    return data.allowed === true
+  } catch {
+    return false
+  }
+}
+
+/**
  * Sugiere hábitos diarios para una meta recién creada, vía la API de Claude.
  * Vive en el servidor (Vercel Edge Function) para que `ANTHROPIC_API_KEY`
  * nunca llegue al bundle del cliente — a diferencia de `VITE_SUPABASE_*`, esta
@@ -50,6 +81,16 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (!(await isAuthenticated(request))) {
     return jsonResponse({ error: 'No autenticado.' }, 401)
+  }
+
+  if (!(await checkAiUsageAllowed(request))) {
+    return jsonResponse(
+      {
+        error: 'Ya usaste tus 3 sugerencias de IA este mes. Con Premium, la IA te acompaña sin límites.',
+        code: 'ai_limit_reached',
+      },
+      403,
+    )
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY

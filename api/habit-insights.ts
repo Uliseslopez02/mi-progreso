@@ -49,6 +49,32 @@ async function isAuthenticated(request: Request): Promise<boolean> {
   }
 }
 
+/** Ver la misma función en api/suggest-habits.ts — mismo criterio de gating de IA. */
+async function checkAiUsageAllowed(request: Request): Promise<boolean> {
+  const auth = request.headers.get('authorization')
+  const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null
+  const supabaseUrl = process.env.VITE_SUPABASE_URL
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY
+  if (!token || !supabaseUrl || !anonKey) return false
+
+  try {
+    const res = await fetch(`${supabaseUrl}/rest/v1/rpc/increment_ai_usage`, {
+      method: 'POST',
+      headers: {
+        apikey: anonKey,
+        authorization: `Bearer ${token}`,
+        'content-type': 'application/json',
+      },
+      body: '{}',
+    })
+    if (!res.ok) return false
+    const data = (await res.json()) as { allowed?: boolean }
+    return data.allowed === true
+  } catch {
+    return false
+  }
+}
+
 /**
  * Sugerencias proactivas basadas en el historial real de cumplimiento —
  * rachas, días de la semana, categorías. Vive en el servidor (Vercel Edge
@@ -83,9 +109,20 @@ export default async function handler(request: Request): Promise<Response> {
   const categories = Array.isArray(body.categories) ? body.categories.slice(0, 20) : []
 
   // Sin hábitos no hay nada real para analizar — evita gastar cuota de Claude
-  // en un caso que siempre va a devolver "no hay suficientes datos".
+  // (y de uso mensual de IA del plan Free) en un caso que siempre va a
+  // devolver "no hay suficientes datos".
   if (habits.length === 0) {
     return jsonResponse({ insights: [] }, 200)
+  }
+
+  if (!(await checkAiUsageAllowed(request))) {
+    return jsonResponse(
+      {
+        error: 'Ya usaste tus 3 sugerencias de IA este mes. Con Premium, la IA te acompaña sin límites.',
+        code: 'ai_limit_reached',
+      },
+      403,
+    )
   }
 
   const summary = JSON.stringify({ habits, weekdays, categories })

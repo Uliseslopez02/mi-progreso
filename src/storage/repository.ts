@@ -1,4 +1,4 @@
-import type { AppData, FocusSession, UserPlan } from '../domain/types'
+import type { AppData, FocusSession, SubscriptionSummary, UserPlan } from '../domain/types'
 
 /**
  * Contrato de persistencia. La UI sólo conoce esta interfaz, así que el día que
@@ -10,8 +10,11 @@ import type { AppData, FocusSession, UserPlan } from '../domain/types'
  * superior, así que se persiste sesión por sesión (una escritura al
  * terminarla), no reenviando todo el historial en cada guardado con debounce.
  *
- * `getUserPlan` es de sólo lectura a propósito: todavía no hay forma de
- * cambiar de plan desde la app (sin cobros), así que no existe un `setUserPlan`.
+ * `getUserPlan` es de sólo lectura a propósito: no hay forma de cambiar de
+ * plan desde la app directamente — el cambio real de plan pasa por Mercado
+ * Pago (ver api/checkout.ts, api/mp-webhook.ts), así que no existe un
+ * `setUserPlan`. `getSubscriptionSummary` es la versión detallada (estado de
+ * facturación + uso de IA del mes) para la página de precios/Ajustes.
  *
  * `completeOnboarding`/`getOnboardingCompleted` persisten en el perfil si la
  * cuenta ya pasó por el onboarding (o lo saltó a propósito) — hoy la UI decide
@@ -26,6 +29,7 @@ export interface ProgressRepository {
   loadFocusSessions(): Promise<FocusSession[]>
   saveFocusSession(session: FocusSession): Promise<void>
   getUserPlan(): Promise<UserPlan>
+  getSubscriptionSummary(): Promise<SubscriptionSummary>
   getOnboardingCompleted(): Promise<boolean>
   completeOnboarding(): Promise<void>
 }
