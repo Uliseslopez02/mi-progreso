@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 
 /**
- * Marca el elemento como visible la primera vez que entra en viewport, vía
- * IntersectionObserver nativo — sin librería de animación. `global.css` ya
- * fuerza `prefers-reduced-motion` globalmente, así que la transición CSS que
- * consuma esta clase se desactiva sola para quien lo pida.
+ * Marca el elemento como visible la primera vez que entra (o casi entra) en
+ * viewport, para animar su entrada — sin librería de animación. `global.css`
+ * ya fuerza `prefers-reduced-motion` globalmente, así que la transición CSS
+ * que consuma esta clase se desactiva sola para quien lo pida.
+ *
+ * Defensa en profundidad para que el contenido nunca quede invisible: además
+ * del IntersectionObserver hay un chequeo directo de `getBoundingClientRect`
+ * en cada scroll/resize y un fallback por tiempo. Si algo falla, el peor caso
+ * es que la sección aparezca sin animar, nunca que no aparezca.
  */
 export function useRevealOnScroll<T extends HTMLElement>() {
   const ref = useRef<T | null>(null)
@@ -13,21 +18,52 @@ export function useRevealOnScroll<T extends HTMLElement>() {
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    if (typeof IntersectionObserver === 'undefined') {
+
+    let done = false
+    const reveal = () => {
+      if (done) return
+      done = true
       setVisible(true)
-      return
+      cleanup()
     }
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true)
-          observer.disconnect()
-        }
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' },
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
+
+    const inView = () => {
+      const r = el.getBoundingClientRect()
+      const h = window.innerHeight || document.documentElement.clientHeight
+      return r.top < h * 0.92 && r.bottom > 0
+    }
+    const onScrollOrResize = () => {
+      if (inView()) reveal()
+    }
+
+    let observer: IntersectionObserver | undefined
+    const fallback = window.setTimeout(reveal, 2500)
+
+    function cleanup() {
+      observer?.disconnect()
+      window.removeEventListener('scroll', onScrollOrResize)
+      window.removeEventListener('resize', onScrollOrResize)
+      window.clearTimeout(fallback)
+    }
+
+    if (inView()) {
+      reveal()
+      return cleanup
+    }
+
+    if (typeof IntersectionObserver !== 'undefined') {
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) reveal()
+        },
+        { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
+      )
+      observer.observe(el)
+    }
+    window.addEventListener('scroll', onScrollOrResize, { passive: true })
+    window.addEventListener('resize', onScrollOrResize, { passive: true })
+
+    return cleanup
   }, [])
 
   return { ref, visible }
