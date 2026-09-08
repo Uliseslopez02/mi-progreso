@@ -183,6 +183,24 @@ main { flex: 1; padding: 28px 0 72px; }
   margin-bottom: 16px;
 }
 
+.premium-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.14) 0%, var(--surface) 70%);
+  text-decoration: none;
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.premium-entry:hover { border-color: rgba(52, 211, 153, 0.55); }
+
+.premium-entry__title { color: var(--accent); font-weight: 600; font-size: 16px; }
+
+.premium-entry__hint { color: var(--text-dim); font-size: 13px; }
+
 .card__title { font-size: 1rem; font-weight: 600; }
 
 .card__hint { font-size: 0.82rem; color: var(--text-muted); }

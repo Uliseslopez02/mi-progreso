@@ -27,10 +27,10 @@ describe('PremiumPage', () => {
 
     expect(await screen.findByRole('button', { name: 'Mensual' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Anual/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Obtener Premium' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Empezar con Premium' })).toBeInTheDocument()
   })
 
-  it('plan Premium activo: no ofrece comprar de nuevo', async () => {
+  it('plan Premium activo: no ofrece comprar de nuevo, ofrece cancelar', async () => {
     renderWithSummary({
       status: 'active',
       planTier: 'premium_monthly',
@@ -38,7 +38,8 @@ describe('PremiumPage', () => {
       aiUsage: null,
     })
 
-    expect(await screen.findByText(/Ya sos Premium/)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Obtener Premium' })).not.toBeInTheDocument()
+    expect(await screen.findByText(/Sos Premium/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Empezar con Premium' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cancelar suscripción' })).toBeInTheDocument()
   })
 })

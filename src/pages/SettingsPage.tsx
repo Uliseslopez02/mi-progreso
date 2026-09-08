@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Toggle } from '../components/Toggle'
 import { CATEGORY_COLOR_NAMES, CATEGORY_PALETTE } from '../domain/categoryColors'
@@ -6,66 +6,17 @@ import { createEmptyData } from '../domain/defaults'
 import { NAV_TABS, orderTabs } from '../domain/navigation'
 import { createId } from '../domain/id'
 import { signOut } from '../auth/supabaseAuth'
-import { track } from '../domain/analytics'
-import { supabase } from '../lib/supabaseClient'
 import { backupFileName, parseBackup, readFileText, serializeBackup } from '../storage/backup'
 import { saveTextFile } from '../storage/claudeDownloads'
-import { useAppContext, useAppData } from '../state/context'
+import { useAppData } from '../state/context'
 
 export function SettingsPage() {
   const { data, plan, dispatch } = useAppData()
-  const { repository } = useAppContext()
   const [newCategory, setNewCategory] = useState('')
   const [backupMessage, setBackupMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(
     null,
   )
-  const [subscriptionActive, setSubscriptionActive] = useState(false)
-  const [cancelStatus, setCancelStatus] = useState<'idle' | 'canceling' | 'error'>('idle')
   const fileInput = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    repository
-      .getSubscriptionSummary()
-      .then((summary) => {
-        if (!cancelled) setSubscriptionActive(summary.status === 'active')
-      })
-      .catch(() => {
-        // Silencioso a propósito: la pill sigue mostrando `plan` (más básico
-        // pero siempre disponible) aunque esto falle.
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [repository])
-
-  const cancelSubscription = async () => {
-    if (!window.confirm('¿Seguro que querés cancelar tu suscripción Premium? Tu progreso sigue acá — sólo se pierde el acceso ilimitado a IA al vencer el período ya pagado.')) {
-      return
-    }
-    setCancelStatus('canceling')
-    try {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const token = sessionData.session?.access_token
-      if (!token) {
-        setCancelStatus('error')
-        return
-      }
-      const res = await fetch('/api/cancel-subscription', {
-        method: 'POST',
-        headers: { authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        setCancelStatus('error')
-        return
-      }
-      setSubscriptionActive(false)
-      setCancelStatus('idle')
-      track({ name: 'subscription_canceled' })
-    } catch {
-      setCancelStatus('error')
-    }
-  }
 
   const exportData = async () => {
     const exportedAt = new Date().toISOString()
@@ -126,6 +77,13 @@ export function SettingsPage() {
 
   return (
     <div className="stack">
+      <Link to="/premium" className="premium-entry">
+        <span className="premium-entry__title">{plan === 'premium' ? 'Premium ✨' : 'Pasar a Premium →'}</span>
+        <span className="premium-entry__hint">
+          {plan === 'premium' ? 'Gestioná tu plan y tu suscripción.' : 'Sumá IA sin límites a tu progreso.'}
+        </span>
+      </Link>
+
       <section className="card">
         <div className="card__header">
           <h2 className="card__title">General</h2>
@@ -359,30 +317,11 @@ export function SettingsPage() {
       <section className="card">
         <div className="card__header">
           <h2 className="card__title">Cuenta</h2>
-          <Link
-            to="/premium"
-            className={`pill pill--${plan === 'premium' ? 'personal' : 'professional'}`}
-          >
-            {plan === 'premium' ? 'Premium' : 'Free · Ver planes'}
-          </Link>
         </div>
-        {cancelStatus === 'error' && (
-          <p className="empty">No se pudo cancelar la suscripción. Probá de nuevo en un momento.</p>
-        )}
         <div className="row">
           <button type="button" className="btn btn--ghost" onClick={() => void signOut()}>
             Cerrar sesión
           </button>
-          {subscriptionActive && (
-            <button
-              type="button"
-              className="btn btn--ghost"
-              disabled={cancelStatus === 'canceling'}
-              onClick={() => void cancelSubscription()}
-            >
-              {cancelStatus === 'canceling' ? 'Cancelando…' : 'Cancelar suscripción'}
-            </button>
-          )}
         </div>
       </section>
     </div>
