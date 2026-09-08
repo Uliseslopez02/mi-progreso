@@ -178,7 +178,7 @@ describe('Mi Progreso', () => {
     await screen.findByText('Objetivos de hoy')
 
     await user.click(screen.getByRole('button', { name: 'Ajustes' }))
-    expect(await screen.findByText('Free · Ver planes')).toBeInTheDocument()
+    expect(await screen.findByText('Pasar a Premium →')).toBeInTheDocument()
   })
 
   it('reordenar la navegación en Ajustes cambia la barra superior y persiste', async () => {

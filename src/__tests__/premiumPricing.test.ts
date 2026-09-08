@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { yearlySavingsPercent } from '../domain/premiumPricing'
+import { monthlyEquivalentLabel, yearlySavingsPercent } from '../domain/premiumPricing'
 
 describe('yearlySavingsPercent', () => {
   it('calcula el % de ahorro cuando el anual es más barato que 12 meses', () => {
@@ -15,5 +15,16 @@ describe('yearlySavingsPercent', () => {
     expect(yearlySavingsPercent('—', '$9000/año')).toBeNull()
     expect(yearlySavingsPercent('$1000/mes', '—')).toBeNull()
     expect(yearlySavingsPercent('', '')).toBeNull()
+  })
+})
+
+describe('monthlyEquivalentLabel', () => {
+  it('divide el precio anual por 12 y lo formatea con separador de miles', () => {
+    expect(monthlyEquivalentLabel('$32.000/año')).toBe('$2.667/mes')
+  })
+
+  it('devuelve null si el label no tiene un número parseable', () => {
+    expect(monthlyEquivalentLabel('—')).toBeNull()
+    expect(monthlyEquivalentLabel('')).toBeNull()
   })
 })
