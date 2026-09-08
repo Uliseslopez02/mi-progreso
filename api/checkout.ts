@@ -94,7 +94,12 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   if (!response.ok) {
-    return jsonResponse({ error: 'Mercado Pago no pudo iniciar el checkout.' }, 502)
+    const mpError = (await response.json().catch(() => null)) as { message?: string; error?: string } | null
+    console.error('MP preapproval error', response.status, mpError)
+    return jsonResponse(
+      { error: `Mercado Pago no pudo iniciar el checkout: ${mpError?.message ?? mpError?.error ?? response.status}` },
+      502,
+    )
   }
 
   const data = (await response.json()) as { init_point?: string }
