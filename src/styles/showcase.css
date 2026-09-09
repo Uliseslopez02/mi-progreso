@@ -86,33 +86,30 @@
 }
 
 /* ---------- Grid bento ----------
-   Layout fluido: columnas de ~300px que se acomodan solas (1 a 4 según ancho).
-   Los módulos "anchos" ocupan 2 columnas; `dense` rellena los huecos. */
+   Dos columnas de igual ancho. Cada fila es [ancho] a lo ancho, o dos módulos
+   normales lado a lado — con `dense` no quedan huecos. Las tarjetas de una
+   misma fila se estiran a la más alta (el contenido se ancla arriba y abajo
+   con `margin-top: auto`), así no hay vacíos. */
 .sc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  grid-auto-flow: dense;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: row dense;
   gap: 20px;
-  max-width: 1240px;
+  max-width: 1080px;
   margin: 0 auto;
-  align-items: start;
 }
 
 .sc-module--habits,
 .sc-module--percent,
 .sc-module--projects,
-.sc-module--dreams { grid-column: span 2; }
+.sc-module--dreams { grid-column: 1 / -1; }
 
 .sc-module--mori {
   background: linear-gradient(180deg, rgba(20, 24, 31, 0.55) 0%, rgba(5, 6, 8, 0.65) 100%);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 760px) {
   .sc-grid { grid-template-columns: 1fr; gap: 16px; }
-  .sc-module--habits,
-  .sc-module--percent,
-  .sc-module--projects,
-  .sc-module--dreams { grid-column: 1 / -1; }
 }
 
 /* ---------- Card de módulo ---------- */
