@@ -2139,3 +2139,18 @@ main { flex: 1; padding: 28px 0 72px; }
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
+
+/* ---------- PWA instalada (standalone) ---------- */
+/* Instalada en el móvil no hay barra de direcciones: la barra de estado del
+   sistema (reloj, notch) queda encima del header sticky. Se compensa con los
+   safe-area insets, sólo en modo standalone para no afectar la pestaña del
+   navegador. */
+@media (display-mode: standalone) {
+  .app-header {
+    padding-top: max(18px, env(safe-area-inset-top));
+  }
+
+  .app-shell {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
