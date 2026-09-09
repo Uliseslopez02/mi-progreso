@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { PlannerBoard } from '../components/PlannerBoard'
+import { PlannerItemDetail } from '../components/PlannerItemDetail'
 import { addDays, formatLongDate, formatShortDate, startOfWeek, weekDays, type DateKey } from '../domain/date'
 import { createId } from '../domain/id'
-import type { PlannerCategory, PlannerItemType, PlannerPriority } from '../domain/types'
+import type { PlannerCategory, PlannerItem, PlannerItemType, PlannerPriority } from '../domain/types'
 import { useAppData } from '../state/context'
 
 export function PlannerPage() {
@@ -16,8 +17,18 @@ export function PlannerPage() {
   const [newTime, setNewTime] = useState('')
   const [newDuration, setNewDuration] = useState(30)
   const [showMore, setShowMore] = useState(false)
+  const [openId, setOpenId] = useState<string | null>(null)
 
   const days = useMemo(() => weekDays(weekStart), [weekStart])
+
+  const openItem = openId ? data.plannerItems.find((i) => i.id === openId) ?? null : null
+  const habitNameById = useMemo(
+    () => Object.fromEntries(data.goals.map((g) => [g.id, g.name])),
+    [data.goals],
+  )
+
+  const patchItem = (id: string, patch: Partial<Omit<PlannerItem, 'id'>>) =>
+    dispatch({ type: 'updatePlannerItem', id, patch })
 
   // Si cambio de semana, "Día" del formulario debe seguir apuntando a un día visible.
   useEffect(() => {
@@ -84,21 +95,35 @@ export function PlannerPage() {
       <section className="card">
         <div className="card__header">
           <h2 className="card__title">Planificador semanal</h2>
-          <div className="row" style={{ gap: 8 }}>
-            <button type="button" className="btn btn--ghost" onClick={() => setWeekStart(addDays(weekStart, -7))}>
-              ‹ Semana anterior
+          <div className="planner-weeknav">
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Semana anterior"
+              onClick={() => setWeekStart(addDays(weekStart, -7))}
+            >
+              ‹
             </button>
-            <button type="button" className="btn btn--ghost" onClick={() => setWeekStart(startOfWeek(today))}>
+            <button
+              type="button"
+              className="btn btn--ghost planner-weeknav__today"
+              onClick={() => setWeekStart(startOfWeek(today))}
+            >
               Esta semana
             </button>
-            <button type="button" className="btn btn--ghost" onClick={() => setWeekStart(addDays(weekStart, 7))}>
-              Semana siguiente ›
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Semana siguiente"
+              onClick={() => setWeekStart(addDays(weekStart, 7))}
+            >
+              ›
             </button>
           </div>
         </div>
         <p className="card__hint" style={{ marginBottom: 14 }}>
-          {formatShortDate(weekStart)} – {formatShortDate(addDays(weekStart, 6))} · arrastrá las tareas para
-          reordenarlas o moverlas de día
+          {formatShortDate(weekStart)} – {formatShortDate(addDays(weekStart, 6))} · arrastrá una tarea para
+          moverla de día u orden
         </p>
 
         <PlannerBoard
@@ -107,12 +132,27 @@ export function PlannerPage() {
           itemsByDay={itemsByDay}
           onToggle={(id) => {
             const item = data.plannerItems.find((i) => i.id === id)
-            if (item) dispatch({ type: 'updatePlannerItem', id, patch: { done: !item.done } })
+            if (item) patchItem(id, { done: !item.done })
           }}
-          onRemove={(id) => dispatch({ type: 'removePlannerItem', id })}
           onReorder={(updates) => dispatch({ type: 'reorderPlannerItems', updates })}
+          onOpen={setOpenId}
         />
       </section>
+
+      {openItem && (
+        <PlannerItemDetail
+          item={openItem}
+          days={days}
+          habitName={openItem.linkedHabitId ? habitNameById[openItem.linkedHabitId] : undefined}
+          onClose={() => setOpenId(null)}
+          onToggle={(id) => {
+            const item = data.plannerItems.find((i) => i.id === id)
+            if (item) patchItem(id, { done: !item.done })
+          }}
+          onPatch={patchItem}
+          onRemove={(id) => dispatch({ type: 'removePlannerItem', id })}
+        />
+      )}
 
       <section className="card">
         <div className="card__header">

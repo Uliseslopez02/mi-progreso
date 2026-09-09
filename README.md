@@ -75,6 +75,29 @@ ajustes). Es el respaldo y también la forma de mover los datos a otra PC o nave
 importar se valida el archivo con la misma migración que usa el storage, así que un archivo
 que no corresponde se rechaza en lugar de romper la app.
 
+## PWA (app instalable)
+
+La app es una PWA: se puede instalar en el móvil ("Agregar a pantalla de inicio" /
+"Instalar app") y abre a pantalla completa, con ícono propio y arranque offline del
+_shell_.
+
+- Config: `vite-plugin-pwa` en `vite.config.ts` (manifest + service worker con Workbox).
+- Iconos: `public/pwa-*.png` y `public/apple-touch-icon.png`, generados desde
+  `public/logo.svg` con `npm run generate:icons` (script en `scripts/generate-icons.mjs`).
+- El service worker sólo corre en build de producción. Para probarlo localmente:
+
+  ```bash
+  npm run build && npm run preview
+  ```
+
+  Luego, en Chrome, DevTools → Application → Manifest / Service Workers, o el botón
+  "Instalar" de la barra de direcciones. En `vite dev` no se registra a propósito.
+- Estrategia de caché: precache de JS/CSS/HTML/iconos + `NetworkFirst` para las lecturas
+  `GET /rest/v1/` de Supabase (al reabrir sin conexión se ve el último estado). Los writes
+  y `/auth/v1/` nunca se cachean. `/api/*` está excluido del fallback de navegación.
+- `registerType: 'autoUpdate'`: al desplegar una versión nueva, el SW se actualiza solo y
+  toma efecto en la siguiente navegación.
+
 ## Estructura
 
 ```

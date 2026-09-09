@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   DndContext,
   PointerSensor,
@@ -10,18 +11,13 @@ import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { formatShortDate, formatWeekday, type DateKey } from '../domain/date'
-import { formatTimeRange } from '../domain/time'
+import { formatTime } from '../domain/time'
 import type { PlannerItem } from '../domain/types'
 
-const PRIORITY_COLOR: Record<PlannerItem['priority'], string> = {
-  low: 'var(--text-dim)',
-  medium: 'var(--band-good)',
-  high: 'var(--band-low)',
-}
-
-const CATEGORY_LABEL: Record<PlannerItem['category'], string> = {
-  personal: 'Personal',
-  professional: 'Profesional',
+/** Abreviatura de 3 letras del día ("Miércoles" → "Mié"), para el encabezado
+ * de columna en desktop, donde el nombre completo no entra. */
+function weekdayAbbr(date: DateKey): string {
+  return formatWeekday(date).slice(0, 3)
 }
 
 interface Props {
@@ -29,48 +25,71 @@ interface Props {
   today: DateKey
   itemsByDay: Record<DateKey, PlannerItem[]>
   onToggle: (id: string) => void
-  onRemove: (id: string) => void
   onReorder: (updates: Array<{ id: string; date: DateKey; order: number }>) => void
+  /** Abre el detalle de la tarea (toda la info + acciones). */
+  onOpen: (id: string) => void
 }
 
+/**
+ * Tarjeta-resumen de una línea: estado · título · hora. La prioridad se insinúa
+ * con un borde izquierdo de color (alta/media); todo lo demás —categoría,
+ * duración, tipo, descripción, acciones— vive en el detalle que abre al tocarla.
+ */
 function SortableRow({
   item,
   onToggle,
-  onRemove,
+  onOpen,
 }: {
   item: PlannerItem
   onToggle: (id: string) => void
-  onRemove: (id: string) => void
+  onOpen: (id: string) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
   })
 
+  const prioClass =
+    !item.done && item.priority !== 'low' ? ` planner-card--prio-${item.priority}` : ''
+
   return (
     <li
       ref={setNodeRef}
-      className={`planner-item${item.done ? ' planner-item--done' : ''}${isDragging ? ' planner-item--dragging' : ''}`}
+      className={`planner-card${item.done ? ' planner-card--done' : ''}${
+        isDragging ? ' planner-card--dragging' : ''
+      }${prioClass}`}
       style={{ transform: CSS.Transform.toString(transform), transition }}
     >
-      <button type="button" className="drag-handle" aria-label={`Reordenar ${item.title}`} {...attributes} {...listeners}>
-        ⠿
+      <label className="planner-card__check">
+        <input
+          type="checkbox"
+          checked={item.done}
+          aria-label={item.title}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+          onChange={() => onToggle(item.id)}
+        />
+      </label>
+
+      <button
+        type="button"
+        className="planner-card__open"
+        title={item.title}
+        onClick={() => onOpen(item.id)}
+      >
+        <span className="planner-card__title">{item.title}</span>
+        {item.startTime && (
+          <span className="planner-card__time numeric">{formatTime(item.startTime)}</span>
+        )}
       </button>
-      <input type="checkbox" checked={item.done} aria-label={item.title} onChange={() => onToggle(item.id)} />
-      <div>
-        <p className="planner-item__title">
-          {item.type === 'event' ? '📅 ' : ''}
-          {item.title}
-        </p>
-        <div className="planner-item__meta">
-          <span className="planner-item__dot" style={{ background: PRIORITY_COLOR[item.priority] }} />
-          <span className="planner-item__tag">{CATEGORY_LABEL[item.category]}</span>
-          {item.startTime && (
-            <span className="planner-item__tag">{formatTimeRange(item.startTime, item.durationMinutes ?? 30)}</span>
-          )}
-        </div>
-      </div>
-      <button type="button" className="planner-item__remove" aria-label={`Eliminar ${item.title}`} onClick={() => onRemove(item.id)}>
-        ×
+
+      <button
+        type="button"
+        className="planner-card__handle"
+        aria-label={`Reordenar ${item.title}`}
+        {...attributes}
+        {...listeners}
+      >
+        <span aria-hidden="true">⠿</span>
       </button>
     </li>
   )
@@ -81,35 +100,67 @@ function DayColumn({
   today,
   items,
   onToggle,
-  onRemove,
+  onOpen,
 }: {
   date: DateKey
   today: DateKey
   items: PlannerItem[]
   onToggle: (id: string) => void
-  onRemove: (id: string) => void
+  onOpen: (id: string) => void
 }) {
   const { setNodeRef } = useDroppable({ id: `day:${date}` })
+  const [showDone, setShowDone] = useState(false)
+
+  const pending = items.filter((i) => !i.done)
+  const done = items.filter((i) => i.done)
+  const visible = showDone ? [...pending, ...done] : pending
 
   return (
     <div className={`planner-day${date === today ? ' planner-day--today' : ''}`}>
       <div className="planner-day__header">
-        <span className="planner-day__weekday">{formatWeekday(date)}</span>
+        <span className="planner-day__weekday">
+          <span className="planner-day__weekday-full">{formatWeekday(date)}</span>
+          <span className="planner-day__weekday-abbr" aria-hidden="true">
+            {weekdayAbbr(date)}
+          </span>
+        </span>
         <span className="planner-day__date numeric">{formatShortDate(date)}</span>
+        {date === today && <span className="planner-day__today-tag">Hoy</span>}
+        {pending.length > 0 && (
+          <span className="planner-day__count numeric" aria-hidden="true">
+            {pending.length}
+          </span>
+        )}
       </div>
-      <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+
+      <SortableContext items={visible.map((i) => i.id)} strategy={verticalListSortingStrategy}>
         <ul className="planner-day__items" ref={setNodeRef}>
-          {items.map((item) => (
-            <SortableRow key={item.id} item={item} onToggle={onToggle} onRemove={onRemove} />
+          {visible.map((item) => (
+            <SortableRow key={item.id} item={item} onToggle={onToggle} onOpen={onOpen} />
           ))}
         </ul>
       </SortableContext>
+
+      {pending.length === 0 && done.length === 0 && (
+        <p className="planner-day__empty">Sin tareas</p>
+      )}
+
+      {done.length > 0 && (
+        <button
+          type="button"
+          className="planner-day__done-toggle"
+          aria-expanded={showDone}
+          onClick={() => setShowDone((v) => !v)}
+        >
+          {showDone ? 'Ocultar' : 'Ver'} {done.length} {done.length === 1 ? 'hecha' : 'hechas'}
+        </button>
+      )}
     </div>
   )
 }
 
 /** Grilla de 7 días con arrastre libre entre columnas (@dnd-kit). */
-export function PlannerBoard({ days, today, itemsByDay, onToggle, onRemove, onReorder }: Props) {
+export function PlannerBoard({ days, today, itemsByDay, onToggle, onReorder, onOpen }: Props) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
   const findDate = (itemId: string): DateKey | null => {
@@ -159,7 +210,7 @@ export function PlannerBoard({ days, today, itemsByDay, onToggle, onRemove, onRe
               today={today}
               items={itemsByDay[date] ?? []}
               onToggle={onToggle}
-              onRemove={onRemove}
+              onOpen={onOpen}
             />
           ))}
         </div>

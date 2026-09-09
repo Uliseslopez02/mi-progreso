@@ -7,14 +7,25 @@ import { MomentoMoriModule } from './modules/MomentoMoriModule'
 import { FocusModule } from './modules/FocusModule'
 import { DreamsModule } from './modules/DreamsModule'
 import { OverallProgressModule } from './modules/OverallProgressModule'
+import { ProjectsModule } from './modules/ProjectsModule'
+import { PercentModule } from './modules/PercentModule'
+import { ProblemStrip, JourneySection, SecondaryFeatures } from './NarrativeSections'
 import { ShowcaseProvider } from './ShowcaseState'
+import { useDocumentMeta } from './useDocumentMeta'
 
 /**
- * Página pública `/producto`: demostración interactiva del producto, pensada
- * también como pieza comercial. No requiere cuenta — ver `main.tsx` para el
- * mount condicional por pathname.
+ * Página pública `/producto`: demostración interactiva del producto y a la vez
+ * pieza comercial. No requiere cuenta — ver `main.tsx` para el mount
+ * condicional por pathname. El bento del medio es Mi Progreso funcionando de
+ * verdad (mismas funciones puras de `domain/*`); alrededor, la narrativa de
+ * para qué sirve.
  */
 export function ProductShowcasePage() {
+  useDocumentMeta(
+    'Mi Progreso — Convertí tus hábitos y objetivos en un progreso real',
+    'Hábitos, objetivos, proyectos y agenda conectados en un solo porcentaje que no miente. Probá una demo interactiva real de Mi Progreso, sin crear cuenta.',
+  )
+
   return (
     <ShowcaseProvider>
       <div className="showcase">
@@ -28,22 +39,37 @@ export function ProductShowcasePage() {
           <p className="hero__eyebrow">Mi Progreso</p>
           <h1 className="sc-hero__title">Un sistema para construir la vida que querés.</h1>
           <p className="sc-hero__subtitle">
-            Hábitos, objetivos, enfoque y reflexión — conectados en un mismo progreso. Esto no es
-            una demo grabada: es Mi Progreso funcionando de verdad. Tocá, marcá, mirá cómo
-            reacciona.
+            Hábitos, objetivos, proyectos, enfoque y reflexión — conectados en un mismo progreso.
+            Esto no es una demo grabada: es Mi Progreso funcionando de verdad. Tocá, marcá, mirá
+            cómo reacciona.
           </p>
+          <div className="sc-hero__actions">
+            <a className="btn btn--primary" href="/?signup=1">
+              Crear mi cuenta gratis
+            </a>
+            <a className="sc-btn-glass" href="#demo">
+              Ver cómo funciona
+            </a>
+          </div>
         </header>
 
-        <main className="sc-grid">
+        <ProblemStrip />
+
+        <main className="sc-grid" id="demo">
           <OverallProgressModule />
           <HabitsModule />
           <TodayRitualModule />
+          <PercentModule />
           <GoalModule />
           <StatsModule />
+          <ProjectsModule />
           <DreamsModule />
           <FocusModule />
           <MomentoMoriModule />
         </main>
+
+        <JourneySection />
+        <SecondaryFeatures />
 
         <section className="sc-cta">
           <h2 className="sc-cta__title">Todo empieza con una pequeña acción.</h2>

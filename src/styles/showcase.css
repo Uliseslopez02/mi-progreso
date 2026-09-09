@@ -76,42 +76,40 @@
   line-height: 1.55;
 }
 
-/* ---------- Grid bento ---------- */
+.sc-hero__actions {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+/* ---------- Grid bento ----------
+   Dos columnas de igual ancho. Cada fila es [ancho] a lo ancho, o dos módulos
+   normales lado a lado — con `dense` no quedan huecos. Las tarjetas de una
+   misma fila se estiran a la más alta (el contenido se ancla arriba y abajo
+   con `margin-top: auto`), así no hay vacíos. */
 .sc-grid {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  grid-auto-rows: minmax(150px, auto);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: row dense;
   gap: 20px;
-  max-width: 1240px;
+  max-width: 1080px;
   margin: 0 auto;
 }
 
-.sc-module--overall  { grid-column: 1 / 5;   grid-row: 1 / span 2; }
-.sc-module--habits   { grid-column: 5 / 10;  grid-row: 1 / span 2; }
-.sc-module--wheel    { grid-column: 10 / 13; grid-row: 1 / span 2; }
+.sc-module--habits,
+.sc-module--percent,
+.sc-module--projects,
+.sc-module--dreams { grid-column: 1 / -1; }
 
-.sc-module--ritual   { grid-column: 1 / 4; }
-.sc-module--goal     { grid-column: 4 / 8; }
-.sc-module--stats    { grid-column: 8 / 13; }
-
-.sc-module--mori     { grid-column: 1 / 5;   grid-row: span 2; background: linear-gradient(180deg, rgba(20,24,31,0.55) 0%, rgba(5,6,8,0.65) 100%); }
-.sc-module--dreams   { grid-column: 5 / 13; }
-.sc-module--focus    { grid-column: 5 / 9; }
-
-@media (max-width: 1100px) {
-  .sc-module--overall, .sc-module--habits, .sc-module--wheel { grid-row: auto; }
-  .sc-module--wheel { grid-column: 1 / 13; }
-  .sc-module--habits { grid-column: 1 / 13; }
-  .sc-module--mori { grid-row: auto; }
+.sc-module--mori {
+  background: linear-gradient(180deg, rgba(20, 24, 31, 0.55) 0%, rgba(5, 6, 8, 0.65) 100%);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 760px) {
   .sc-grid { grid-template-columns: 1fr; gap: 16px; }
-  .sc-module--overall, .sc-module--habits, .sc-module--ritual, .sc-module--goal,
-  .sc-module--wheel, .sc-module--stats, .sc-module--mori, .sc-module--dreams, .sc-module--focus {
-    grid-column: 1 / -1;
-    grid-row: auto;
-  }
 }
 
 /* ---------- Card de módulo ---------- */
@@ -173,10 +171,6 @@
 .sc-goal__percent { font-size: 1.4rem; font-weight: 660; flex: none; width: 3.2em; }
 .sc-goal__progress .consistency__bar { flex: 1; }
 
-/* ---------- Módulo 4: Rueda ---------- */
-.sc-module--wheel .sc-module__body { align-items: center; }
-.sc-wheel__hint { text-align: center; font-size: 0.85rem; color: var(--text-muted); min-height: 1.2em; }
-
 /* ---------- Módulo 5: Estadísticas ---------- */
 .sc-sparkline { width: 100%; height: 44px; overflow: visible; }
 
@@ -226,6 +220,116 @@
 /* ---------- Módulo 9: Progreso general ---------- */
 .sc-module--overall .sc-module__body { align-items: center; text-align: center; }
 .sc-overall__trend { color: var(--text-muted); font-size: 0.9rem; max-width: 26ch; }
+
+/* ---------- Módulo: Sistema de porcentajes ---------- */
+.sc-percent__goals { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.sc-percent__goal {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 12px;
+  padding: 4px 6px 4px 12px;
+}
+.sc-percent__goal-toggle {
+  flex: 1; background: none; border: none; color: var(--text); font-size: 0.9rem;
+  text-align: left; padding: 6px 0; cursor: pointer;
+}
+.sc-percent__goal-toggle--done { color: var(--accent); text-decoration: line-through; text-decoration-color: rgba(52, 211, 153, 0.5); }
+.sc-percent__pill {
+  flex: none; font-size: 0.74rem; color: var(--text-dim); padding: 5px 10px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05); border: none; cursor: pointer;
+  transition: color 0.2s var(--ease), background 0.2s var(--ease);
+}
+.sc-percent__pill:hover { color: var(--accent); background: rgba(52, 211, 153, 0.12); }
+
+.sc-percent__result { display: flex; gap: 8px; margin-top: 4px; }
+.sc-percent__stat {
+  flex: 1; display: flex; flex-direction: column; gap: 4px; align-items: center;
+  background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 14px;
+  padding: 12px 6px; color: var(--text); cursor: pointer;
+  transition: border-color 0.2s var(--ease);
+}
+.sc-percent__stat:hover { border-color: rgba(52, 211, 153, 0.4); }
+.sc-percent__stat span:first-child { font-size: 1.2rem; font-weight: 680; }
+.sc-percent__stat span:last-child { font-size: 0.72rem; color: var(--text-dim); }
+
+.sc-percent__explain { margin-top: auto; padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.sc-percent__explain-label { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); font-weight: 650; }
+.sc-percent__explain p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.55; }
+
+/* ---------- Módulo: Proyectos (Kanban) ---------- */
+.sc-project__head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.sc-project__name { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+.sc-project__count { font-size: 0.82rem; color: var(--text-muted); flex: none; }
+
+.sc-kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 4px; }
+.sc-kanban__col {
+  background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 14px;
+  padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 110px;
+}
+.sc-kanban__col-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); }
+.sc-kanban__card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 9px 11px; display: flex; flex-direction: column; gap: 8px; font-size: 0.82rem; color: var(--text);
+}
+.sc-kanban__move {
+  align-self: flex-end; background: none; border: none; color: var(--accent);
+  font-size: 0.76rem; font-weight: 600; padding: 0; cursor: pointer;
+}
+.sc-kanban__move:hover { text-decoration: underline; }
+
+@media (max-width: 620px) {
+  .sc-kanban { grid-template-columns: 1fr; }
+}
+
+/* ---------- Bloques narrativos (fuera del bento) ---------- */
+.sc-narrative {
+  max-width: 1080px;
+  margin: 88px auto 0;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+}
+.sc-narrative--visible { opacity: 1; transform: translateY(0); }
+.sc-narrative__head { max-width: 640px; margin-bottom: 28px; display: flex; flex-direction: column; gap: 10px; }
+.sc-narrative__title {
+  font-family: var(--sc-display-font); font-weight: 300;
+  font-size: clamp(1.5rem, 2vw + 1rem, 2.1rem); line-height: 1.2; color: var(--text);
+}
+.sc-narrative__subtitle { color: var(--text-muted); font-size: 0.98rem; line-height: 1.55; }
+
+/* Problema */
+.sc-problem__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.sc-problem__card {
+  background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 8px;
+}
+.sc-problem__card h3 { font-size: 0.98rem; color: var(--text); margin: 0; }
+.sc-problem__card p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin: 0; }
+
+/* Recorrido */
+.sc-journey__path { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.sc-journey__path li { display: flex; gap: 18px; align-items: flex-start; margin-left: 12px; padding-left: 24px; }
+.sc-journey__path li:not(:last-child) { padding-bottom: 22px; border-left: 1px dashed var(--border); }
+.sc-journey__index { flex: none; font-size: 0.85rem; color: var(--text-dim); font-weight: 700; padding-top: 2px; }
+.sc-journey__path h3 { font-size: 1rem; color: var(--text); margin: 0 0 4px; }
+.sc-journey__path p { font-size: 0.9rem; color: var(--text-muted); margin: 0; line-height: 1.5; }
+
+/* Secundarias */
+.sc-secondary__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.sc-secondary__card {
+  background: rgba(20, 24, 31, 0.42); border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px; padding: 18px; backdrop-filter: blur(18px);
+}
+.sc-secondary__card h3 { font-size: 0.95rem; color: var(--text); margin: 0 0 6px; }
+.sc-secondary__card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin: 0; }
+
+@media (max-width: 900px) {
+  .sc-problem__grid { grid-template-columns: 1fr; }
+  .sc-secondary__grid { grid-template-columns: repeat(2, 1fr); }
+  .sc-narrative { margin-top: 64px; }
+}
+@media (max-width: 620px) {
+  .sc-secondary__grid { grid-template-columns: 1fr; }
+}
 
 /* ---------- Cierre comercial ---------- */
 .sc-cta {

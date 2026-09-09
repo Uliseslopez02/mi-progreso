@@ -102,7 +102,7 @@ export default async function handler(request: Request): Promise<Response> {
     external_reference?: string
     payer_email?: string
     id?: string
-    preapproval_plan_id?: string
+    auto_recurring?: { frequency?: number }
   }
   try {
     const res = await fetch(`https://api.mercadopago.com/preapproval/${dataId}`, {
@@ -122,9 +122,12 @@ export default async function handler(request: Request): Promise<Response> {
     return jsonResponse({ ok: true }, 200)
   }
 
+  // Sin preapproval_plan_id (ver api/checkout.ts) — el plan se infiere de la
+  // frecuencia real de cobro que devuelve MP, no de un id de plan.
   let planTier: 'premium_monthly' | 'premium_yearly' | undefined
-  if (preapproval.preapproval_plan_id === process.env.MP_PLAN_ID_MONTHLY) planTier = 'premium_monthly'
-  else if (preapproval.preapproval_plan_id === process.env.MP_PLAN_ID_YEARLY) planTier = 'premium_yearly'
+  const frequency = preapproval.auto_recurring?.frequency
+  if (frequency === 1) planTier = 'premium_monthly'
+  else if (frequency === 12) planTier = 'premium_yearly'
 
   try {
     const upsertRes = await fetch(`${supabaseUrl}/rest/v1/subscriptions?on_conflict=user_id`, {

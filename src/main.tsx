@@ -14,14 +14,30 @@ const ProductShowcasePage = lazy(() =>
   import('./showcase/ProductShowcasePage').then((m) => ({ default: m.ProductShowcasePage })),
 )
 
+// `/presentacion` es la página comercial de venta (independiente de
+// `/producto`, que quedó desactualizada respecto al producto real — ver
+// `src/presentacion/`). Mismo criterio: pública, sin cuenta, import perezoso.
+const PresentacionPage = lazy(() =>
+  import('./presentacion/PresentacionPage').then((m) => ({ default: m.PresentacionPage })),
+)
+
 const isShowcaseRoute = window.location.pathname.startsWith('/producto')
+const isPresentacionRoute = window.location.pathname.startsWith('/presentacion')
 
 // Se crea una sola vez a nivel de módulo (no dentro del componente) para que
-// StrictMode no la duplique, y sólo si hace falta: la demo pública no debe
+// StrictMode no la duplique, y sólo si hace falta: las demos públicas no deben
 // depender de que Supabase esté configurado.
-const repository = isShowcaseRoute ? null : createSupabaseRepository()
+const repository = isShowcaseRoute || isPresentacionRoute ? null : createSupabaseRepository()
 
 function Root() {
+  if (isPresentacionRoute) {
+    return (
+      <Suspense fallback={null}>
+        <PresentacionPage />
+      </Suspense>
+    )
+  }
+
   if (!repository) {
     return (
       <Suspense fallback={null}>

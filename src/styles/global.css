@@ -752,51 +752,249 @@ main { flex: 1; padding: 28px 0 72px; }
   padding: 12px 0 4px;
 }
 
-/* ---------- Planificador semanal ---------- */
+/* ---------- Planificador semanal ----------
+ * MOBILE FIRST. La tarjeta es un RESUMEN de una línea: estado · título · hora.
+ * La prioridad se insinúa con un borde izquierdo de color (alta/media). Todo lo
+ * demás —categoría, duración, tipo, acciones— vive en `.planner-detail` (el
+ * modal que abre al tocar la tarjeta). Objetivo: máxima densidad, mínimo ruido,
+ * que muchas tareas convivan en un día sin volverlo interminable.
+ *
+ * Base = celular / tablet: los 7 días se apilan, scroll vertical natural,
+ * tarjetas a lo ancho, tap targets cómodos. Desde 1080px (`@media min-width`)
+ * pasa a la grilla semanal de 7 columnas, más densa — recién ahí hay ancho
+ * para que las 7 columnas entren sin scroll horizontal ni quedar diminutas. */
+.planner-weeknav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+.planner-weeknav__today {
+  min-height: 34px;
+  padding: 0 14px;
+  font-size: 0.85rem;
+}
+
 .planner-scroll {
   overflow-x: auto;
-  padding-bottom: 4px;
+  scrollbar-width: thin;
 }
 
 .planner-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(190px, 1fr));
-  gap: 12px;
-  min-width: 900px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  min-width: 0;
 }
 
 .planner-day {
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 12px;
-  min-height: 160px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  /* Sin esto un título con `white-space: nowrap` infla la columna del grid
+   * (blowout) y aparece scroll horizontal en desktop. */
+  min-width: 0;
 }
 
-.planner-day--today { border-color: var(--accent); }
+.planner-day--today {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, rgba(52, 211, 153, 0.06), transparent 40%), var(--surface-2);
+}
 
 .planner-day__header {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 2px;
+  gap: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
 }
 
-.planner-day__weekday { font-weight: 650; font-size: 0.88rem; }
+.planner-day__weekday { font-weight: 650; font-size: 0.9rem; }
+.planner-day__weekday-abbr { display: none; }
 
 .planner-day__date { font-size: 0.76rem; color: var(--text-dim); }
 
-.planner-day__items {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-height: 12px;
-  flex: 1;
+.planner-day__today-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  border-radius: 999px;
+  padding: 1px 6px;
 }
 
+/* Cuántas tareas pendientes tiene el día — un solo número, para escanear la
+ * semana de un vistazo (qué días están cargados). */
+.planner-day__count {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+.planner-day__today-tag + .planner-day__count { margin-left: 4px; }
+
+.planner-day__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  /* Día sin tareas: sigue siendo destino de arrastre pero no infla la columna. */
+  min-height: 8px;
+}
+
+.planner-day__empty {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  padding: 2px 0;
+}
+
+.planner-day__done-toggle {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+.planner-day__done-toggle:hover { color: var(--text-muted); }
+
+/* Tarjeta-resumen del tablero semanal (una sola línea). Clase propia — no
+ * comparte estilos con `.planner-item`, que la usan Agenda/Eisenhower/Kanban. */
+.planner-card {
+  display: flex;
+  align-items: stretch;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 9px;
+  min-height: 44px;
+  transition: border-color 0.15s var(--ease);
+}
+
+.planner-card--prio-high { border-left-color: var(--band-low); }
+.planner-card--prio-medium { border-left-color: var(--band-good); }
+.planner-card--dragging { opacity: 0.4; }
+.planner-card--done { border-left-color: var(--border); }
+
+/* Estado: el checkbox nativo, con zona de toque ampliada por el padding del
+ * label — el objetivo tocable es ~40px de ancho por el alto de la tarjeta. */
+.planner-card__check {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  cursor: pointer;
+}
+.planner-card__check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--band-top);
+  cursor: pointer;
+}
+
+/* El cuerpo: título + hora. Todo el bloque es el botón que abre el detalle. */
+.planner-card__open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 6px 2px 6px 0;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.planner-card__open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 7px;
+}
+
+.planner-card__title {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.planner-card__time {
+  flex: none;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.planner-card--done .planner-card__title {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Asa de arrastre: en celular siempre visible pero discreta, con zona de toque
+ * ancha. `touch-action: none` es lo que deja que @dnd-kit tome el gesto. */
+.planner-card__handle {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  line-height: 1;
+  opacity: 0.4;
+  cursor: grab;
+  touch-action: none;
+}
+.planner-card__handle:active { cursor: grabbing; }
+.planner-card__handle:focus-visible { opacity: 0.7; outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* ----- Desktop: grilla semanal de 7 columnas ----- */
+@media (min-width: 1080px) {
+  .planner-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .planner-day { padding: 9px 10px; gap: 5px; }
+  .planner-day__header { gap: 5px; padding-bottom: 5px; }
+  .planner-day__weekday { font-size: 0.8rem; }
+  .planner-day__weekday-full { display: none; }
+  .planner-day__weekday-abbr { display: inline; }
+  .planner-day__date { font-size: 0.7rem; }
+
+  .planner-day__items { gap: 4px; }
+  .planner-card { min-height: 32px; border-radius: 7px; }
+  .planner-card__check { padding: 0 7px; }
+  .planner-card__check input { width: 15px; height: 15px; }
+  .planner-card__open { gap: 6px; padding: 3px 2px 3px 0; }
+  .planner-card__title { font-size: 0.8rem; }
+  .planner-card__time { font-size: 0.72rem; }
+
+  /* El asa aparece al pasar por encima o al enfocarla — en desktop no hace
+   * falta que esté siempre a la vista. */
+  .planner-card__handle { width: 16px; opacity: 0; transition: opacity 0.15s var(--ease); }
+  .planner-card:hover { border-color: var(--border-strong); }
+  .planner-card:hover .planner-card__handle,
+  .planner-card__handle:focus-visible { opacity: 0.5; }
+}
+
+/* ---------- Ítem de tarea genérico (matriz Eisenhower) ---------- */
 .planner-item {
   display: flex;
   align-items: flex-start;
@@ -809,8 +1007,6 @@ main { flex: 1; padding: 28px 0 72px; }
 }
 
 .planner-item input[type='checkbox'] { accent-color: var(--band-top); }
-
-.planner-item--dragging { opacity: 0.4; }
 
 .planner-item--done .planner-item__title {
   color: var(--text-muted);
@@ -856,6 +1052,57 @@ main { flex: 1; padding: 28px 0 72px; }
 .planner-item__remove:hover { color: var(--band-low); }
 
 .planner-item--static { cursor: default; }
+
+/* ---------- Detalle de tarea del planificador (modal) ---------- */
+.planner-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Fila de campos cortos (día/hora/duración · tipo/categoría/prioridad). Se
+ * acomodan solos: 1 columna en pantallas muy angostas, 2–3 cuando entran. */
+.planner-detail__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+.planner-detail__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-weight: 550;
+}
+
+.planner-detail__status:hover { border-color: var(--accent); color: var(--text); }
+
+.planner-detail__status--done {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(52, 211, 153, 0.08);
+}
+
+.planner-detail__check {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1px solid currentColor;
+  font-size: 0.72rem;
+}
+
+.planner-detail__habit {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
 
 .planner-day__add {
   display: flex;
@@ -2187,4 +2434,19 @@ main { flex: 1; padding: 28px 0 72px; }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+/* ---------- PWA instalada (standalone) ---------- */
+/* Instalada en el móvil no hay barra de direcciones: la barra de estado del
+   sistema (reloj, notch) queda encima del header sticky. Se compensa con los
+   safe-area insets, sólo en modo standalone para no afectar la pestaña del
+   navegador. */
+@media (display-mode: standalone) {
+  .app-header {
+    padding-top: max(18px, env(safe-area-inset-top));
+  }
+
+  .app-shell {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }

@@ -866,6 +866,8 @@ describe('Mi Progreso', () => {
     await user.click(screen.getByRole('button', { name: 'Agregar' }))
 
     await user.click(screen.getByRole('checkbox', { name: 'Hacer ahora TEST' }))
+    // Al completarse, la tarjeta se pliega bajo "Ver N hechas" — ya no ocupa la grilla.
+    expect(screen.queryByText('Hacer ahora TEST')).not.toBeInTheDocument()
 
     await waitFor(async () => {
       const stored = await repository.load()
@@ -873,7 +875,9 @@ describe('Mi Progreso', () => {
       expect(done?.done).toBe(true)
     })
 
-    await user.click(screen.getByRole('button', { name: 'Eliminar Eliminar TEST' }))
+    // Eliminar es una acción del detalle: se abre la tarjeta y se elimina desde ahí.
+    await user.click(screen.getByRole('button', { name: 'Eliminar TEST' }))
+    await user.click(screen.getByRole('button', { name: 'Eliminar' }))
     await waitFor(async () => {
       const stored = await repository.load()
       expect(stored?.plannerItems.find((i) => i.title === 'Eliminar TEST')).toBeUndefined()

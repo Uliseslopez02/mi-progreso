@@ -2,9 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 
 /**
  * Marca el elemento como visible la primera vez que entra (o casi entra) en
- * viewport, para animar su entrada — sin librería de animación. `global.css`
- * ya fuerza `prefers-reduced-motion` globalmente, así que la transición CSS
- * que consuma esta clase se desactiva sola para quien lo pida.
+ * viewport, para animar su entrada. Copia local a propósito (no se importa de
+ * `src/showcase/`: `/presentacion` es una ruta independiente).
  *
  * Defensa en profundidad para que el contenido nunca quede invisible: además
  * del IntersectionObserver hay un chequeo directo de `getBoundingClientRect`
