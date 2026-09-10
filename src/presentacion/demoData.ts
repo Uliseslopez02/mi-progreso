@@ -16,6 +16,7 @@ import { routineRunKey } from '../domain/routine'
 import type {
   Category,
   DayRecord,
+  FocusSession,
   Goal,
   LifeGoal,
   PlannerItem,
@@ -272,3 +273,33 @@ export function buildDemoRoutineRuns(): Record<string, RoutineRun> {
   }
   return { [routineRunKey(run.routineId, run.date)]: run }
 }
+
+/** Historial de sesiones de Enfoque: 2 completadas hoy (una vinculada a la
+ * tarea `pi-4`, "Bloque de trabajo profundo") y una detenida ayer. */
+export const DEMO_FOCUS_SESSIONS: FocusSession[] = [
+  {
+    id: 'fs-1',
+    startedAt: `${TODAY}T09:00:00.000Z`,
+    completedAt: `${TODAY}T09:25:00.000Z`,
+    plannedMinutes: 25,
+    type: 'focus',
+    status: 'completed',
+  },
+  {
+    id: 'fs-2',
+    startedAt: `${TODAY}T11:00:00.000Z`,
+    completedAt: `${TODAY}T11:50:00.000Z`,
+    plannedMinutes: 50,
+    type: 'focus',
+    status: 'completed',
+    linkedPlannerItemId: 'pi-4',
+  },
+  {
+    id: 'fs-3',
+    startedAt: `${addDays(TODAY, -1)}T16:00:00.000Z`,
+    completedAt: `${addDays(TODAY, -1)}T16:12:00.000Z`,
+    plannedMinutes: 25,
+    type: 'focus',
+    status: 'stopped',
+  },
+]

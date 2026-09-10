@@ -150,4 +150,21 @@ describe('PresentacionPage', () => {
     await userEvent.click(within(calendarCard).getByRole('button', { name: 'Mes anterior' }))
     expect(within(calendarCard).getByText(/^\w+ \d{4}$/).textContent).not.toBe(titleBefore)
   })
+
+  it('Enfoque: muestra el historial real, arranca un temporizador y lo puede detener', async () => {
+    render(<PresentacionPage />)
+
+    const focusCard = screen.getByRole('heading', { name: 'Enfoque' }).closest('.pr-focus') as HTMLElement
+    // Demo: 25 + 50 min completados hoy, una vinculada a una tarea de la agenda.
+    expect(within(focusCard).getByText('75')).toBeInTheDocument()
+    expect(within(focusCard).getByText(/50 min · Bloque de trabajo profundo/)).toBeInTheDocument()
+
+    await userEvent.click(within(focusCard).getByRole('button', { name: 'Iniciar' }))
+    expect(within(focusCard).getByText(/^\d{2}:\d{2}$/)).toBeInTheDocument()
+
+    await userEvent.click(within(focusCard).getByRole('button', { name: 'Detener' }))
+    // Vuelve al setup y la sesión detenida queda primera en el historial.
+    expect(within(focusCard).getByRole('button', { name: 'Iniciar' })).toBeInTheDocument()
+    expect(within(focusCard).getAllByText('Detenida')[0]).toBeInTheDocument()
+  })
 })

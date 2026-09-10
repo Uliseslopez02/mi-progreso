@@ -10,10 +10,6 @@ const FEATURES = [
     text: 'Un heatmap tipo GitHub de las últimas 53 semanas de un hábito, para ver el patrón de todo el año de un vistazo.',
   },
   {
-    title: 'Enfoque',
-    text: 'Temporizador Libre (5–60 min), Pomodoro (25 / 5 / descanso largo cada 4) y Trabajo profundo (50 o 90 min). Podés atarlo a una tarea pendiente de la agenda.',
-  },
-  {
     title: 'Notas',
     text: 'Notas libres con título y fecha, para lo que no encaja en un objetivo ni en una tarea.',
   },
