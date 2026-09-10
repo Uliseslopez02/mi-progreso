@@ -66,7 +66,9 @@ export function weightForTier(tier: WeightTier): number {
 }
 
 /** A partir de esta cantidad, el paso de objetivos muestra una advertencia (no bloqueante). */
-export const RECOMMENDED_MAX_GOALS = 8
+/** Alineado con el límite de objetivos diarios del plan Free (ver domain/plan.ts):
+ * arrancar con pocos objetivos es además el mejor consejo para sostener el hábito. */
+export const RECOMMENDED_MAX_GOALS = 5
 
 export interface SuggestedGoal {
   name: string

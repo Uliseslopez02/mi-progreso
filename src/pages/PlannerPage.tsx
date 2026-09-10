@@ -1,14 +1,29 @@
 import { useEffect, useMemo, useState } from 'react'
 import { PlannerBoard } from '../components/PlannerBoard'
 import { PlannerItemDetail } from '../components/PlannerItemDetail'
-import { addDays, formatLongDate, formatShortDate, startOfWeek, weekDays, type DateKey } from '../domain/date'
+import { UpgradeCard } from '../components/UpgradeCard'
+import { addDays, diffDays, formatLongDate, formatShortDate, startOfWeek, weekDays, type DateKey } from '../domain/date'
 import { createId } from '../domain/id'
+import { canOpenPlannerWeek } from '../domain/plan'
 import type { PlannerCategory, PlannerItem, PlannerItemType, PlannerPriority } from '../domain/types'
 import { useAppData } from '../state/context'
 
 export function PlannerPage() {
-  const { data, today, dispatch } = useAppData()
+  const { data, today, plan, dispatch } = useAppData()
   const [weekStart, setWeekStart] = useState<DateKey>(startOfWeek(today))
+  const [weekUpgrade, setWeekUpgrade] = useState(false)
+
+  const weeksAhead = Math.round(diffDays(startOfWeek(today), weekStart) / 7)
+  const nextWeekBlocked = !canOpenPlannerWeek(plan, weeksAhead + 1)
+
+  const goNextWeek = () => {
+    if (nextWeekBlocked) {
+      setWeekUpgrade(true)
+      return
+    }
+    setWeekUpgrade(false)
+    setWeekStart(addDays(weekStart, 7))
+  }
   const [newTitle, setNewTitle] = useState('')
   const [newDate, setNewDate] = useState<DateKey>(today)
   const [newType, setNewType] = useState<PlannerItemType>('task')
@@ -20,6 +35,11 @@ export function PlannerPage() {
   const [openId, setOpenId] = useState<string | null>(null)
 
   const days = useMemo(() => weekDays(weekStart), [weekStart])
+
+  // Volver a la semana actual (o a una anterior) descarta el aviso de upgrade.
+  useEffect(() => {
+    setWeekUpgrade(false)
+  }, [weekStart])
 
   const openItem = openId ? data.plannerItems.find((i) => i.id === openId) ?? null : null
   const habitNameById = useMemo(
@@ -115,12 +135,16 @@ export function PlannerPage() {
               type="button"
               className="icon-btn"
               aria-label="Semana siguiente"
-              onClick={() => setWeekStart(addDays(weekStart, 7))}
+              onClick={goNextWeek}
             >
               ›
             </button>
           </div>
         </div>
+
+        {weekUpgrade && (
+          <UpgradeCard limit="plannerWeeks" compact />
+        )}
         <p className="card__hint" style={{ marginBottom: 14 }}>
           {formatShortDate(weekStart)} – {formatShortDate(addDays(weekStart, 6))} · arrastrá una tarea para
           moverla de día u orden

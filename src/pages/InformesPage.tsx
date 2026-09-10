@@ -1,14 +1,17 @@
 import { useMemo } from 'react'
 import { LineChart } from '../components/LineChart'
 import { Stat } from '../components/Stat'
+import { UpgradeCard } from '../components/UpgradeCard'
 import { diffDays, formatLongDate, formatMonthYear, monthDays, startOfMonth } from '../domain/date'
 import { monthlyConclusions } from '../domain/monthlyConclusions'
 import { monthlyReport } from '../domain/monthlyReport'
+import { showsAdvancedReport } from '../domain/plan'
 import { computeDayStats, formatDelta } from '../domain/scoring'
 import { useAppData } from '../state/context'
 
 export function InformesPage() {
-  const { data, today } = useAppData()
+  const { data, today, plan } = useAppData()
+  const advanced = showsAdvancedReport(plan)
   const report = useMemo(
     () => monthlyReport(data.days, data.plannerItems, today, data.settings.streakThreshold),
     [data.days, data.plannerItems, today, data.settings.streakThreshold],
@@ -55,7 +58,7 @@ export function InformesPage() {
                 label="Cumplimiento del mes"
                 value={`${report.stats.average}%`}
                 hint={
-                  report.deltaVsPreviousMonth === null ? (
+                  !advanced ? undefined : report.deltaVsPreviousMonth === null ? (
                     'Sin mes anterior para comparar'
                   ) : (
                     <span className={deltaClass}>
@@ -84,40 +87,42 @@ export function InformesPage() {
                 value={report.perfectDays}
                 hint={report.perfectDays === 1 ? 'día al 100%' : 'días al 100%'}
               />
-              <Stat
-                label="Categoría más fuerte"
-                value={report.bestCategory ? `${report.bestCategory.percent}%` : '—'}
-                hint={report.bestCategory ? report.bestCategory.name : 'Sin datos todavía'}
-              />
-              {report.worstCategory && (
+              {advanced && (
+                <Stat
+                  label="Categoría más fuerte"
+                  value={report.bestCategory ? `${report.bestCategory.percent}%` : '—'}
+                  hint={report.bestCategory ? report.bestCategory.name : 'Sin datos todavía'}
+                />
+              )}
+              {advanced && report.worstCategory && (
                 <Stat
                   label="Categoría a reforzar"
                   value={`${report.worstCategory.percent}%`}
                   hint={report.worstCategory.name}
                 />
               )}
-              {report.mostConsistentGoal && (
+              {advanced && report.mostConsistentGoal && (
                 <Stat
                   label="Objetivo más consistente"
                   value={`${report.mostConsistentGoal.percent}%`}
                   hint={report.mostConsistentGoal.name}
                 />
               )}
-              {report.hardestGoal && (
+              {advanced && report.hardestGoal && (
                 <Stat
                   label="Objetivo más difícil"
                   value={`${report.hardestGoal.percent}%`}
                   hint={report.hardestGoal.name}
                 />
               )}
-              {report.bestWeekday && (
+              {advanced && report.bestWeekday && (
                 <Stat
                   label="Mejor día de la semana"
                   value={`${report.bestWeekday.average}%`}
                   hint={report.bestWeekday.day}
                 />
               )}
-              {report.plannedVsRealized.planned > 0 && (
+              {advanced && report.plannedVsRealized.planned > 0 && (
                 <Stat
                   label="Planificado vs. realizado"
                   value={`${report.plannedVsRealized.done}/${report.plannedVsRealized.planned}`}
@@ -125,6 +130,12 @@ export function InformesPage() {
                 />
               )}
             </div>
+
+            {!advanced && (
+              <div style={{ marginTop: 16 }}>
+                <UpgradeCard limit="advancedReport" />
+              </div>
+            )}
 
             <div style={{ marginTop: 16 }}>
               <LineChart points={evolutionPoints} average={report.stats.average} />

@@ -5,17 +5,31 @@ import { LifeGoalHealthCard } from '../components/LifeGoalHealthCard'
 import { LineChart } from '../components/LineChart'
 import { Stat } from '../components/Stat'
 import { WeekCard } from '../components/WeekCard'
+import { ProBadge } from '../components/ProBadge'
+import { UpgradeCard } from '../components/UpgradeCard'
 import { categoryConsistency, goalConsistency, habitStreakBreakdown } from '../domain/consistency'
 import { formatLongDate } from '../domain/date'
 import { lifeGoalHealth } from '../domain/lifeGoalHealth'
+import { PRO_HISTORY_RANGES, historyRangesFor, isProHistoryRange } from '../domain/plan'
 import { aggregate, computeStreak, historySeries, weekSummary } from '../domain/scoring'
 import { useAppData } from '../state/context'
 
-const RANGES = [7, 14, 30, 90] as const
+const RANGE_LABEL: Record<number, string> = { 7: '7 días', 14: '14 días', 30: '30 días', 90: '90 días', 365: '1 año' }
 
 export function HistoryPage() {
-  const { data, today } = useAppData()
-  const [range, setRange] = useState<(typeof RANGES)[number]>(14)
+  const { data, today, plan } = useAppData()
+  const [range, setRange] = useState<number>(14)
+  const [rangeUpgrade, setRangeUpgrade] = useState(false)
+  const allowedRanges = historyRangesFor(plan)
+
+  const chooseRange = (option: number) => {
+    if (allowedRanges.includes(option)) {
+      setRange(option)
+      setRangeUpgrade(false)
+    } else {
+      setRangeUpgrade(true)
+    }
+  }
 
   const series = useMemo(() => historySeries(data.days, today, range), [data.days, today, range])
   const stats = useMemo(
@@ -60,20 +74,30 @@ export function HistoryPage() {
         <div className="card__header">
           <h2 className="card__title">Progreso diario (%)</h2>
           <div className="nav" role="group" aria-label="Rango del historial">
-            {RANGES.map((option) => (
-              <button
-                key={option}
-                type="button"
-                className={`nav__item${option === range ? ' nav__item--active' : ''}`}
-                onClick={() => setRange(option)}
-              >
-                {option} días
-              </button>
-            ))}
+            {PRO_HISTORY_RANGES.map((option) => {
+              const locked = !allowedRanges.includes(option)
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  className={`nav__item${option === range ? ' nav__item--active' : ''}`}
+                  onClick={() => chooseRange(option)}
+                >
+                  {RANGE_LABEL[option]}
+                  {locked && isProHistoryRange(option) && (
+                    <>
+                      {' '}
+                      <ProBadge from="historyRange" static />
+                    </>
+                  )}
+                </button>
+              )
+            })}
           </div>
         </div>
 
         <LineChart points={series} average={stats.average} />
+        {rangeUpgrade && <UpgradeCard limit="historyRange" compact />}
       </section>
 
       <section className="card">

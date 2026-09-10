@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react'
 import { RoutineCard } from '../components/RoutineCard'
 import { RoutineExecutionCard } from '../components/RoutineExecutionCard'
 import { RoutineFocusMode } from '../components/RoutineFocusMode'
+import { UpgradeCard } from '../components/UpgradeCard'
 import { createId } from '../domain/id'
+import { isAtLimit, limitFor, shouldShowCounter } from '../domain/plan'
 import { getRoutineRun } from '../domain/routine'
 import type { RoutineCategory } from '../domain/types'
 import { useAppData } from '../state/context'
@@ -17,7 +19,7 @@ const CATEGORY_LABEL: Record<RoutineCategory, string> = {
 
 /** Rutinas: ritual con pasos ordenados, ejecución diaria y modo enfocado. */
 export function RoutinesPage() {
-  const { data, today, dispatch } = useAppData()
+  const { data, today, plan, dispatch } = useAppData()
   const [newName, setNewName] = useState('')
   const [newCategory, setNewCategory] = useState<RoutineCategory>('morning')
   const [focusRoutineId, setFocusRoutineId] = useState<string | null>(null)
@@ -26,9 +28,11 @@ export function RoutinesPage() {
   const activeRoutines = useMemo(() => routines.filter((r) => r.active), [routines])
   const focusRoutine = focusRoutineId ? data.routines.find((r) => r.id === focusRoutineId) : undefined
 
+  const routinesAtLimit = isAtLimit(plan, 'routines', data.routines.length)
+
   const addRoutine = () => {
     const name = newName.trim()
-    if (!name) return
+    if (!name || routinesAtLimit) return
     dispatch({
       type: 'addRoutine',
       routine: {
@@ -74,6 +78,9 @@ export function RoutinesPage() {
           <h2 className="card__title">Tus rutinas</h2>
           <span className="card__hint">
             {routines.filter((r) => r.active).length} activas de {routines.length}
+            {shouldShowCounter(plan, 'routines', data.routines.length) && (
+              <> · {data.routines.length}/{limitFor(plan, 'routines')}</>
+            )}
           </span>
         </div>
 
@@ -130,10 +137,16 @@ export function RoutinesPage() {
               ))}
             </select>
           </div>
-          <button type="button" className="btn btn--primary" onClick={addRoutine}>
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={addRoutine}
+            disabled={routinesAtLimit}
+          >
             Crear rutina
           </button>
         </div>
+        {routinesAtLimit && <UpgradeCard limit="routines" compact />}
       </section>
 
       {focusRoutine && (

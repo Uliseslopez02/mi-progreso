@@ -5,13 +5,15 @@ import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ProjectCard } from '../components/ProjectCard'
 import { ProjectListRow } from '../components/ProjectListRow'
+import { UpgradeCard } from '../components/UpgradeCard'
 import { createId } from '../domain/id'
+import { isAtLimit, limitFor, shouldShowCounter } from '../domain/plan'
 import { useAppData } from '../state/context'
 import { ProjectDetailPage } from './ProjectDetailPage'
 
 /** Proyectos: lista con CRUD, o el tablero Kanban de uno abierto (vía `?id=`). */
 export function ProjectsPage() {
-  const { data, dispatch } = useAppData()
+  const { data, plan, dispatch } = useAppData()
   const [searchParams, setSearchParams] = useSearchParams()
   const [newName, setNewName] = useState('')
 
@@ -37,9 +39,11 @@ export function ProjectsPage() {
     return <ProjectDetailPage project={openProject} onBack={() => setSearchParams({})} />
   }
 
+  const projectsAtLimit = isAtLimit(plan, 'activeProjects', activeProjects.length)
+
   const addProject = () => {
     const name = newName.trim()
-    if (!name) return
+    if (!name || projectsAtLimit) return
     dispatch({
       type: 'addProject',
       project: {
@@ -73,6 +77,11 @@ export function ProjectsPage() {
       <section className="card">
         <div className="card__header">
           <h2 className="card__title">Proyectos activos</h2>
+          {shouldShowCounter(plan, 'activeProjects', activeProjects.length) && (
+            <span className="card__hint">
+              {activeProjects.length}/{limitFor(plan, 'activeProjects')}
+            </span>
+          )}
         </div>
         {activeProjects.length === 0 ? (
           <p className="empty">No tenés proyectos activos. Creá el primero abajo.</p>
@@ -144,10 +153,16 @@ export function ProjectsPage() {
               }}
             />
           </div>
-          <button type="button" className="btn btn--primary" onClick={addProject}>
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={addProject}
+            disabled={projectsAtLimit}
+          >
             Crear proyecto
           </button>
         </div>
+        {projectsAtLimit && <UpgradeCard limit="activeProjects" compact />}
       </section>
     </div>
   )

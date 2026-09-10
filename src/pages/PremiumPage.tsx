@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { PlanComparison } from '../components/PlanComparison'
 import { supabase } from '../lib/supabaseClient'
 import { useAppContext } from '../state/context'
 import { track } from '../domain/analytics'
@@ -10,19 +11,24 @@ type PlanTier = 'premium_monthly' | 'premium_yearly'
 
 const BENEFITS = [
   {
-    icon: '🤖',
-    title: 'IA sin límites',
-    text: 'Pedile sugerencias e insights las veces que quieras, sin tope mensual.',
+    icon: '♾️',
+    title: 'Sin límites de capacidad',
+    text: 'Todos los objetivos, hábitos, proyectos, rutinas y metas que necesites para organizar todas tus áreas a la vez.',
   },
   {
-    icon: '💡',
-    title: 'Sugerencias de hábitos',
-    text: 'Ideas concretas para armar o ajustar tus hábitos según tus objetivos.',
+    icon: '📈',
+    title: 'Tu historia completa',
+    text: 'Progreso de los últimos 90 días y del último año, y el mapa anual entero de cada hábito.',
   },
   {
     icon: '📊',
-    title: 'Insights de tu historial',
-    text: 'La IA revisa tu progreso ya registrado y te ayuda a ver patrones y oportunidades.',
+    title: 'Informes que comparan',
+    text: 'Tu evolución mes a mes y las métricas avanzadas que muestran qué reforzar.',
+  },
+  {
+    icon: '🤖',
+    title: 'IA sin tope',
+    text: 'Sugerencias de hábitos e insights de tu historial las veces que quieras.',
   },
 ]
 
@@ -183,10 +189,11 @@ export function PremiumPage() {
   return (
     <div className="stack">
       <section className="card">
-        <h1 className="card__title">Tu progreso, con un poco de ayuda extra ✨</h1>
+        <h1 className="card__title">Cuando una sola parte de tu vida ya no alcanza ✨</h1>
         <p className="card__hint">
-          Mi Progreso sigue siendo gratis para organizar tus hábitos, objetivos, agenda, proyectos
-          e informes. Con Premium sumás IA para acompañarte cuando la necesites.
+          Mi Progreso es gratis para organizar tus hábitos, objetivos, agenda, proyectos e
+          informes. Premium es para cuando querés llevar todas tus áreas a la vez, mirar tu
+          progreso de meses atrás y aprovechar la IA sin tope.
         </p>
       </section>
 
@@ -203,6 +210,11 @@ export function PremiumPage() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="card">
+        <h2 className="card__title" style={{ fontSize: 16, marginBottom: 12 }}>Free vs Premium</h2>
+        <PlanComparison />
       </section>
 
       <section className="card">

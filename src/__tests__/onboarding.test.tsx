@@ -128,7 +128,7 @@ describe('Onboarding', () => {
     expect(screen.getByText('Practicar guitarra')).toBeInTheDocument()
   })
 
-  it('avisa (sin bloquear) al elegir muchos objetivos', async () => {
+  it('el plan gratuito topea en 5 objetivos y explica por qué (sin bloquear el wizard)', async () => {
     const user = userEvent.setup()
     renderFreshApp()
     await skipIntro(user)
@@ -140,17 +140,19 @@ describe('Onboarding', () => {
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     await screen.findByText('¿Qué querés lograr?')
 
+    // Intento elegir muchas sugerencias; en el plan gratuito sólo entran 5.
     for (const suggestion of screen.getAllByRole('button').filter((b) =>
       ['Dormir 8 horas', 'Hacer ejercicio', 'Tomar agua', 'Comer saludable', 'Caminar',
         'Trabajar sin distracciones', 'Planificar el día', 'Reducir uso del celular',
         'Leer', 'Estudiar', 'Aprender algo nuevo'].includes(b.textContent ?? ''),
     )) {
-      await user.click(suggestion)
+      await user.click(suggestion).catch(() => {})
     }
 
     expect(
-      await screen.findByText(/Elegiste bastantes objetivos para arrancar/),
+      await screen.findByText(/Con el plan gratuito arrancás con 5 objetivos diarios/),
     ).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Quitar / })).toHaveLength(5)
     expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled()
   })
 

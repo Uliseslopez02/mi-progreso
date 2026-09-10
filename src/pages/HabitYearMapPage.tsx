@@ -1,14 +1,19 @@
 import { useMemo, useState } from 'react'
 import { HabitYearHeatmap } from '../components/HabitYearHeatmap'
+import { ProBadge } from '../components/ProBadge'
 import { Stat } from '../components/Stat'
-import { habitYearMap, habitYearSummary } from '../domain/habitYearMap'
+import { UpgradeCard } from '../components/UpgradeCard'
+import { YEAR_MAP_WEEKS, habitYearMap, habitYearSummary } from '../domain/habitYearMap'
+import { yearMapWeeksFor } from '../domain/plan'
 import { useAppData } from '../state/context'
 
 /** Mapa anual (estilo GitHub) de un hábito a la vez, elegible por categoría/hábito. */
 export function HabitYearMapPage() {
-  const { data, today } = useAppData()
+  const { data, today, plan } = useAppData()
   const [categoryId, setCategoryId] = useState('')
   const [habitId, setHabitId] = useState('')
+  const weeksCount = yearMapWeeksFor(plan, YEAR_MAP_WEEKS)
+  const clamped = weeksCount < YEAR_MAP_WEEKS
 
   const habits = useMemo(
     () =>
@@ -31,8 +36,8 @@ export function HabitYearMapPage() {
   const selectedHabit = filteredHabits.find((h) => h.id === habitId) ?? filteredHabits[0] ?? null
 
   const weeks = useMemo(
-    () => (selectedHabit ? habitYearMap(data.days, selectedHabit.id, today) : []),
-    [data.days, selectedHabit, today],
+    () => (selectedHabit ? habitYearMap(data.days, selectedHabit.id, today, weeksCount) : []),
+    [data.days, selectedHabit, today, weeksCount],
   )
   const summary = useMemo(() => habitYearSummary(weeks), [weeks])
 
@@ -54,6 +59,7 @@ export function HabitYearMapPage() {
       <section className="card">
         <div className="card__header">
           <h2 className="card__title">Mapa anual</h2>
+          {clamped && <ProBadge from="yearMap" />}
         </div>
 
         <div className="row">
@@ -106,6 +112,11 @@ export function HabitYearMapPage() {
             <div style={{ marginTop: 16 }}>
               <HabitYearHeatmap weeks={weeks} />
             </div>
+            {clamped && (
+              <div style={{ marginTop: 16 }}>
+                <UpgradeCard limit="yearMap" compact />
+              </div>
+            )}
           </>
         )}
       </section>

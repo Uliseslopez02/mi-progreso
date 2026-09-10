@@ -2,7 +2,16 @@ import { useMemo, useState } from 'react'
 import { HabitSuggestionModal, type ConfirmedHabit } from '../components/HabitSuggestionModal'
 import { LifeGoalCard } from '../components/LifeGoalCard'
 import { SelectMenu } from '../components/SelectMenu'
+import { UpgradeCard } from '../components/UpgradeCard'
 import { createId } from '../domain/id'
+import {
+  countActiveLifeGoals,
+  countHabits,
+  isAtLimit,
+  limitFor,
+  remainingFor,
+  shouldShowCounter,
+} from '../domain/plan'
 import type { LifeGoalKind, LifeGoalPriority, LifeGoalScope } from '../domain/types'
 import { useAppData } from '../state/context'
 
@@ -43,7 +52,7 @@ const VALUE_KINDS: LifeGoalKind[] = ['quantity', 'money', 'hours', 'sessions']
 
 /** Objetivos y metas: visión de largo plazo, separada de los objetivos diarios. */
 export function GoalsPage() {
-  const { data, today, dispatch } = useAppData()
+  const { data, today, plan, dispatch } = useAppData()
   const [filter, setFilter] = useState<ScopeFilter>('all')
   const [newName, setNewName] = useState('')
   const [newScope, setNewScope] = useState<LifeGoalScope>('personal')
@@ -69,9 +78,12 @@ export function GoalsPage() {
     [data.lifeGoals, filter],
   )
 
+  const lifeGoalsAtLimit = isAtLimit(plan, 'activeLifeGoals', countActiveLifeGoals(data.lifeGoals))
+
   const addGoal = () => {
     const name = newName.trim()
     if (!name) return
+    if (lifeGoalsAtLimit) return
     const id = createId('meta')
     dispatch({
       type: 'addLifeGoal',
@@ -110,7 +122,10 @@ export function GoalsPage() {
   const confirmSuggestedHabits = (suggested: ConfirmedHabit[], driveProgress: boolean) => {
     if (!suggestingFor) return
     const categoryId = ensureCategoryId()
-    const createdIds = suggested.map(({ name, frequency }, index) => {
+    // Respeta el límite de hábitos del plan: si no entran todos, se crean los
+    // que quepan (nunca falla ni bloquea el flujo de la meta recién creada).
+    const room = remainingFor(plan, 'habits', countHabits(data.goals))
+    const createdIds = suggested.slice(0, room).map(({ name, frequency }, index) => {
       const habitId = createId('habit')
       dispatch({
         type: 'addGoal',
@@ -146,6 +161,9 @@ export function GoalsPage() {
           <span className="card__hint">
             {data.lifeGoals.filter((g) => g.status === 'active').length} activas de{' '}
             {data.lifeGoals.length}
+            {shouldShowCounter(plan, 'activeLifeGoals', countActiveLifeGoals(data.lifeGoals)) && (
+              <> · {countActiveLifeGoals(data.lifeGoals)}/{limitFor(plan, 'activeLifeGoals')} activas</>
+            )}
           </span>
         </div>
 
@@ -237,10 +255,16 @@ export function GoalsPage() {
               />
             </div>
           )}
-          <button type="button" className="btn btn--primary" onClick={addGoal}>
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={addGoal}
+            disabled={lifeGoalsAtLimit}
+          >
             Crear meta
           </button>
         </div>
+        {lifeGoalsAtLimit && <UpgradeCard limit="activeLifeGoals" compact />}
       </section>
 
       {suggestingFor && (

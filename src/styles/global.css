@@ -201,6 +201,70 @@ main { flex: 1; padding: 28px 0 72px; }
 
 .premium-entry__hint { color: var(--text-dim); font-size: 13px; }
 
+/* ---------- Upgrade (freemium) ---------- */
+.pro-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.32);
+  text-decoration: none;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.pro-badge--link:hover { background: rgba(52, 211, 153, 0.2); }
+
+.upgrade-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, var(--surface-2) 75%);
+}
+
+.upgrade-card--compact { margin-top: 12px; }
+
+.upgrade-card__title { font-weight: 650; font-size: 0.95rem; }
+
+.upgrade-card__body { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
+
+.upgrade-card__cta { margin-top: 4px; text-decoration: none; }
+
+.plan-compare { display: flex; flex-direction: column; font-size: 0.85rem; }
+
+.plan-compare__head,
+.plan-compare__row {
+  display: grid;
+  grid-template-columns: 1.6fr 0.9fr 1.3fr;
+  gap: 10px;
+  padding: 9px 0;
+  align-items: baseline;
+}
+
+.plan-compare__head {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+.plan-compare__row { border-top: 1px solid var(--border); }
+
+.plan-compare__label { color: var(--text-muted); }
+.plan-compare__free { color: var(--text-dim); }
+.plan-compare__pro { color: var(--text); font-weight: 550; }
+
 .card__title { font-size: 1rem; font-weight: 600; }
 
 .card__hint { font-size: 0.82rem; color: var(--text-muted); }

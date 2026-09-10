@@ -3,9 +3,11 @@ import { GoalList } from '../components/GoalList'
 import { HabitCard } from '../components/HabitCard'
 import { HabitInsightsCard } from '../components/HabitInsightsCard'
 import { SelectMenu } from '../components/SelectMenu'
+import { UpgradeCard } from '../components/UpgradeCard'
 import { WEEKDAY_KEYS, weekdayInitials } from '../domain/date'
 import { frequencyFrom, type FrequencyType } from '../domain/habits'
 import { createId } from '../domain/id'
+import { countHabits, isAtLimit, limitFor, shouldShowCounter } from '../domain/plan'
 import { useAppData } from '../state/context'
 
 const FREQUENCY_OPTIONS: Array<{ value: FrequencyType; label: string }> = [
@@ -19,7 +21,7 @@ const FREQUENCY_OPTIONS: Array<{ value: FrequencyType; label: string }> = [
  * existentes — única fuente de verdad para hábitos en toda la app (la edición
  * ya no vive también en Ajustes). */
 export function HabitsPage() {
-  const { data, today, dispatch } = useAppData()
+  const { data, today, plan, dispatch } = useAppData()
   const record = data.days[today]
   const [newHabitName, setNewHabitName] = useState('')
   const [newHabitCategory, setNewHabitCategory] = useState(data.categories[0]?.id ?? '')
@@ -59,9 +61,12 @@ export function HabitsPage() {
     )
   }
 
+  const habitsAtLimit = isAtLimit(plan, 'habits', countHabits(data.goals))
+
   const addHabit = () => {
     const name = newHabitName.trim()
     if (!name) return
+    if (habitsAtLimit) return
     let categoryId = newHabitCategory
     if (!categoryId) {
       categoryId = data.categories[0]?.id ?? createId('cat')
@@ -114,6 +119,9 @@ export function HabitsPage() {
           <h2 className="card__title">Tus hábitos</h2>
           <span className="card__hint">
             {habits.filter((h) => h.active).length} activos de {habits.length}
+            {shouldShowCounter(plan, 'habits', countHabits(data.goals)) && (
+              <> · {countHabits(data.goals)}/{limitFor(plan, 'habits')}</>
+            )}
           </span>
         </div>
 
@@ -209,10 +217,16 @@ export function HabitsPage() {
               />
             </div>
           )}
-          <button type="button" className="btn btn--primary" onClick={addHabit}>
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={addHabit}
+            disabled={habitsAtLimit}
+          >
             Crear hábito
           </button>
         </div>
+        {habitsAtLimit && <UpgradeCard limit="habits" compact />}
       </section>
     </div>
   )
