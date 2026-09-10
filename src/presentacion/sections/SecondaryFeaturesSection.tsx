@@ -2,12 +2,8 @@ import { SectionFrame } from '../SectionFrame'
 
 const FEATURES = [
   {
-    title: 'Agenda',
-    text: 'Vista de Día (timeline de 06 a 23 h, arrastrás los bloques para mover la hora o el borde para la duración), vista de Mes con un punto por día, y el Planificador semanal para repartir tareas entre los 7 días. Una tarea puede vincularse a un hábito y marcarlo por vos.',
-  },
-  {
-    title: 'Metas',
-    text: 'Objetivos de largo plazo (Correr 10 km, cambiar de trabajo…) con subobjetivos, ámbito personal/profesional y prioridad. El progreso se calcula solo desde los hábitos que vinculás, o lo llevás a mano.',
+    title: 'Planificador semanal',
+    text: 'Además de la vista de Día y de Mes, repartís las tareas de la semana entre los 7 días arrastrándolas de una columna a otra.',
   },
   {
     title: 'Rutinas',

@@ -6,9 +6,11 @@ import { ProblemSection } from './sections/ProblemSection'
 import { SolutionSection } from './sections/SolutionSection'
 import { DashboardSection } from './sections/DashboardSection'
 import { HabitsSection } from './sections/HabitsSection'
-import { ProjectsSection } from './sections/ProjectsSection'
 import { PercentageSystemSection } from './sections/PercentageSystemSection'
 import { ProgressSection } from './sections/ProgressSection'
+import { AgendaSection } from './sections/AgendaSection'
+import { ProjectsSection } from './sections/ProjectsSection'
+import { MetasSection } from './sections/MetasSection'
 import { JourneySection } from './sections/JourneySection'
 import { SecondaryFeaturesSection } from './sections/SecondaryFeaturesSection'
 import { FinalCtaSection } from './sections/FinalCtaSection'
@@ -39,9 +41,11 @@ export function PresentacionPage() {
           <SolutionSection />
           <DashboardSection />
           <HabitsSection />
-          <ProjectsSection />
           <PercentageSystemSection />
           <ProgressSection />
+          <AgendaSection />
+          <ProjectsSection />
+          <MetasSection />
           <div id="recorrido">
             <JourneySection />
           </div>

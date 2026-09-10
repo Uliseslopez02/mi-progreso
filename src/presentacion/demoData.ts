@@ -12,7 +12,16 @@
  */
 import { addDays, todayKey, type DateKey } from '../domain/date'
 import { snapshotGoals } from '../domain/day'
-import type { Category, DayRecord, Goal, LifeGoal, Project, ProjectTask, Routine } from '../domain/types'
+import type {
+  Category,
+  DayRecord,
+  Goal,
+  LifeGoal,
+  PlannerItem,
+  Project,
+  ProjectTask,
+  Routine,
+} from '../domain/types'
 
 export const TODAY: DateKey = todayKey()
 /** Ventana de historial fabricado. 45 > 30 para que el heatmap de hábitos
@@ -121,25 +130,84 @@ export function buildDemoDays(): Record<DateKey, DayRecord> {
   return days
 }
 
-export function buildDemoLifeGoal(): LifeGoal {
-  return {
-    id: 'lg-10k',
-    name: 'Correr 10 km',
-    description: 'De sofá a 10 km en 10 semanas.',
-    categoryId: 'pr-salud',
-    scope: 'personal',
-    priority: 'high',
-    progress: 62,
-    status: 'active',
-    subGoals: [
-      { id: 'sg-1', text: 'Entrenar 3 veces por semana', done: true },
-      { id: 'sg-2', text: 'Mejorar resistencia', done: true },
-      { id: 'sg-3', text: 'Completar 8 km seguidos', done: false },
-    ],
-    linkedHabitIds: ['h-caminar'],
-    order: 0,
-    createdAt: TODAY,
-  }
+/**
+ * Metas (LifeGoal) — visión de largo plazo, separada de los objetivos diarios.
+ * `progress` lo recalcula el estado con `computeLifeGoalProgress`, igual que la
+ * app; los valores acá son sólo un punto de partida.
+ */
+export function buildDemoLifeGoals(): LifeGoal[] {
+  const createdAt = addDays(TODAY, -40)
+  return [
+    {
+      id: 'lg-10k',
+      name: 'Correr 10 km sin parar',
+      description: 'De sofá a 10 km, apoyándome en el hábito de caminar.',
+      scope: 'personal',
+      priority: 'high',
+      progress: 0,
+      status: 'active',
+      kind: 'habits',
+      subGoals: [],
+      linkedHabitIds: ['h-caminar'],
+      targetDate: addDays(TODAY, 35),
+      order: 0,
+      createdAt,
+    },
+    {
+      id: 'lg-libros',
+      name: 'Leer 12 libros este año',
+      scope: 'personal',
+      priority: 'medium',
+      progress: 0,
+      status: 'active',
+      kind: 'quantity',
+      currentValue: 7,
+      targetValue: 12,
+      unit: 'libros',
+      subGoals: [],
+      linkedHabitIds: [],
+      order: 1,
+      createdAt,
+    },
+    {
+      id: 'lg-lanzar',
+      name: 'Lanzar mi proyecto',
+      description: 'De la idea a los primeros usuarios reales.',
+      scope: 'professional',
+      priority: 'high',
+      progress: 0,
+      status: 'active',
+      kind: 'milestones',
+      subGoals: [],
+      linkedHabitIds: [],
+      milestones: [
+        { id: 'ms-1', name: 'Definir el problema', done: true },
+        { id: 'ms-2', name: 'Prototipo funcionando', done: true },
+        { id: 'ms-3', name: 'Probarlo con 5 personas', done: true },
+        { id: 'ms-4', name: 'Ajustar según feedback', done: false },
+        { id: 'ms-5', name: 'Publicarlo', done: false },
+      ],
+      order: 2,
+      createdAt,
+    },
+  ]
+}
+
+const AGO = (n: number) => addDays(TODAY, -n)
+
+/** Un día de agenda realista: eventos con hora, tareas con y sin horario,
+ * distintas prioridades, y una tarea vinculada a un hábito. */
+export function buildDemoPlannerItems(): PlannerItem[] {
+  const base = { date: TODAY, done: false, createdAt: AGO(1) } as const
+  return [
+    { ...base, id: 'pi-1', title: 'Entrenar', type: 'task', category: 'personal', priority: 'high', order: 0, startTime: '07:30', durationMinutes: 60, linkedHabitId: 'h-caminar', habitCompletionMode: 'auto' },
+    { ...base, id: 'pi-2', title: 'Revisar mails y responder lo urgente', type: 'task', category: 'professional', priority: 'medium', order: 1, startTime: '09:00', durationMinutes: 30 },
+    { ...base, id: 'pi-3', title: 'Reunión de equipo', type: 'event', category: 'professional', priority: 'medium', order: 2, startTime: '10:00', durationMinutes: 45, done: true },
+    { ...base, id: 'pi-4', title: 'Bloque de trabajo profundo', type: 'task', category: 'professional', priority: 'high', order: 3, startTime: '11:00', durationMinutes: 90 },
+    { ...base, id: 'pi-5', title: 'Almuerzo con Sofía', type: 'event', category: 'personal', priority: 'low', order: 4, startTime: '13:30', durationMinutes: 60 },
+    { ...base, id: 'pi-6', title: 'Llamar al banco', type: 'task', category: 'personal', priority: 'low', order: 5 },
+    { ...base, id: 'pi-7', title: 'Comprar para la cena', type: 'task', category: 'personal', priority: 'medium', order: 6 },
+  ]
 }
 
 export const DEMO_PROJECT: Project = {

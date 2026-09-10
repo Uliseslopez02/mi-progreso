@@ -194,6 +194,12 @@
 .pr-progress__stack { display: flex; flex-direction: column; gap: 16px; }
 .pr-progress__note { margin-top: 18px; font-size: 0.85rem; color: var(--text-dim); line-height: 1.55; max-width: 68ch; }
 
+/* ---------- Agenda (recreación con <DayTimeline> real) ---------- */
+.pr-agenda__note { margin-top: 16px; font-size: 0.85rem; color: var(--text-dim); line-height: 1.55; max-width: 68ch; }
+
+/* ---------- Metas (recreación con <LifeGoalCard> real) ---------- */
+.pr-metas .lifegoal-card + .lifegoal-card { margin-top: 14px; }
+
 /* ---------- Recorrido ---------- */
 .pr-journey__path { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 22px; }
 .pr-journey__path li { display: flex; gap: 18px; align-items: flex-start; }
