@@ -2,6 +2,15 @@ export const config = { runtime: 'edge' }
 
 const MODEL = 'claude-haiku-4-5-20251001'
 
+/**
+ * Único mensaje que ve la persona usuaria ante cualquier fallo del servicio
+ * de IA (clave sin configurar, timeout, error de la API de Claude, respuesta
+ * ilegible). Nunca incluye detalles técnicos, nombres de variables ni stack
+ * traces — esos van sólo a console.error para el operador.
+ */
+const AI_UNAVAILABLE_MESSAGE =
+  'No pudimos generar las sugerencias en este momento. Probá de nuevo en unos segundos.'
+
 interface HabitAggregate {
   name: string
   percent: number
@@ -94,7 +103,8 @@ export default async function handler(request: Request): Promise<Response> {
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    return jsonResponse({ error: 'Falta configurar ANTHROPIC_API_KEY en el servidor.' }, 500)
+    console.error('[habit-insights] ANTHROPIC_API_KEY no está configurada en el entorno del servidor')
+    return jsonResponse({ error: AI_UNAVAILABLE_MESSAGE, code: 'ai_unavailable' }, 503)
   }
 
   let body: RequestBody
@@ -159,12 +169,14 @@ Ejemplo de formato: ["Cumplís mejor los martes y jueves que el resto de la sema
         messages: [{ role: 'user', content: prompt }],
       }),
     })
-  } catch {
-    return jsonResponse({ error: 'No se pudo contactar el servicio de sugerencias.' }, 502)
+  } catch (err) {
+    console.error('[habit-insights] no se pudo contactar la API de Claude', err)
+    return jsonResponse({ error: AI_UNAVAILABLE_MESSAGE, code: 'ai_unavailable' }, 503)
   }
 
   if (!response.ok) {
-    return jsonResponse({ error: 'El servicio de sugerencias no respondió correctamente.' }, 502)
+    console.error('[habit-insights] la API de Claude respondió con error', response.status, await response.text())
+    return jsonResponse({ error: AI_UNAVAILABLE_MESSAGE, code: 'ai_unavailable' }, 503)
   }
 
   const data = (await response.json()) as { content?: Array<{ text?: string }> }
@@ -176,7 +188,8 @@ Ejemplo de formato: ["Cumplís mejor los martes y jueves que el resto de la sema
     if (Array.isArray(parsed)) {
       insights = parsed.filter((s): s is string => typeof s === 'string' && s.trim().length > 0).slice(0, 3)
     }
-  } catch {
+  } catch (err) {
+    console.error('[habit-insights] no se pudo parsear la respuesta de Claude', err)
     insights = []
   }
 

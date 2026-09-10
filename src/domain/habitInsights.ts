@@ -74,6 +74,9 @@ export type HabitInsightsResult =
   | { ok: true; insights: string[] }
   | { ok: false; error: string; code?: string }
 
+const GENERIC_SUGGESTIONS_ERROR =
+  'No pudimos generar las sugerencias en este momento. Probá de nuevo en unos segundos.'
+
 /**
  * Pide sugerencias proactivas basadas en el historial de hábitos, vía la Edge
  * Function `/api/habit-insights`. Mismo criterio de seguridad que
@@ -93,7 +96,10 @@ export async function fetchHabitInsights(payload: HabitInsightsPayload): Promise
     })
     if (!res.ok) {
       const body = (await res.json().catch(() => null)) as { error?: string; code?: string } | null
-      return { ok: false, error: body?.error ?? 'No se pudieron generar sugerencias.', code: body?.code }
+      if (body?.code === 'ai_limit_reached') {
+        return { ok: false, error: body.error ?? GENERIC_SUGGESTIONS_ERROR, code: body.code }
+      }
+      return { ok: false, error: GENERIC_SUGGESTIONS_ERROR, code: body?.code }
     }
     const data = (await res.json()) as { insights?: unknown }
     const insights = Array.isArray(data.insights)
@@ -101,6 +107,6 @@ export async function fetchHabitInsights(payload: HabitInsightsPayload): Promise
       : []
     return { ok: true, insights }
   } catch {
-    return { ok: false, error: 'No se pudo conectar con el servicio de sugerencias.' }
+    return { ok: false, error: GENERIC_SUGGESTIONS_ERROR }
   }
 }
