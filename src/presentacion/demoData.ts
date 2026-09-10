@@ -12,6 +12,7 @@
  */
 import { addDays, todayKey, type DateKey } from '../domain/date'
 import { snapshotGoals } from '../domain/day'
+import { routineRunKey } from '../domain/routine'
 import type {
   Category,
   DayRecord,
@@ -21,6 +22,7 @@ import type {
   Project,
   ProjectTask,
   Routine,
+  RoutineRun,
 } from '../domain/types'
 
 export const TODAY: DateKey = todayKey()
@@ -229,17 +231,44 @@ export function buildDemoProjectTasks(): ProjectTask[] {
   ]
 }
 
-export const DEMO_ROUTINE: Routine = {
-  id: 'rt-manana',
-  name: 'Ritual de la mañana',
-  category: 'morning',
-  active: true,
-  order: 0,
-  createdAt: TODAY,
-  steps: [
-    { id: 'rs-1', text: 'Tender la cama', order: 0 },
-    { id: 'rs-2', text: 'Vaso de agua', order: 1 },
-    { id: 'rs-3', text: '10 minutos de estiramiento', order: 2 },
-    { id: 'rs-4', text: 'Revisar la agenda del día', order: 3 },
-  ],
+export function buildDemoRoutines(): Routine[] {
+  return [
+    {
+      id: 'rt-manana',
+      name: 'Ritual de la mañana',
+      category: 'morning',
+      active: true,
+      order: 0,
+      createdAt: TODAY,
+      steps: [
+        { id: 'rs-1', text: 'Tender la cama', order: 0 },
+        { id: 'rs-2', text: 'Vaso de agua', order: 1 },
+        { id: 'rs-3', text: '10 minutos de estiramiento', order: 2 },
+        { id: 'rs-4', text: 'Revisar la agenda del día', order: 3 },
+      ],
+    },
+    {
+      id: 'rt-noche',
+      name: 'Cierre del día',
+      category: 'evening',
+      active: true,
+      order: 1,
+      createdAt: TODAY,
+      steps: [
+        { id: 'rs-5', text: 'Anotar 3 cosas logradas hoy', order: 0 },
+        { id: 'rs-6', text: 'Dejar la ropa lista para mañana', order: 1 },
+        { id: 'rs-7', text: 'Pantallas apagadas 30 min antes de dormir', order: 2 },
+      ],
+    },
+  ]
+}
+
+/** El ritual de la mañana ya lleva 2 de 4 pasos hoy; el de la noche todavía no arrancó. */
+export function buildDemoRoutineRuns(): Record<string, RoutineRun> {
+  const run: RoutineRun = {
+    routineId: 'rt-manana',
+    date: TODAY,
+    completedStepIds: ['rs-1', 'rs-2'],
+  }
+  return { [routineRunKey(run.routineId, run.date)]: run }
 }

@@ -6,10 +6,6 @@ const FEATURES = [
     text: 'Además de la vista de Día y de Mes, repartís las tareas de la semana entre los 7 días arrastrándolas de una columna a otra.',
   },
   {
-    title: 'Rutinas',
-    text: 'Secuencias de pasos (ritual de la mañana, entrenamiento, cierre del día) que se completan paso a paso, con un modo enfoque para hacerlas una por una sin distracción.',
-  },
-  {
     title: 'Calendario',
     text: 'El mes entero coloreado por el % de cada día, con la misma escala de bandas del anillo. Tocás un día y ves qué cumpliste y qué no.',
   },

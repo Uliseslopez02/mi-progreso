@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { snapshotGoals, toggleGoal } from '../domain/day'
 import type { DateKey } from '../domain/date'
 import { computeLifeGoalProgress } from '../domain/lifeGoalProgress'
+import { routineRunKey } from '../domain/routine'
 import type {
   DayRecord,
   Goal,
@@ -10,6 +11,8 @@ import type {
   PlannerItem,
   ProjectTask,
   ProjectTaskStatus,
+  Routine,
+  RoutineRun,
 } from '../domain/types'
 import {
   ALL_DEMO_GOALS,
@@ -19,6 +22,8 @@ import {
   buildDemoLifeGoals,
   buildDemoPlannerItems,
   buildDemoProjectTasks,
+  buildDemoRoutineRuns,
+  buildDemoRoutines,
 } from './demoData'
 
 interface PresentacionData {
@@ -28,6 +33,8 @@ interface PresentacionData {
   lifeGoals: LifeGoal[]
   plannerItems: PlannerItem[]
   projectTasks: ProjectTask[]
+  routines: Routine[]
+  routineRuns: Record<string, RoutineRun>
 }
 
 type Action =
@@ -45,6 +52,10 @@ type Action =
   | { type: 'MOVE_PLANNER_ITEM'; itemId: string; startTime: string }
   | { type: 'RESIZE_PLANNER_ITEM'; itemId: string; durationMinutes: number }
   | { type: 'MOVE_TASK'; taskId: string; status: ProjectTaskStatus }
+  | { type: 'UPDATE_ROUTINE'; routineId: string; patch: Partial<Omit<Routine, 'id'>> }
+  | { type: 'REMOVE_ROUTINE'; routineId: string }
+  | { type: 'MOVE_ROUTINE'; routineId: string; direction: -1 | 1 }
+  | { type: 'TOGGLE_ROUTINE_STEP'; routineId: string; stepId: string }
 
 /** Re-snapshotea `days[TODAY]` a partir de `goals` conservando el progreso ya
  * cargado — mismo comportamiento que `ensureDay` para el día en curso. */
@@ -157,6 +168,40 @@ function reducer(state: PresentacionData, action: Action): PresentacionData {
       )
       return { ...state, projectTasks }
     }
+    case 'UPDATE_ROUTINE': {
+      const routines = state.routines.map((r) =>
+        r.id === action.routineId ? { ...r, ...action.patch } : r,
+      )
+      return { ...state, routines }
+    }
+    case 'REMOVE_ROUTINE': {
+      const routineRuns = Object.fromEntries(
+        Object.entries(state.routineRuns).filter(([, run]) => run.routineId !== action.routineId),
+      )
+      return {
+        ...state,
+        routines: state.routines.filter((r) => r.id !== action.routineId),
+        routineRuns,
+      }
+    }
+    case 'MOVE_ROUTINE': {
+      const ordered = [...state.routines].sort((a, b) => a.order - b.order)
+      const index = ordered.findIndex((r) => r.id === action.routineId)
+      const target = index + action.direction
+      if (index === -1 || target < 0 || target >= ordered.length) return state
+      const swapped = [...ordered]
+      ;[swapped[index], swapped[target]] = [swapped[target], swapped[index]]
+      return { ...state, routines: swapped.map((r, order) => ({ ...r, order })) }
+    }
+    case 'TOGGLE_ROUTINE_STEP': {
+      const key = routineRunKey(action.routineId, TODAY)
+      const existing = state.routineRuns[key]
+      const completed = new Set(existing?.completedStepIds ?? [])
+      if (completed.has(action.stepId)) completed.delete(action.stepId)
+      else completed.add(action.stepId)
+      const run: RoutineRun = { routineId: action.routineId, date: TODAY, completedStepIds: [...completed] }
+      return { ...state, routineRuns: { ...state.routineRuns, [key]: run } }
+    }
     default:
       return state
   }
@@ -177,6 +222,10 @@ interface PresentacionContextValue extends PresentacionData {
   movePlannerItem: (itemId: string, startTime: string) => void
   resizePlannerItem: (itemId: string, durationMinutes: number) => void
   moveTask: (taskId: string, status: ProjectTaskStatus) => void
+  updateRoutine: (routineId: string, patch: Partial<Omit<Routine, 'id'>>) => void
+  removeRoutine: (routineId: string) => void
+  moveRoutine: (routineId: string, direction: -1 | 1) => void
+  toggleRoutineStep: (routineId: string, stepId: string) => void
 }
 
 const PresentacionContext = createContext<PresentacionContextValue | null>(null)
@@ -196,6 +245,8 @@ export function PresentacionProvider({ children }: { children: ReactNode }) {
       lifeGoals: recomputeLifeGoals(buildDemoLifeGoals(), days),
       plannerItems: buildDemoPlannerItems(),
       projectTasks: buildDemoProjectTasks(),
+      routines: buildDemoRoutines(),
+      routineRuns: buildDemoRoutineRuns(),
     }
   })
 
@@ -217,6 +268,10 @@ export function PresentacionProvider({ children }: { children: ReactNode }) {
       resizePlannerItem: (itemId, durationMinutes) =>
         dispatch({ type: 'RESIZE_PLANNER_ITEM', itemId, durationMinutes }),
       moveTask: (taskId, status) => dispatch({ type: 'MOVE_TASK', taskId, status }),
+      updateRoutine: (routineId, patch) => dispatch({ type: 'UPDATE_ROUTINE', routineId, patch }),
+      removeRoutine: (routineId) => dispatch({ type: 'REMOVE_ROUTINE', routineId }),
+      moveRoutine: (routineId, direction) => dispatch({ type: 'MOVE_ROUTINE', routineId, direction }),
+      toggleRoutineStep: (routineId, stepId) => dispatch({ type: 'TOGGLE_ROUTINE_STEP', routineId, stepId }),
     }),
     [state],
   )

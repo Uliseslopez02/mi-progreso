@@ -11,6 +11,7 @@ import { ProgressSection } from './sections/ProgressSection'
 import { AgendaSection } from './sections/AgendaSection'
 import { ProjectsSection } from './sections/ProjectsSection'
 import { MetasSection } from './sections/MetasSection'
+import { RoutinasSection } from './sections/RoutinasSection'
 import { JourneySection } from './sections/JourneySection'
 import { SecondaryFeaturesSection } from './sections/SecondaryFeaturesSection'
 import { FinalCtaSection } from './sections/FinalCtaSection'
@@ -46,6 +47,7 @@ export function PresentacionPage() {
           <AgendaSection />
           <ProjectsSection />
           <MetasSection />
+          <RoutinasSection />
           <div id="recorrido">
             <JourneySection />
           </div>

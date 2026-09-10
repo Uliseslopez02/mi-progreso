@@ -97,4 +97,26 @@ describe('PresentacionPage', () => {
     const after = Number(within(goalCard).getByText(/%$/).textContent!.replace('%', ''))
     expect(after).not.toBe(before)
   })
+
+  it('Rutinas: marcar un paso recalcula el progreso y el modo enfocado avanza paso a paso', async () => {
+    render(<PresentacionPage />)
+
+    const rutinasCard = screen
+      .getByRole('heading', { name: 'Rutinas de hoy' })
+      .closest('.card') as HTMLElement
+    // Demo: el ritual de la mañana ya lleva 2 de 4 pasos.
+    expect(within(rutinasCard).getByText('2 de 4 completados')).toBeInTheDocument()
+
+    await userEvent.click(within(rutinasCard).getByRole('checkbox', { name: '10 minutos de estiramiento' }))
+    expect(within(rutinasCard).getByText('3 de 4 completados')).toBeInTheDocument()
+
+    await userEvent.click(
+      within(rutinasCard).getAllByRole('button', { name: 'Modo enfocado' })[0],
+    )
+    const dialog = screen.getByRole('dialog', { name: /Modo enfocado — Ritual de la mañana/i })
+    expect(within(dialog).getByText('Paso 4 de 4')).toBeInTheDocument()
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Hecho, siguiente' }))
+    expect(within(dialog).getByText(/Rutina completa/)).toBeInTheDocument()
+  })
 })
