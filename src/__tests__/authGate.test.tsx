@@ -336,8 +336,26 @@ describe('AuthGate', () => {
 
     expect(await screen.findByRole('heading', { name: 'Este enlace ya venció.' })).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Pedir un enlace nuevo' }))
+    await user.click(screen.getByRole('button', { name: 'Restablecer mi contraseña' }))
     expect(await screen.findByRole('heading', { name: '¿No recordás tu contraseña?' })).toBeInTheDocument()
+  })
+
+  it('un enlace vencido también permite pedir un nuevo email de confirmación de cuenta', async () => {
+    window.history.replaceState(null, '', '/#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired')
+    vi.mocked(supabaseAuth.getSession).mockResolvedValue(null)
+    vi.mocked(supabaseAuth.onAuthStateChange).mockReturnValue(() => {})
+    const user = userEvent.setup()
+
+    render(
+      <AuthGate>
+        <p>Contenido secreto</p>
+      </AuthGate>,
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Este enlace ya venció.' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Confirmar mi cuenta' }))
+    expect(await screen.findByRole('heading', { name: 'Confirmá tu cuenta' })).toBeInTheDocument()
   })
 
   it('cerrar sesión (evento de auth con sesión null) vuelve al login', async () => {

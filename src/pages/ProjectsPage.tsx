@@ -113,7 +113,14 @@ export function ProjectsPage() {
                       doneCount={done}
                       taskCount={total}
                       onUpdate={(patch) => dispatch({ type: 'updateProject', id: project.id, patch })}
-                      onRemove={() => dispatch({ type: 'removeProject', id: project.id })}
+                      onRemove={() => {
+                        const warning =
+                          total > 0
+                            ? `Vas a eliminar "${project.name}" y sus ${total} tarea${total === 1 ? '' : 's'}. Esta acción no se puede deshacer. ¿Continuar?`
+                            : `Vas a eliminar "${project.name}". Esta acción no se puede deshacer. ¿Continuar?`
+                        if (!window.confirm(warning)) return
+                        dispatch({ type: 'removeProject', id: project.id })
+                      }}
                       onOpen={() => setSearchParams({ id: project.id })}
                     />
                   )

@@ -230,8 +230,13 @@ secure_password_change = false
 max_frequency = "1s"
 # Number of characters used in the email OTP.
 otp_length = 6
-# Number of seconds before the email OTP expires (defaults to 1 hour).
-otp_expiry = 3600
+# Número de segundos antes de que venza el link/OTP de email (confirmación de
+# cuenta, magic link, recuperación de contraseña). Se sube de 1 hora (default)
+# a 24hs para que confirmar la cuenta más tarde no tire "enlace vencido".
+# IMPORTANTE: este valor sólo aplica al entorno local (`supabase start`). En
+# producción hay que replicarlo a mano en el Dashboard del proyecto:
+# Authentication → Settings → Email OTP expiration.
+otp_expiry = 86400
 
 # Use a production-ready SMTP server
 # [auth.email.smtp]
@@ -242,6 +247,16 @@ otp_expiry = 3600
 # pass = "env(SENDGRID_API_KEY)"
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
+
+# Email de confirmación de cuenta (signup) — ver supabase/templates/confirmation.html.
+# IMPORTANTE: este archivo sólo se usa si el proyecto se gestiona con
+# `supabase link` + `supabase config push`/`db push`. Si el proyecto de
+# producción se administra desde el Dashboard, hay que copiar el HTML de
+# supabase/templates/confirmation.html a mano en:
+# Authentication → Email Templates → Confirm signup.
+[auth.email.template.confirmation]
+subject = "Confirmá tu cuenta de Mi Progreso"
+content_path = "./supabase/templates/confirmation.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

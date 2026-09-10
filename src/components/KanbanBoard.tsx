@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { useState, type PointerEvent as ReactPointerEvent } from 'react'
 import {
   DndContext,
-  PointerSensor,
+  DragOverlay,
+  MouseSensor,
+  TouchSensor,
   closestCenter,
   useDroppable,
   useSensor,
   useSensors,
 } from '@dnd-kit/core'
-import type { DragEndEvent } from '@dnd-kit/core'
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { ProjectTask, ProjectTaskStatus } from '../domain/types'
@@ -42,6 +44,31 @@ interface Props {
   onAdd: (status: ProjectTaskStatus, title: string) => void
 }
 
+/** Contenido visual de una tarjeta — compartido entre la versión arrastrable
+ * (`SortableCard`) y el clon que sigue al dedo/cursor en el `DragOverlay`. */
+function CardContent({ task, onRemove }: { task: ProjectTask; onRemove?: (id: string) => void }) {
+  const stop = (e: ReactPointerEvent) => e.stopPropagation()
+  return (
+    <>
+      <span className="drag-handle" aria-hidden="true">
+        ⠿
+      </span>
+      <p className="planner-item__title">{task.title}</p>
+      {onRemove && (
+        <button
+          type="button"
+          className="planner-item__remove"
+          aria-label={`Eliminar ${task.title}`}
+          onPointerDown={stop}
+          onClick={() => onRemove(task.id)}
+        >
+          ×
+        </button>
+      )}
+    </>
+  )
+}
+
 function SortableCard({ task, onRemove }: { task: ProjectTask; onRemove: (id: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
@@ -50,16 +77,12 @@ function SortableCard({ task, onRemove }: { task: ProjectTask; onRemove: (id: st
   return (
     <li
       ref={setNodeRef}
-      className={`planner-item${isDragging ? ' planner-item--dragging' : ''}`}
+      className={`planner-item kanban-card${isDragging ? ' planner-item--dragging' : ''}`}
       style={{ transform: CSS.Transform.toString(transform), transition }}
+      {...attributes}
+      {...listeners}
     >
-      <button type="button" className="drag-handle" aria-label={`Reordenar ${task.title}`} {...attributes} {...listeners}>
-        ⠿
-      </button>
-      <p className="planner-item__title">{task.title}</p>
-      <button type="button" className="planner-item__remove" aria-label={`Eliminar ${task.title}`} onClick={() => onRemove(task.id)}>
-        ×
-      </button>
+      <CardContent task={task} onRemove={onRemove} />
     </li>
   )
 }
@@ -75,7 +98,7 @@ function StatusColumn({
   onRemove: (id: string) => void
   onAdd: (status: ProjectTaskStatus, title: string) => void
 }) {
-  const { setNodeRef } = useDroppable({ id: `status:${status}` })
+  const { setNodeRef, isOver } = useDroppable({ id: `status:${status}` })
   const [newTitle, setNewTitle] = useState('')
 
   const addHere = () => {
@@ -86,7 +109,7 @@ function StatusColumn({
   }
 
   return (
-    <div className="planner-day">
+    <div className={`planner-day kanban-column${isOver ? ' kanban-column--over' : ''}`}>
       <div className="planner-day__header">
         <span className="planner-day__weekday">
           <span aria-hidden="true" style={{ color: STATUS_COLOR[status] }}>
@@ -101,6 +124,7 @@ function StatusColumn({
           {tasks.map((task) => (
             <SortableCard key={task.id} task={task} onRemove={onRemove} />
           ))}
+          {tasks.length === 0 && <li className="kanban-column__empty">Soltá una tarea acá</li>}
         </ul>
       </SortableContext>
       <div className="planner-day__add">
@@ -122,9 +146,15 @@ function StatusColumn({
   )
 }
 
-/** Tablero Kanban de un proyecto: columnas de estado en vez de columnas de día, mismo mecanismo de arrastre que `PlannerBoard`. */
+/** Tablero Kanban de un proyecto: columnas de estado en vez de columnas de día.
+ * Soporta mouse (arrastre inmediato) y táctil (mantener presionado para no
+ * chocar con el scroll vertical de la columna, ver `TouchSensor` abajo). */
 export function KanbanBoard({ tasksByStatus, onRemove, onReorder, onAdd }: Props) {
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+  )
+  const [activeId, setActiveId] = useState<string | null>(null)
 
   const findStatus = (taskId: string): ProjectTaskStatus | null => {
     for (const status of STATUSES) {
@@ -133,7 +163,16 @@ export function KanbanBoard({ tasksByStatus, onRemove, onReorder, onAdd }: Props
     return null
   }
 
+  const activeTask = activeId
+    ? (STATUSES.map((s) => tasksByStatus[s]?.find((t) => t.id === activeId)).find(Boolean) ?? null)
+    : null
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(String(event.active.id))
+  }
+
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null)
     const { active, over } = event
     if (!over) return
     const activeId = String(active.id)
@@ -164,7 +203,13 @@ export function KanbanBoard({ tasksByStatus, onRemove, onReorder, onAdd }: Props
 
   return (
     <div className="planner-scroll">
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={() => setActiveId(null)}
+      >
         <div className="planner-grid">
           {STATUSES.map((status) => (
             <StatusColumn
@@ -176,6 +221,15 @@ export function KanbanBoard({ tasksByStatus, onRemove, onReorder, onAdd }: Props
             />
           ))}
         </div>
+        <DragOverlay>
+          {activeTask && (
+            <ul className="planner-day__items">
+              <li className="planner-item kanban-card kanban-card--overlay">
+                <CardContent task={activeTask} />
+              </li>
+            </ul>
+          )}
+        </DragOverlay>
       </DndContext>
     </div>
   )

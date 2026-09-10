@@ -13,13 +13,20 @@ import { touchLastActive } from './profileActivity'
 import { SignUpWizard } from './SignUpWizard'
 import { isValidEmail, maskEmail } from './validation'
 import { isReturningDevice, markReturningDevice, pickWelcomeCopy } from './welcomeMessages'
-import { getSession, onAuthStateChange, requestPasswordReset, signIn, updatePassword } from './supabaseAuth'
+import {
+  getSession,
+  onAuthStateChange,
+  requestPasswordReset,
+  resendSignUpConfirmation,
+  signIn,
+  updatePassword,
+} from './supabaseAuth'
 
 interface Props {
   children: ReactNode
 }
 
-type Mode = 'signIn' | 'signUp' | 'resetPassword' | 'setNewPassword'
+type Mode = 'signIn' | 'signUp' | 'resetPassword' | 'setNewPassword' | 'resendConfirmation'
 
 /** Si la verificación de sesión no responde en este tiempo, no dejamos a la persona mirando una pantalla muda. */
 const SESSION_CHECK_TIMEOUT_MS = 15_000
@@ -56,6 +63,8 @@ export function AuthGate({ children }: Props) {
   const [configError, setConfigError] = useState<string | null>(null)
   const [resetSent, setResetSent] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
+  const [confirmResendSent, setConfirmResendSent] = useState(false)
+  const [confirmResendCooldown, setConfirmResendCooldown] = useState(0)
   const [entering, setEntering] = useState(false)
   const [welcome] = useState(() => pickWelcomeCopy(isReturningDevice()))
   const [linkError, setLinkError] = useState<LinkError>(() => readLinkErrorFromUrl())
@@ -108,6 +117,12 @@ export function AuthGate({ children }: Props) {
     return () => window.clearInterval(timer)
   }, [resendCooldown])
 
+  useEffect(() => {
+    if (confirmResendCooldown <= 0) return
+    const timer = window.setInterval(() => setConfirmResendCooldown((s) => Math.max(0, s - 1)), 1000)
+    return () => window.clearInterval(timer)
+  }, [confirmResendCooldown])
+
   // Transición breve de continuidad tras un login exitoso — nunca bloquea de verdad.
   useEffect(() => {
     if (!entering) return
@@ -158,18 +173,29 @@ export function AuthGate({ children }: Props) {
           </h1>
           <p className="card__hint auth-card__subtitle">
             {linkError === 'expired'
-              ? 'Por seguridad, los enlaces para restablecer tu contraseña duran un tiempo limitado.'
+              ? 'Por seguridad, los enlaces de email duran un tiempo limitado, o puede que ya lo hayas usado antes.'
               : 'Puede que ya se haya usado, o que el link esté incompleto.'}
           </p>
+          <p className="card__hint auth-card__subtitle">¿Qué estabas intentando hacer?</p>
           <button
             type="button"
             className="btn btn--primary"
             onClick={() => {
               setLinkError(null)
+              setMode('resendConfirmation')
+            }}
+          >
+            Confirmar mi cuenta
+          </button>
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={() => {
+              setLinkError(null)
               setMode('resetPassword')
             }}
           >
-            Pedir un enlace nuevo
+            Restablecer mi contraseña
           </button>
           <div className="auth-card__links auth-card__links--center">
             <button type="button" className="btn btn--ghost" onClick={() => setLinkError(null)}>
@@ -201,6 +227,8 @@ export function AuthGate({ children }: Props) {
     setSubmitAttempted(false)
     setResetSent(false)
     setResendCooldown(0)
+    setConfirmResendSent(false)
+    setConfirmResendCooldown(0)
   }
 
   if (mode === 'signUp') {
@@ -268,6 +296,39 @@ export function AuthGate({ children }: Props) {
       setInfo('Reenviado.')
     } catch (err) {
       setError(describeAuthError('resetPassword', err))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleConfirmResendRequest = async (event: FormEvent) => {
+    event.preventDefault()
+    resetFeedback()
+    setSubmitAttempted(true)
+    if (emailError) return
+
+    setSubmitting(true)
+    try {
+      await resendSignUpConfirmation(email.trim())
+      setConfirmResendSent(true)
+      setConfirmResendCooldown(RESET_RESEND_COOLDOWN_S)
+    } catch (err) {
+      setError(describeAuthError('resendConfirmation', err))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleConfirmResendAgain = async () => {
+    if (confirmResendCooldown > 0) return
+    resetFeedback()
+    setSubmitting(true)
+    try {
+      await resendSignUpConfirmation(email.trim())
+      setConfirmResendCooldown(RESET_RESEND_COOLDOWN_S)
+      setInfo('Reenviado.')
+    } catch (err) {
+      setError(describeAuthError('resendConfirmation', err))
     } finally {
       setSubmitting(false)
     }
@@ -355,6 +416,102 @@ export function AuthGate({ children }: Props) {
           <p className="card__hint auth-card__subtitle">No pasa nada. Te ayudamos a volver.</p>
           <IconField
             id="reset-email"
+            label="Email"
+            type="email"
+            icon={<MailIcon />}
+            autoComplete="email"
+            value={email}
+            disabled={submitting}
+            valid={isValidEmail(email)}
+            onChange={(v) => {
+              setEmail(v)
+              resetFeedback()
+            }}
+            onBlur={() => setTouched((t) => ({ ...t, email: true }))}
+            error={showEmailError || undefined}
+          />
+          {error && (
+            <p className="auth-card__error" role="alert">
+              {error}
+            </p>
+          )}
+          <button type="submit" className="btn btn--primary" disabled={submitting}>
+            {submitting ? 'Enviando…' : 'Enviar enlace'}
+          </button>
+          <div className="auth-card__links auth-card__links--center">
+            <button type="button" className="btn btn--ghost" onClick={() => switchMode('signIn')}>
+              Volver al inicio
+            </button>
+          </div>
+        </form>
+      </div>
+    )
+  }
+
+  if (mode === 'resendConfirmation') {
+    if (confirmResendSent) {
+      return (
+        <div className="auth-screen">
+          <div className="card auth-card">
+            <div className="auth-card__brand">
+              <LogoMark size={30} />
+              <p className="hero__eyebrow">Mi Progreso</p>
+            </div>
+            <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+              Revisá tu correo.
+            </h1>
+            <p className="card__hint auth-card__subtitle" role="status">
+              Te enviamos un nuevo email de confirmación a <strong>{maskEmail(email)}</strong>. El enlace es válido
+              por 24 horas.
+            </p>
+            {error && (
+              <p className="auth-card__error" role="alert">
+                {error}
+              </p>
+            )}
+            {info && (
+              <p className="auth-card__info" role="status">
+                {info}
+              </p>
+            )}
+            <div className="auth-card__links">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                disabled={submitting || confirmResendCooldown > 0}
+                onClick={() => void handleConfirmResendAgain()}
+              >
+                {confirmResendCooldown > 0 ? `Reenviar (${confirmResendCooldown}s)` : 'Reenviar'}
+              </button>
+              <button type="button" className="btn btn--ghost" onClick={() => setConfirmResendSent(false)}>
+                Cambiar email
+              </button>
+            </div>
+            <div className="auth-card__links auth-card__links--center">
+              <button type="button" className="btn btn--ghost" onClick={() => switchMode('signIn')}>
+                Volver al inicio
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="auth-screen">
+        <form className="card auth-card" onSubmit={(e) => void handleConfirmResendRequest(e)} noValidate>
+          <div className="auth-card__brand">
+            <LogoMark size={30} />
+            <p className="hero__eyebrow">Mi Progreso</p>
+          </div>
+          <h1 className="card__title" ref={headingRef} tabIndex={-1}>
+            Confirmá tu cuenta
+          </h1>
+          <p className="card__hint auth-card__subtitle">
+            Ingresá tu email y te mandamos un nuevo enlace de confirmación.
+          </p>
+          <IconField
+            id="resend-confirmation-email"
             label="Email"
             type="email"
             icon={<MailIcon />}
