@@ -119,4 +119,35 @@ describe('PresentacionPage', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: 'Hecho, siguiente' }))
     expect(within(dialog).getByText(/Rutina completa/)).toBeInTheDocument()
   })
+
+  it('el Calendario recrea el <MonthCalendar> real: hoy es editable, los días pasados son sólo lectura', async () => {
+    render(<PresentacionPage />)
+
+    const calendarCard = screen
+      .getByRole('heading', { name: /Calendario: tu mes/i })
+      .closest('.pr-section') as HTMLElement
+
+    // Hoy: editable, con el GoalList real.
+    expect(within(calendarCard).getByRole('checkbox', { name: /Entrenar/i })).toBeInTheDocument()
+
+    const pastDay = within(calendarCard)
+      .getAllByRole('button')
+      .find(
+        (b) =>
+          b.className.includes('calendar__day') &&
+          !b.className.includes('calendar__day--today') &&
+          !(b as HTMLButtonElement).disabled &&
+          /%/.test(b.getAttribute('aria-label') ?? ''),
+      ) as HTMLElement
+    expect(pastDay).toBeTruthy()
+    await userEvent.click(pastDay)
+
+    // Día pasado: sólo lectura (Completados/Pendientes), no checkboxes.
+    expect(within(calendarCard).getByText('Completados')).toBeInTheDocument()
+    expect(within(calendarCard).queryByRole('checkbox')).not.toBeInTheDocument()
+
+    const titleBefore = within(calendarCard).getByText(/^\w+ \d{4}$/).textContent
+    await userEvent.click(within(calendarCard).getByRole('button', { name: 'Mes anterior' }))
+    expect(within(calendarCard).getByText(/^\w+ \d{4}$/).textContent).not.toBe(titleBefore)
+  })
 })

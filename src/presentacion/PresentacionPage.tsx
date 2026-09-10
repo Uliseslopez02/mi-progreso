@@ -8,6 +8,7 @@ import { DashboardSection } from './sections/DashboardSection'
 import { HabitsSection } from './sections/HabitsSection'
 import { PercentageSystemSection } from './sections/PercentageSystemSection'
 import { ProgressSection } from './sections/ProgressSection'
+import { CalendarioSection } from './sections/CalendarioSection'
 import { AgendaSection } from './sections/AgendaSection'
 import { ProjectsSection } from './sections/ProjectsSection'
 import { MetasSection } from './sections/MetasSection'
@@ -44,6 +45,7 @@ export function PresentacionPage() {
           <HabitsSection />
           <PercentageSystemSection />
           <ProgressSection />
+          <CalendarioSection />
           <AgendaSection />
           <ProjectsSection />
           <MetasSection />
