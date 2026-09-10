@@ -10,6 +10,9 @@ export type HabitSuggestionResult =
   | { ok: true; suggestions: SuggestedHabit[] }
   | { ok: false; error: string; code?: string }
 
+const GENERIC_SUGGESTIONS_ERROR =
+  'No pudimos generar las sugerencias en este momento. Probá de nuevo en unos segundos.'
+
 /**
  * Pide sugerencias de hábitos para una meta recién creada, vía la Edge
  * Function `/api/suggest-habits` (que a su vez llama a la API de Claude con
@@ -33,7 +36,10 @@ export async function suggestHabits(goalName: string, categoryName?: string): Pr
     })
     if (!res.ok) {
       const body = (await res.json().catch(() => null)) as { error?: string; code?: string } | null
-      return { ok: false, error: body?.error ?? 'No se pudieron generar sugerencias.', code: body?.code }
+      if (body?.code === 'ai_limit_reached') {
+        return { ok: false, error: body.error ?? GENERIC_SUGGESTIONS_ERROR, code: body.code }
+      }
+      return { ok: false, error: GENERIC_SUGGESTIONS_ERROR, code: body?.code }
     }
     const data = (await res.json()) as { suggestions?: unknown }
     const suggestions = Array.isArray(data.suggestions)
@@ -48,6 +54,6 @@ export async function suggestHabits(goalName: string, categoryName?: string): Pr
       : []
     return { ok: true, suggestions }
   } catch {
-    return { ok: false, error: 'No se pudo conectar con el servicio de sugerencias.' }
+    return { ok: false, error: GENERIC_SUGGESTIONS_ERROR }
   }
 }
