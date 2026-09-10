@@ -6,6 +6,7 @@ import { ProblemSection } from './sections/ProblemSection'
 import { SolutionSection } from './sections/SolutionSection'
 import { DashboardSection } from './sections/DashboardSection'
 import { HabitsSection } from './sections/HabitsSection'
+import { MapaAnualSection } from './sections/MapaAnualSection'
 import { PercentageSystemSection } from './sections/PercentageSystemSection'
 import { ProgressSection } from './sections/ProgressSection'
 import { CalendarioSection } from './sections/CalendarioSection'
@@ -45,6 +46,7 @@ export function PresentacionPage() {
           <SolutionSection />
           <DashboardSection />
           <HabitsSection />
+          <MapaAnualSection />
           <PercentageSystemSection />
           <ProgressSection />
           <CalendarioSection />

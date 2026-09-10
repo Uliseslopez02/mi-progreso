@@ -183,4 +183,20 @@ describe('PresentacionPage', () => {
       within(informesCard).getByText(/Tu categoría más fuerte fue Salud\./),
     ).toBeInTheDocument()
   })
+
+  it('el Mapa anual recrea el <HabitYearHeatmap> real y cambia de hábito', async () => {
+    render(<PresentacionPage />)
+
+    const mapaCard = screen.getByRole('heading', { name: 'Mapa anual' }).closest('.card') as HTMLElement
+    const habitSelect = within(mapaCard).getByLabelText('Hábito') as HTMLSelectElement
+
+    const statValue = () => within(mapaCard).getByText('Cumplimiento').nextElementSibling?.textContent
+    const before = statValue()
+
+    await userEvent.selectOptions(habitSelect, 'Leer 20 minutos')
+    expect(statValue()).not.toBe(before)
+
+    // 45 días de historial fabricado: la mayoría del año queda "sin registro", como en una cuenta nueva real.
+    expect(within(mapaCard).getByText('Sin registro')).toBeInTheDocument()
+  })
 })

@@ -6,10 +6,6 @@ const FEATURES = [
     text: 'Además de la vista de Día y de Mes, repartís las tareas de la semana entre los 7 días arrastrándolas de una columna a otra.',
   },
   {
-    title: 'Mapa anual de hábitos',
-    text: 'Un heatmap tipo GitHub de las últimas 53 semanas de un hábito, para ver el patrón de todo el año de un vistazo.',
-  },
-  {
     title: 'Revisión mensual',
     text: 'Un wizard guiado de 4 pasos sobre los mismos números de Informes, con preguntas de reflexión para cerrar el mes con más que un número.',
   },
