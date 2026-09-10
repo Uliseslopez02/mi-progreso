@@ -1,17 +1,26 @@
 /**
- * Datos ficticios de `/presentacion` — página comercial pública. Igual criterio
- * que `src/showcase/demoData.ts`: forma real (mismos tipos que produce la app
- * de verdad), historial fabricado, nada se persiste. Este archivo es
- * independiente del de `/producto` a propósito (Ulises pidió una ruta nueva
- * sin tocar `/producto`), pero cubre más superficie de producto: además de
- * hábitos/objetivos, incluye un Proyecto con tareas Kanban y una Rutina.
+ * Datos ficticios de `/presentacion`. Fuente de verdad: la app real. Todo esto
+ * usa los mismos tipos y las mismas funciones puras de `domain/*` que Mi
+ * Progreso — sólo el historial está fabricado, y nada se persiste.
+ *
+ * Objetivos vs. hábitos, igual que en la app:
+ * - Los OBJETIVOS puntúan el día. Tienen `weight` ("peso") y el % del día es
+ *   `peso completado / peso total`. Los pesos por defecto suman ~100, así el %
+ *   coincide con los puntos sumados (mismo criterio que `domain/defaults.ts`).
+ * - Los HÁBITOS no puntúan: se miden por racha propia y constancia. Su `weight`
+ *   siempre es 1 y no entra en el cálculo del día.
  */
 import { addDays, todayKey, type DateKey } from '../domain/date'
 import { snapshotGoals } from '../domain/day'
 import type { Category, DayRecord, Goal, LifeGoal, Project, ProjectTask, Routine } from '../domain/types'
 
 export const TODAY: DateKey = todayKey()
-export const DAYS_BACK = 20
+/** Ventana de historial fabricado. 45 > 30 para que el heatmap de hábitos
+ * (últimos 30 días, igual que `HabitCard`) y las rachas tengan de dónde salir. */
+export const DAYS_BACK = 45
+
+/** Umbral de racha por defecto de la app (`DEFAULT_SETTINGS.streakThreshold`). */
+export const DEMO_STREAK_THRESHOLD = 70
 
 export const DEMO_CATEGORIES: Category[] = [
   { id: 'pr-salud', name: 'Salud', order: 0 },
@@ -19,72 +28,85 @@ export const DEMO_CATEGORIES: Category[] = [
 ]
 
 /**
- * Objetivos diarios que puntúan el día. A propósito con pesos desiguales
- * (Entrenar pesa el doble) para que la sección del sistema de porcentajes
- * pueda mostrar un caso real de ponderación, no todo 1/1.
+ * Objetivos diarios que puntúan el día. Pesos desiguales que suman 100 —
+ * mismo criterio que los objetivos por defecto de la app: el % del día es
+ * literalmente la suma de puntos completados.
  */
 export const DEMO_GOALS: Goal[] = [
   {
-    id: 'g-entrenar', name: 'Entrenar', categoryId: 'pr-salud', weight: 2, active: true,
+    id: 'g-entrenar', name: 'Entrenar', categoryId: 'pr-salud', weight: 25, active: true,
     period: 'daily', order: 0, createdAt: TODAY, kind: 'boolean', trackingKind: 'goal',
     frequency: { type: 'daily' },
   },
   {
-    id: 'g-agua', name: 'Tomar 2L de agua', categoryId: 'pr-salud', weight: 1, active: true,
-    period: 'daily', order: 1, createdAt: TODAY, kind: 'quantitative', targetValue: 2, unit: 'L',
-    trackingKind: 'goal', frequency: { type: 'daily' },
-  },
-  {
-    id: 'g-deepwork', name: 'Bloque de trabajo profundo', categoryId: 'pr-trabajo', weight: 1,
-    active: true, period: 'daily', order: 2, createdAt: TODAY, kind: 'boolean', trackingKind: 'goal',
+    id: 'g-comer', name: 'Comer saludable', categoryId: 'pr-salud', weight: 15, active: true,
+    period: 'daily', order: 1, createdAt: TODAY, kind: 'boolean', trackingKind: 'goal',
     frequency: { type: 'daily' },
   },
   {
-    id: 'g-bandeja', name: 'Bandeja de entrada en cero', categoryId: 'pr-trabajo', weight: 1,
+    id: 'g-agua', name: 'Tomar 2L de agua', categoryId: 'pr-salud', weight: 10, active: true,
+    period: 'daily', order: 2, createdAt: TODAY, kind: 'quantitative', targetValue: 2, unit: 'L',
+    trackingKind: 'goal', frequency: { type: 'daily' },
+  },
+  {
+    id: 'g-deepwork', name: 'Bloque de trabajo profundo', categoryId: 'pr-trabajo', weight: 30,
     active: true, period: 'daily', order: 3, createdAt: TODAY, kind: 'boolean', trackingKind: 'goal',
+    frequency: { type: 'daily' },
+  },
+  {
+    id: 'g-bandeja', name: 'Bandeja de entrada en cero', categoryId: 'pr-trabajo', weight: 20,
+    active: true, period: 'daily', order: 4, createdAt: TODAY, kind: 'boolean', trackingKind: 'goal',
     frequency: { type: 'daily' },
   },
 ]
 
-/** Hábitos: racha/consistencia propios, no puntúan el día. */
+/** Hábitos: racha/heatmap propios, peso 1, no puntúan el día. */
 export const DEMO_HABITS: Goal[] = [
   {
     id: 'h-dormir', name: 'Dormir 8 horas', categoryId: 'pr-salud', weight: 1, active: true,
-    period: 'daily', order: 4, createdAt: TODAY, kind: 'boolean', trackingKind: 'habit',
+    period: 'daily', order: 5, createdAt: TODAY, kind: 'boolean', trackingKind: 'habit',
     frequency: { type: 'daily' }, difficulty: 'medium',
   },
   {
     id: 'h-leer', name: 'Leer 20 minutos', categoryId: 'pr-trabajo', weight: 1, active: true,
-    period: 'daily', order: 5, createdAt: TODAY, kind: 'boolean', trackingKind: 'habit',
+    period: 'daily', order: 6, createdAt: TODAY, kind: 'boolean', trackingKind: 'habit',
     frequency: { type: 'daily' }, difficulty: 'easy',
   },
   {
     id: 'h-caminar', name: 'Caminar 30 minutos', categoryId: 'pr-salud', weight: 1, active: true,
-    period: 'daily', order: 6, createdAt: TODAY, kind: 'boolean', trackingKind: 'habit',
+    period: 'daily', order: 7, createdAt: TODAY, kind: 'boolean', trackingKind: 'habit',
     frequency: { type: 'daily' }, difficulty: 'easy',
   },
 ]
 
 export const ALL_DEMO_GOALS: Goal[] = [...DEMO_GOALS, ...DEMO_HABITS]
 
-// ---------- Patrón de cumplimiento (daysAgo: 0 = hoy, 20 = hace 20 días) ----------
+// ---------- Patrón de cumplimiento (daysAgo: 0 = hoy, 45 = hace 45 días) ----------
 
-const FALSE_ON: Record<string, Set<number>> = {
-  // Hoy queda deliberadamente incompleto en un par de ítems: invita a
-  // completarlos y ver reaccionar el anillo/racha en vivo.
-  'g-entrenar': new Set([9, 16]),
-  'g-deepwork': new Set(Array.from({ length: 21 }, (_, i) => i).filter((i) => i !== 3 && i !== 10)),
-  'g-bandeja': new Set([0, 9, 11, 13, 15, 17, 19]),
-  'h-dormir': new Set([7]),
-  'h-leer': new Set([0, 2, 4, 6, 8, 10, 12, 14, 16, 18]),
-  'h-caminar': new Set([0, 1, 3, 5, 7, 9, 11, 13, 15, 17]),
+/**
+ * Días (en "daysAgo") en los que cada objetivo/hábito NO se cumplió. Todo lo
+ * demás cuenta como cumplido. Hoy (0) queda a propósito a medias en objetivos
+ * para invitar a marcar y ver el anillo/nota/racha reaccionar; los hábitos de
+ * hoy sí arrancan cumplidos.
+ */
+const MISSED_ON: Record<string, number[]> = {
+  // Objetivos — días 1..9 siempre ≥ 70% (racha del día = 9); se corta en el 10.
+  'g-entrenar': [6, 11, 18, 25, 32, 40],
+  'g-comer': [4, 10, 14, 22, 29, 36, 44],
+  'g-deepwork': [0, 8, 10, 13, 16, 20, 24, 28, 31, 35, 39, 43],
+  'g-bandeja': [0, 2, 10, 12, 15, 19, 23, 27, 30, 34, 38, 42],
+  // Hábitos — rachas actuales distintas y coherentes con el heatmap.
+  'h-dormir': [8, 19, 30, 41],
+  'h-leer': [3, 9, 16, 24, 33, 42],
+  'h-caminar': [5, 12, 20, 28, 36, 44],
 }
 
-const WATER_LITERS: Record<number, number> = { 9: 0.5, 16: 1, 17: 1.5 }
+/** Litros registrados los días que no se llegó a los 2L (el resto: 2L). */
+const WATER_LITERS: Record<number, number> = { 12: 1, 19: 0.5, 26: 1.5, 33: 1 }
 
 function progressFor(goalId: string, daysAgo: number): number | boolean {
   if (goalId === 'g-agua') return WATER_LITERS[daysAgo] ?? 2
-  return !FALSE_ON[goalId]?.has(daysAgo)
+  return !MISSED_ON[goalId]?.includes(daysAgo)
 }
 
 export function buildDemoDays(): Record<DateKey, DayRecord> {
@@ -153,5 +175,3 @@ export const DEMO_ROUTINE: Routine = {
     { id: 'rs-4', text: 'Revisar la agenda del día', order: 3 },
   ],
 }
-
-export const DEMO_STREAK_THRESHOLD = 70

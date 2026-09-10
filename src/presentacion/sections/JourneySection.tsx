@@ -1,11 +1,11 @@
 import { SectionFrame } from '../SectionFrame'
 
 const STEPS = [
-  { title: 'Elegís tus áreas y objetivos', text: 'El onboarding arranca por áreas de vida, no por una pantalla en blanco.' },
-  { title: 'Los organizás en tu semana', text: 'Agenda, Proyectos y Rutinas — cada uno para un tipo distinto de trabajo.' },
-  { title: 'Los cumplís día a día', text: 'Un toque por objetivo o hábito. Nada de formularios largos.' },
-  { title: 'Se convierte en % y racha', text: 'El mismo cálculo, todos los días, sin excepciones ni números inventados.' },
-  { title: 'Lo revisás en Informes', text: 'Patrones semanales y mensuales, y una revisión guiada para cerrar el mes.' },
+  { title: 'Elegís tus áreas y objetivos', text: 'El onboarding arranca por áreas de vida, no por una pantalla en blanco. Cada objetivo lleva su categoría y su peso.' },
+  { title: 'Los organizás', text: 'Agenda para lo que tiene día y hora, Proyectos para lo que no, Rutinas para lo que se repite, Metas para el largo plazo.' },
+  { title: 'Los cumplís día a día', text: 'Un check, una cantidad o un tiempo por objetivo o hábito. Nada de formularios largos.' },
+  { title: 'Se convierte en % y racha', text: 'Peso completado sobre peso total, todos los días. La racha son los días seguidos que llegaron al 70%.' },
+  { title: 'Lo revisás en Historial e Informes', text: 'Constancia por objetivo, promedios y evolución, y una Revisión mensual guiada de 4 pasos para cerrar el mes.' },
 ]
 
 export function JourneySection() {

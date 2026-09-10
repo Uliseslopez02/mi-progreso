@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { PresentacionPage } from '../presentacion/PresentacionPage'
@@ -19,19 +19,52 @@ describe('PresentacionPage', () => {
     expect(document.title).toMatch(/Mi Progreso/)
   })
 
-  it('la recreación de "Hoy" reacciona al marcar un objetivo', async () => {
+  it('la recreación de "Hoy" usa el mismo cálculo que la app al marcar un objetivo', async () => {
     render(<PresentacionPage />)
 
-    // El día arranca en 60% (Entrenar peso 2 + Agua, sobre peso total 5).
     const dayCard = screen
       .getByText('Así se ve tu progreso, todos los días.')
       .closest('.pr-section') as HTMLElement
-    expect(within(dayCard).getByTestId('ring-percent')).toHaveTextContent('60%')
+    // El día arranca a medias: faltan Bloque de trabajo profundo (30) y Bandeja (20).
+    expect(within(dayCard).getByTestId('ring-percent')).toHaveTextContent('50%')
 
     await userEvent.click(within(dayCard).getByRole('checkbox', { name: /Bloque de trabajo profundo/i }))
 
-    // 3/5 → 4/5 = 80% — el mismo cálculo puro que la app real.
+    // 50 + 30 = 80% → nota 8, "Muy buen día" (mismo labelForPercent que la app).
     expect(within(dayCard).getByTestId('ring-percent')).toHaveTextContent('80%')
-    expect(within(dayCard).getByText('Muy buen día')).toBeInTheDocument()
+    expect(within(dayCard).getByText(/Nota del día ·\s*Muy buen día/)).toBeInTheDocument()
+  })
+
+  it('el editor de peso recalcula el % igual que Objetivos → Editar', async () => {
+    render(<PresentacionPage />)
+
+    const percentCard = screen
+      .getByRole('heading', { name: /¿Qué significa realmente ese número\?/i })
+      .closest('.pr-section') as HTMLElement
+
+    const pctOf = () => {
+      const stat = within(percentCard).getByText('del día').closest('button') as HTMLElement
+      return Number(within(stat).getByText(/%$/).textContent!.replace('%', ''))
+    }
+
+    const weightInput = within(percentCard).getByLabelText('Peso de Entrenar') as HTMLInputElement
+    expect(weightInput.value).toBe('25')
+    const before = pctOf()
+
+    // "Entrenar" está cumplido hoy: subir su peso sube el % del día al instante.
+    fireEvent.change(weightInput, { target: { value: '80' } })
+
+    expect(weightInput.value).toBe('80')
+    expect(pctOf()).toBeGreaterThan(before)
+  })
+
+  it('muestra la racha del día como en "Esta semana", con el umbral configurable', () => {
+    render(<PresentacionPage />)
+    const progressCard = screen
+      .getByText(/No es un solo día\./)
+      .closest('.pr-section') as HTMLElement
+    // Texto textual de WeekCard, la fuente de verdad de la racha del día.
+    expect(within(progressCard).getByText(/Días seguidos con 70% o más/)).toBeInTheDocument()
+    expect(within(progressCard).getByText(/Con 70% o más/)).toBeInTheDocument()
   })
 })
