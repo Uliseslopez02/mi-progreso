@@ -67,4 +67,34 @@ describe('PresentacionPage', () => {
     expect(within(progressCard).getByText(/Días seguidos con 70% o más/)).toBeInTheDocument()
     expect(within(progressCard).getByText(/Con 70% o más/)).toBeInTheDocument()
   })
+
+  it('la Agenda recrea el <DayTimeline> real con los ítems de la demo', () => {
+    render(<PresentacionPage />)
+    const agendaCard = screen.getByRole('heading', { name: 'Agenda del día' }).closest('.card') as HTMLElement
+    expect(within(agendaCard).getByText('Llamar al banco')).toBeInTheDocument()
+    expect(within(agendaCard).getByText('Bloque de trabajo profundo')).toBeInTheDocument()
+    // Ítem vinculado a un hábito muestra el link real.
+    expect(within(agendaCard).getByText(/Caminar 30 minutos/)).toBeInTheDocument()
+  })
+
+  it('marcar el hábito vinculado en Hábitos sube el % de la meta en Metas', async () => {
+    render(<PresentacionPage />)
+
+    const habitsCard = screen
+      .getByText(/Los hábitos no puntúan tu día/)
+      .closest('.pr-section') as HTMLElement
+    const metasCard = screen
+      .getByRole('heading', { name: 'Objetivos y metas' })
+      .closest('.card') as HTMLElement
+
+    const goalCard = within(metasCard)
+      .getByText('Correr 10 km sin parar')
+      .closest('.lifegoal-card') as HTMLElement
+    const before = Number(within(goalCard).getByText(/%$/).textContent!.replace('%', ''))
+
+    await userEvent.click(within(habitsCard).getByRole('checkbox', { name: /Caminar 30 minutos/i }))
+
+    const after = Number(within(goalCard).getByText(/%$/).textContent!.replace('%', ''))
+    expect(after).not.toBe(before)
+  })
 })
