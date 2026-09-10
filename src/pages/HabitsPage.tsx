@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { GoalList } from '../components/GoalList'
 import { HabitCard } from '../components/HabitCard'
-import { HabitInsightsCard } from '../components/HabitInsightsCard'
 import { SelectMenu } from '../components/SelectMenu'
 import { WEEKDAY_KEYS, weekdayInitials } from '../domain/date'
 import { frequencyFrom, type FrequencyType } from '../domain/habits'
@@ -139,8 +138,6 @@ export function HabitsPage() {
           ))
         )}
       </section>
-
-      <HabitInsightsCard data={data} today={today} />
 
       <section className="card">
         <div className="card__header">

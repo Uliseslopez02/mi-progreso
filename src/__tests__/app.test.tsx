@@ -591,6 +591,7 @@ describe('Mi Progreso', () => {
     await screen.findByText('Objetivos de hoy')
 
     await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.click(screen.getByRole('button', { name: 'Hábitos' }))
     await user.type(screen.getByLabelText('Nombre'), 'Meditar')
     await user.click(screen.getByRole('button', { name: 'Crear hábito' }))
 
@@ -739,6 +740,7 @@ describe('Mi Progreso', () => {
     await screen.findByText('Objetivos de hoy')
 
     await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.click(screen.getByRole('button', { name: 'Hábitos' }))
     await user.type(screen.getByLabelText('Nombre'), 'Meditar')
     await user.click(screen.getByRole('button', { name: 'Crear hábito' }))
 

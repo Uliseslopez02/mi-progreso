@@ -40,8 +40,8 @@ const AGENDA_ITEMS = [
 ]
 
 const OBJETIVOS_ITEMS = [
-  { to: '/objetivos', label: 'Hábitos' },
-  { to: '/objetivos/metas', label: 'Metas' },
+  { to: '/objetivos', label: 'Metas' },
+  { to: '/objetivos/habitos', label: 'Hábitos' },
   { to: '/objetivos/rutinas', label: 'Rutinas' },
   { to: '/objetivos/editar', label: 'Editar' },
 ]
@@ -217,8 +217,8 @@ function AppShell() {
             </Route>
             <Route path="/proyectos" element={<ProjectsPage />} />
             <Route path="/objetivos" element={<SectionLayout items={OBJETIVOS_ITEMS} ariaLabel="Objetivos" />}>
-              <Route index element={<HabitsPage />} />
-              <Route path="metas" element={<GoalsPage />} />
+              <Route index element={<GoalsPage />} />
+              <Route path="habitos" element={<HabitsPage />} />
               <Route path="rutinas" element={<RoutinesPage />} />
               <Route path="editar" element={<EditGoalsPage />} />
             </Route>
