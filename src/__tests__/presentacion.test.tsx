@@ -167,4 +167,20 @@ describe('PresentacionPage', () => {
     expect(within(focusCard).getByRole('button', { name: 'Iniciar' })).toBeInTheDocument()
     expect(within(focusCard).getAllByText('Detenida')[0]).toBeInTheDocument()
   })
+
+  it('Informes recrea el monthlyReport real: stats, conclusiones y ninguna frase inventada', () => {
+    render(<PresentacionPage />)
+
+    const informesCard = screen
+      .getByRole('heading', { name: /Informe de/i })
+      .closest('.card') as HTMLElement
+
+    // Fuente de verdad: domain/monthlyReport.ts + monthlyConclusions.ts sobre los mismos `days` de la demo.
+    expect(within(informesCard).getByText('Categoría más fuerte')).toBeInTheDocument()
+    expect(within(informesCard).getByText('Salud')).toBeInTheDocument()
+    expect(within(informesCard).getByText('Conclusiones')).toBeInTheDocument()
+    expect(
+      within(informesCard).getByText(/Tu categoría más fuerte fue Salud\./),
+    ).toBeInTheDocument()
+  })
 })

@@ -10,6 +10,10 @@ const FEATURES = [
     text: 'Un heatmap tipo GitHub de las últimas 53 semanas de un hábito, para ver el patrón de todo el año de un vistazo.',
   },
   {
+    title: 'Revisión mensual',
+    text: 'Un wizard guiado de 4 pasos sobre los mismos números de Informes, con preguntas de reflexión para cerrar el mes con más que un número.',
+  },
+  {
     title: 'Notas',
     text: 'Notas libres con título y fecha, para lo que no encaja en un objetivo ni en una tarea.',
   },
