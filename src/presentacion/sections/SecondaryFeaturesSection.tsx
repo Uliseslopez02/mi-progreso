@@ -10,16 +10,8 @@ const FEATURES = [
     text: 'Un wizard guiado de 4 pasos sobre los mismos números de Informes, con preguntas de reflexión para cerrar el mes con más que un número.',
   },
   {
-    title: 'Notas',
-    text: 'Notas libres con título y fecha, para lo que no encaja en un objetivo ni en una tarea.',
-  },
-  {
     title: 'Sugerencias e insights con IA',
     text: 'Al crear una meta, la IA propone hábitos concretos para lograrla. Bajo demanda, también resume rachas y patrones por día de la semana. 3 usos gratis por mes calendario, ilimitado en Premium.',
-  },
-  {
-    title: 'Momento Mori',
-    text: 'Una vista opcional de tu tiempo vivido, con una reflexión diaria corta — para quien quiera ese recordatorio.',
   },
 ]
 

@@ -199,4 +199,32 @@ describe('PresentacionPage', () => {
     // 45 días de historial fabricado: la mayoría del año queda "sin registro", como en una cuenta nueva real.
     expect(within(mapaCard).getByText('Sin registro')).toBeInTheDocument()
   })
+
+  it('Momento Mori calcula con timeLived real y guarda una reflexión nueva', async () => {
+    render(<PresentacionPage />)
+
+    const moriCard = screen.getByRole('heading', { name: 'Momento Mori' }).closest('.card') as HTMLElement
+    // Nacimiento demo 1996-03-15: ya viviste más de 25 años, es un cálculo real (no un número fijo).
+    expect(within(moriCard).getByText(/años y/)).toBeInTheDocument()
+
+    const reflectionSection = screen.getByRole('heading', { name: 'Reflexión de hoy' }).closest('.card') as HTMLElement
+    await userEvent.type(within(reflectionSection).getByLabelText('Tu respuesta'), 'Prueba de reflexión')
+    await userEvent.click(within(reflectionSection).getByRole('button', { name: 'Guardar reflexión' }))
+
+    expect(within(reflectionSection).getByText('Prueba de reflexión')).toBeInTheDocument()
+  })
+
+  it('Notas: crea, edita y elimina una nota como en Historial → Notas', async () => {
+    render(<PresentacionPage />)
+
+    const notesSection = screen.getByRole('heading', { name: 'Nueva nota' }).closest('.card') as HTMLElement
+    await userEvent.type(within(notesSection).getByLabelText('Nota'), 'Nota de prueba')
+    await userEvent.click(within(notesSection).getByRole('button', { name: 'Guardar nota' }))
+
+    const listSection = screen.getByRole('heading', { name: 'Notas anteriores' }).closest('.card') as HTMLElement
+    const newNoteItem = within(listSection).getByText('Nota de prueba').closest('li') as HTMLElement
+
+    await userEvent.click(within(newNoteItem).getByRole('button', { name: /Eliminar nota del/ }))
+    expect(within(listSection).queryByText('Nota de prueba')).not.toBeInTheDocument()
+  })
 })

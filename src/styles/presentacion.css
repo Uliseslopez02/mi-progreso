@@ -200,6 +200,9 @@
 /* ---------- Metas (recreación con <LifeGoalCard> real) ---------- */
 .pr-metas .lifegoal-card + .lifegoal-card { margin-top: 14px; }
 
+/* ---------- Momento Mori (recreación fiel, sección opcional) ---------- */
+.pr-mori__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+
 /* ---------- Recorrido ---------- */
 .pr-journey__path { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 22px; }
 .pr-journey__path li { display: flex; gap: 18px; align-items: flex-start; }
@@ -225,6 +228,7 @@
 
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {
+  .pr-mori__grid { grid-template-columns: 1fr; }
   .pr-dashboard__grid { grid-template-columns: 1fr; }
   .pr-percent__grid { grid-template-columns: 1fr; }
   .pr-problem__grid { grid-template-columns: 1fr; }
