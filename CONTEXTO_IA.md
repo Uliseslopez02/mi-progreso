@@ -289,10 +289,18 @@ en local con `.env.local`).
       Vercel — el chequeo de la key ocurre DESPUÉS de `checkAiUsageAllowed()`
       en el código, así que un 403 por cuota agotada nunca llega a probarla.
       Esta cuenta (Free) ya gastó sus 3 usos del mes — probablemente varios se
-      quemaron en intentos previos que fallaban por la key faltante (el
-      contador se incrementa aunque después falle la llamada a Claude: mirar
-      si vale la pena arreglar eso aparte). Para terminar de confirmar la
-      key hace falta una de estas (decisión del usuario, no la tomé sola):
+      quemaron en intentos previos que fallaban por la key faltante.
+      **Arreglado 2026-09-11 (commit `ea53c03`, ya pusheado):**
+      `api/suggest-habits.ts` chequeaba `ANTHROPIC_API_KEY` DESPUÉS de
+      `checkAiUsageAllowed()` (que incrementa el contador) — un fallo de
+      configuración del servidor le quemaba cuota real al usuario sin que la
+      IA respondiera nunca. Se invirtió el orden: ahora la key se chequea
+      primero, antes de tocar el contador. `api/habit-insights.ts` ya tenía el
+      orden correcto (no se tocó). `npm run build` + `npm test` (314/314) OK
+      después del cambio.
+      Aun así, esta cuenta ya tiene los 3 usos de este mes gastados de ANTES
+      del fix (no se puede revertir eso). Para terminar de confirmar la key
+      hace falta una de estas (decisión del usuario, no la tomé sola):
         a) Pasar esta cuenta a `premium` en Supabase (tabla `subscriptions` o
            `profiles.plan`) temporalmente y repetir la prueba, revirtiendo
            después.
