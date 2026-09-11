@@ -101,7 +101,6 @@ export function FocusSection() {
     }
     const timer = window.setInterval(tick, 1000)
     return () => window.clearInterval(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active])
 
   const startSession = () => {
