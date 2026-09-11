@@ -10,7 +10,7 @@
  * - Los HÁBITOS no puntúan: se miden por racha propia y constancia. Su `weight`
  *   siempre es 1 y no entra en el cálculo del día.
  */
-import { addDays, todayKey, type DateKey } from '../domain/date'
+import { addDays, startOfWeek, todayKey, type DateKey } from '../domain/date'
 import { snapshotGoals } from '../domain/day'
 import { routineRunKey } from '../domain/routine'
 import type {
@@ -198,10 +198,19 @@ export function buildDemoLifeGoals(): LifeGoal[] {
 
 const AGO = (n: number) => addDays(TODAY, -n)
 
-/** Un día de agenda realista: eventos con hora, tareas con y sin horario,
- * distintas prioridades, y una tarea vinculada a un hábito. */
+/**
+ * Agenda de la semana: hoy tiene el día completo (eventos con hora, tareas con
+ * y sin horario, distintas prioridades, una vinculada a un hábito); el resto
+ * de la semana tiene menos ítems repartidos, como en una semana real — y un
+ * día (domingo) queda sin nada, para que el Planificador muestre también su
+ * estado vacío. Los ids `pi-1`..`pi-7` de hoy son estables porque Enfoque los
+ * referencia (`linkedPlannerItemId: 'pi-4'`).
+ */
 export function buildDemoPlannerItems(): PlannerItem[] {
   const base = { date: TODAY, done: false, createdAt: AGO(1) } as const
+  const weekStart = startOfWeek(TODAY)
+  const day = (offset: number) => addDays(weekStart, offset)
+
   return [
     { ...base, id: 'pi-1', title: 'Entrenar', type: 'task', category: 'personal', priority: 'high', order: 0, startTime: '07:30', durationMinutes: 60, linkedHabitId: 'h-caminar', habitCompletionMode: 'auto' },
     { ...base, id: 'pi-2', title: 'Revisar mails y responder lo urgente', type: 'task', category: 'professional', priority: 'medium', order: 1, startTime: '09:00', durationMinutes: 30 },
@@ -210,6 +219,16 @@ export function buildDemoPlannerItems(): PlannerItem[] {
     { ...base, id: 'pi-5', title: 'Almuerzo con Sofía', type: 'event', category: 'personal', priority: 'low', order: 4, startTime: '13:30', durationMinutes: 60 },
     { ...base, id: 'pi-6', title: 'Llamar al banco', type: 'task', category: 'personal', priority: 'low', order: 5 },
     { ...base, id: 'pi-7', title: 'Comprar para la cena', type: 'task', category: 'personal', priority: 'medium', order: 6 },
+
+    // Resto de la semana (para el Planificador semanal).
+    { id: 'pi-w1', date: day(0), done: true, createdAt: AGO(3), title: 'Armar la agenda de la semana', type: 'task', category: 'professional', priority: 'medium', order: 0 },
+    { id: 'pi-w2', date: day(1), done: false, createdAt: AGO(3), title: 'Dentista', type: 'event', category: 'personal', priority: 'medium', order: 0, startTime: '16:00', durationMinutes: 45 },
+    { id: 'pi-w3', date: day(1), done: false, createdAt: AGO(3), title: 'Pagar el alquiler', type: 'task', category: 'personal', priority: 'high', order: 1 },
+    { id: 'pi-w4', date: day(3), done: false, createdAt: AGO(2), title: 'Demo con el cliente', type: 'event', category: 'professional', priority: 'high', order: 0, startTime: '15:00', durationMinutes: 45 },
+    { id: 'pi-w5', date: day(4), done: false, createdAt: AGO(2), title: 'Cierre de sprint', type: 'event', category: 'professional', priority: 'medium', order: 0, startTime: '17:00', durationMinutes: 30 },
+    { id: 'pi-w6', date: day(4), done: false, createdAt: AGO(2), title: 'Enviar informe semanal', type: 'task', category: 'professional', priority: 'medium', order: 1 },
+    { id: 'pi-w7', date: day(5), done: false, createdAt: AGO(1), title: 'Juntada con amigos', type: 'event', category: 'personal', priority: 'low', order: 0, startTime: '20:00', durationMinutes: 180 },
+    // day(6) — domingo — a propósito sin nada: el Planificador también muestra el día vacío.
   ]
 }
 

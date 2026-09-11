@@ -29,7 +29,7 @@ export function AgendaSection() {
     [goals],
   )
   const items = useMemo(
-    () => [...plannerItems].sort((a, b) => a.order - b.order),
+    () => plannerItems.filter((i) => i.date === TODAY).sort((a, b) => a.order - b.order),
     [plannerItems],
   )
   const nowMinutes = useMemo(() => {

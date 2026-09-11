@@ -227,4 +227,31 @@ describe('PresentacionPage', () => {
     await userEvent.click(within(newNoteItem).getByRole('button', { name: /Eliminar nota del/ }))
     expect(within(listSection).queryByText('Nota de prueba')).not.toBeInTheDocument()
   })
+
+  it('Planificador: comparte las tareas con Agenda, edita el detalle y agrega una tarea nueva', async () => {
+    render(<PresentacionPage />)
+
+    const planificadorCard = screen
+      .getByRole('heading', { name: 'Planificador semanal' })
+      .closest('.card') as HTMLElement
+
+    // "Dentista" está otro día de la semana (no hoy) — el Planificador ve toda la semana.
+    await userEvent.click(within(planificadorCard).getByText('Dentista'))
+    const dialog = screen.getByRole('dialog', { name: 'Detalle de la tarea' })
+    expect(within(dialog).getByLabelText('Título')).toHaveValue('Dentista')
+
+    await userEvent.selectOptions(within(dialog).getByLabelText('Prioridad'), 'Alta')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Listo' }))
+
+    // El cambio de prioridad se ve reflejado en la tarjeta del tablero (borde de prioridad alta).
+    const dentistaCard = within(planificadorCard).getByText('Dentista').closest('.planner-card') as HTMLElement
+    expect(dentistaCard.className).toContain('planner-card--prio-high')
+
+    // Agregar una tarea nueva desde el formulario aparece en el tablero.
+    const addSection = screen.getByRole('heading', { name: 'Agregar a la semana' }).closest('.card') as HTMLElement
+    await userEvent.type(within(addSection).getByLabelText('Título'), 'Tarea de prueba')
+    await userEvent.click(within(addSection).getByRole('button', { name: 'Agregar' }))
+
+    expect(within(planificadorCard).getByText('Tarea de prueba')).toBeInTheDocument()
+  })
 })

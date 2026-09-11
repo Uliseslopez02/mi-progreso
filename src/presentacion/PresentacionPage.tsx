@@ -12,6 +12,7 @@ import { ProgressSection } from './sections/ProgressSection'
 import { CalendarioSection } from './sections/CalendarioSection'
 import { InformesSection } from './sections/InformesSection'
 import { AgendaSection } from './sections/AgendaSection'
+import { PlanificadorSection } from './sections/PlanificadorSection'
 import { FocusSection } from './sections/FocusSection'
 import { ProjectsSection } from './sections/ProjectsSection'
 import { MetasSection } from './sections/MetasSection'
@@ -54,6 +55,7 @@ export function PresentacionPage() {
           <CalendarioSection />
           <InformesSection />
           <AgendaSection />
+          <PlanificadorSection />
           <FocusSection />
           <ProjectsSection />
           <MetasSection />

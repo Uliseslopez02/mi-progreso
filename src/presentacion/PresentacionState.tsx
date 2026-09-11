@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useReducer } from 'react'
 import type { ReactNode } from 'react'
+import { addDays, type DateKey } from '../domain/date'
 import { snapshotGoals, toggleGoal } from '../domain/day'
-import type { DateKey } from '../domain/date'
 import { computeLifeGoalProgress } from '../domain/lifeGoalProgress'
 import { routineRunKey } from '../domain/routine'
 import type {
@@ -45,12 +45,15 @@ type Action =
   | { type: 'UPDATE_LIFEGOAL'; goalId: string; patch: Partial<Omit<LifeGoal, 'id'>> }
   | { type: 'REMOVE_LIFEGOAL'; goalId: string }
   | { type: 'MOVE_LIFEGOAL'; goalId: string; direction: -1 | 1 }
+  | { type: 'ADD_PLANNER_ITEM'; item: PlannerItem }
   | { type: 'TOGGLE_PLANNER_ITEM'; itemId: string }
+  | { type: 'UPDATE_PLANNER_ITEM'; itemId: string; patch: Partial<Omit<PlannerItem, 'id'>> }
   | { type: 'REMOVE_PLANNER_ITEM'; itemId: string }
   | { type: 'DUPLICATE_PLANNER_ITEM'; itemId: string }
   | { type: 'POSTPONE_PLANNER_ITEM'; itemId: string }
   | { type: 'MOVE_PLANNER_ITEM'; itemId: string; startTime: string }
   | { type: 'RESIZE_PLANNER_ITEM'; itemId: string; durationMinutes: number }
+  | { type: 'REORDER_PLANNER_ITEMS'; updates: Array<{ id: string; date: DateKey; order: number }> }
   | { type: 'MOVE_TASK'; taskId: string; status: ProjectTaskStatus }
   | { type: 'UPDATE_ROUTINE'; routineId: string; patch: Partial<Omit<Routine, 'id'>> }
   | { type: 'REMOVE_ROUTINE'; routineId: string }
@@ -125,9 +128,17 @@ function reducer(state: PresentacionData, action: Action): PresentacionData {
       ;[list[i], list[j]] = [list[j], list[i]]
       return { ...state, lifeGoals: list.map((g, idx) => ({ ...g, order: idx })) }
     }
+    case 'ADD_PLANNER_ITEM':
+      return { ...state, plannerItems: [...state.plannerItems, action.item] }
     case 'TOGGLE_PLANNER_ITEM': {
       const plannerItems = state.plannerItems.map((it) =>
         it.id === action.itemId ? { ...it, done: !it.done } : it,
+      )
+      return { ...state, plannerItems }
+    }
+    case 'UPDATE_PLANNER_ITEM': {
+      const plannerItems = state.plannerItems.map((it) =>
+        it.id === action.itemId ? { ...it, ...action.patch } : it,
       )
       return { ...state, plannerItems }
     }
@@ -146,9 +157,11 @@ function reducer(state: PresentacionData, action: Action): PresentacionData {
       return { ...state, plannerItems: [...state.plannerItems, copy] }
     }
     case 'POSTPONE_PLANNER_ITEM': {
-      // En la app pasa al día siguiente; en el demo (un solo día visible) lo
-      // sacamos de la vista, que es el efecto observable.
-      return { ...state, plannerItems: state.plannerItems.filter((it) => it.id !== action.itemId) }
+      // Igual que la app: pasa al día siguiente (no desaparece).
+      const plannerItems = state.plannerItems.map((it) =>
+        it.id === action.itemId ? { ...it, date: addDays(it.date, 1) } : it,
+      )
+      return { ...state, plannerItems }
     }
     case 'MOVE_PLANNER_ITEM': {
       const plannerItems = state.plannerItems.map((it) =>
@@ -160,6 +173,14 @@ function reducer(state: PresentacionData, action: Action): PresentacionData {
       const plannerItems = state.plannerItems.map((it) =>
         it.id === action.itemId ? { ...it, durationMinutes: action.durationMinutes } : it,
       )
+      return { ...state, plannerItems }
+    }
+    case 'REORDER_PLANNER_ITEMS': {
+      const patchById = new Map(action.updates.map((u) => [u.id, u]))
+      const plannerItems = state.plannerItems.map((it) => {
+        const patch = patchById.get(it.id)
+        return patch ? { ...it, date: patch.date, order: patch.order } : it
+      })
       return { ...state, plannerItems }
     }
     case 'MOVE_TASK': {
@@ -215,12 +236,15 @@ interface PresentacionContextValue extends PresentacionData {
   updateLifeGoal: (goalId: string, patch: Partial<Omit<LifeGoal, 'id'>>) => void
   removeLifeGoal: (goalId: string) => void
   moveLifeGoal: (goalId: string, direction: -1 | 1) => void
+  addPlannerItem: (item: PlannerItem) => void
   togglePlannerItem: (itemId: string) => void
+  updatePlannerItem: (itemId: string, patch: Partial<Omit<PlannerItem, 'id'>>) => void
   removePlannerItem: (itemId: string) => void
   duplicatePlannerItem: (itemId: string) => void
   postponePlannerItem: (itemId: string) => void
   movePlannerItem: (itemId: string, startTime: string) => void
   resizePlannerItem: (itemId: string, durationMinutes: number) => void
+  reorderPlannerItems: (updates: Array<{ id: string; date: DateKey; order: number }>) => void
   moveTask: (taskId: string, status: ProjectTaskStatus) => void
   updateRoutine: (routineId: string, patch: Partial<Omit<Routine, 'id'>>) => void
   removeRoutine: (routineId: string) => void
@@ -260,13 +284,16 @@ export function PresentacionProvider({ children }: { children: ReactNode }) {
       updateLifeGoal: (goalId, patch) => dispatch({ type: 'UPDATE_LIFEGOAL', goalId, patch }),
       removeLifeGoal: (goalId) => dispatch({ type: 'REMOVE_LIFEGOAL', goalId }),
       moveLifeGoal: (goalId, direction) => dispatch({ type: 'MOVE_LIFEGOAL', goalId, direction }),
+      addPlannerItem: (item) => dispatch({ type: 'ADD_PLANNER_ITEM', item }),
       togglePlannerItem: (itemId) => dispatch({ type: 'TOGGLE_PLANNER_ITEM', itemId }),
+      updatePlannerItem: (itemId, patch) => dispatch({ type: 'UPDATE_PLANNER_ITEM', itemId, patch }),
       removePlannerItem: (itemId) => dispatch({ type: 'REMOVE_PLANNER_ITEM', itemId }),
       duplicatePlannerItem: (itemId) => dispatch({ type: 'DUPLICATE_PLANNER_ITEM', itemId }),
       postponePlannerItem: (itemId) => dispatch({ type: 'POSTPONE_PLANNER_ITEM', itemId }),
       movePlannerItem: (itemId, startTime) => dispatch({ type: 'MOVE_PLANNER_ITEM', itemId, startTime }),
       resizePlannerItem: (itemId, durationMinutes) =>
         dispatch({ type: 'RESIZE_PLANNER_ITEM', itemId, durationMinutes }),
+      reorderPlannerItems: (updates) => dispatch({ type: 'REORDER_PLANNER_ITEMS', updates }),
       moveTask: (taskId, status) => dispatch({ type: 'MOVE_TASK', taskId, status }),
       updateRoutine: (routineId, patch) => dispatch({ type: 'UPDATE_ROUTINE', routineId, patch }),
       removeRoutine: (routineId) => dispatch({ type: 'REMOVE_ROUTINE', routineId }),

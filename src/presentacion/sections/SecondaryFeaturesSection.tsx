@@ -2,10 +2,6 @@ import { SectionFrame } from '../SectionFrame'
 
 const FEATURES = [
   {
-    title: 'Planificador semanal',
-    text: 'Además de la vista de Día y de Mes, repartís las tareas de la semana entre los 7 días arrastrándolas de una columna a otra.',
-  },
-  {
     title: 'Revisión mensual',
     text: 'Un wizard guiado de 4 pasos sobre los mismos números de Informes, con preguntas de reflexión para cerrar el mes con más que un número.',
   },
