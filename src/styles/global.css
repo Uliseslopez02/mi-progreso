@@ -389,6 +389,23 @@ main { flex: 1; padding: 28px 0 72px; }
   font-weight: 600;
 }
 
+/* Objetivo cuantitativo/temporal: sin esto queda con el fondo blanco nativo
+ * del navegador y el texto claro del tema por encima — prácticamente
+ * invisible (blanco sobre blanco). */
+.goal__input {
+  flex: none;
+  width: 56px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 6px 8px;
+  color: var(--text);
+  font: inherit;
+  text-align: center;
+}
+
+.goal__input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
 /* ---------- Stats ---------- */
 .stat-grid {
   display: grid;
