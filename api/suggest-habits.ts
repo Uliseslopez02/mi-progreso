@@ -92,6 +92,15 @@ export default async function handler(request: Request): Promise<Response> {
     return jsonResponse({ error: 'No autenticado.' }, 401)
   }
 
+  // Chequear la key ANTES de gastar cuota: si el servidor está mal
+  // configurado, no es un "uso" real de IA y no le tiene que costar al
+  // usuario uno de sus 3 usos mensuales.
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) {
+    console.error('[suggest-habits] ANTHROPIC_API_KEY no está configurada en el entorno del servidor')
+    return jsonResponse({ error: AI_UNAVAILABLE_MESSAGE, code: 'ai_unavailable' }, 503)
+  }
+
   if (!(await checkAiUsageAllowed(request))) {
     return jsonResponse(
       {
@@ -100,12 +109,6 @@ export default async function handler(request: Request): Promise<Response> {
       },
       403,
     )
-  }
-
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) {
-    console.error('[suggest-habits] ANTHROPIC_API_KEY no está configurada en el entorno del servidor')
-    return jsonResponse({ error: AI_UNAVAILABLE_MESSAGE, code: 'ai_unavailable' }, 503)
   }
 
   let body: RequestBody
