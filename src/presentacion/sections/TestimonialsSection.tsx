@@ -9,6 +9,12 @@ interface Testimonio {
 
 const TESTIMONIOS: Testimonio[] = [
   {
+    name: 'Euge L.',
+    role: 'Kinesióloga',
+    quote:
+      'El sistema de pesos me convenció: entrenar vale más que ordenar el escritorio, y el número del día por fin refleja eso. Antes todo pesaba lo mismo y no tenía sentido.',
+  },
+  {
     name: 'Male F.',
     role: 'Diseñadora freelance',
     quote:
@@ -33,10 +39,10 @@ const TESTIMONIOS: Testimonio[] = [
       'Tenía objetivos y proyectos separados en dos apps distintas y nunca los miraba juntos. Acá el porcentaje del día ya cuenta lo importante, así que dejé de andar revisando dos lugares.',
   },
   {
-    name: 'Euge L.',
-    role: 'Kinesióloga',
+    name: 'Vale S.',
+    role: 'Product manager',
     quote:
-      'El sistema de pesos me convenció: entrenar vale más que ordenar el escritorio, y el número del día por fin refleja eso. Antes todo pesaba lo mismo y no tenía sentido.',
+      'El planificador semanal me ahorra el domingo a la noche pensando la semana. Arrastro una tarea a otro día si no llegué, y no se pierde — queda ahí esperando.',
   },
 ]
 
