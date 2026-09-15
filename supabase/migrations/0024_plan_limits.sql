@@ -60,7 +60,7 @@ begin
          and coalesce(g->>'period', 'daily') = 'weekly'),
     (select count(*)::int from public.goals
        where user_id = uid and coalesce(tracking_kind, 'goal') <> 'habit' and period = 'weekly'),
-    2);
+    1);
 
   perform public.plan_limit_guard('monthlyGoals',
     (select count(*)::int from jsonb_array_elements(coalesce(payload->'goals', '[]'::jsonb)) g
@@ -68,7 +68,7 @@ begin
          and coalesce(g->>'period', 'daily') = 'monthly'),
     (select count(*)::int from public.goals
        where user_id = uid and coalesce(tracking_kind, 'goal') <> 'habit' and period = 'monthly'),
-    2);
+    1);
 
   -- Hábitos.
   perform public.plan_limit_guard('habits',
@@ -76,27 +76,27 @@ begin
        where coalesce(g->>'trackingKind', 'goal') = 'habit'),
     (select count(*)::int from public.goals
        where user_id = uid and coalesce(tracking_kind, 'goal') = 'habit'),
-    5);
+    3);
 
   -- Metas de vida activas (completadas / abandonadas no cuentan).
   perform public.plan_limit_guard('activeLifeGoals',
     (select count(*)::int from jsonb_array_elements(coalesce(payload->'lifeGoals', '[]'::jsonb)) lg
        where coalesce(lg->>'status', 'active') = 'active'),
     (select count(*)::int from public.life_goals where user_id = uid and status = 'active'),
-    3);
+    2);
 
   -- Proyectos activos (archivados / completados no cuentan).
   perform public.plan_limit_guard('activeProjects',
     (select count(*)::int from jsonb_array_elements(coalesce(payload->'projects', '[]'::jsonb)) p
        where coalesce(p->>'status', 'active') = 'active'),
     (select count(*)::int from public.projects where user_id = uid and status = 'active'),
-    2);
+    1);
 
   -- Rutinas.
   perform public.plan_limit_guard('routines',
     (select count(*)::int from jsonb_array_elements(coalesce(payload->'routines', '[]'::jsonb))),
     (select count(*)::int from public.routines where user_id = uid),
-    2);
+    1);
 end;
 $$;
 

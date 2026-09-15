@@ -1,4 +1,4 @@
-import { PLAN_LIMITS, PRO_NAME } from '../domain/plan'
+import { FREE_HISTORY_RANGES, PLAN_LIMITS, PRO_NAME } from '../domain/plan'
 
 interface Row {
   label: string
@@ -7,15 +7,17 @@ interface Row {
 }
 
 const f = PLAN_LIMITS.free
+const freeHistoryDays = FREE_HISTORY_RANGES[FREE_HISTORY_RANGES.length - 1]
 
 const ROWS: Row[] = [
   { label: 'Objetivos diarios', free: String(f.dailyGoals), pro: 'Sin límite' },
+  { label: 'Objetivos semanales / mensuales', free: `${f.weeklyGoals} c/u`, pro: 'Sin límite' },
   { label: 'Hábitos', free: String(f.habits), pro: 'Sin límite' },
   { label: 'Metas activas', free: String(f.activeLifeGoals), pro: 'Sin límite' },
   { label: 'Proyectos activos', free: String(f.activeProjects), pro: 'Sin límite' },
   { label: 'Rutinas', free: String(f.routines), pro: 'Sin límite' },
-  { label: 'Historial de progreso', free: '30 días', pro: '90 días + 1 año' },
-  { label: 'Mapa anual de hábitos', free: 'Últimos meses', pro: 'Año completo' },
+  { label: 'Historial de progreso', free: `${freeHistoryDays} días`, pro: '30/90 días + 1 año' },
+  { label: 'Mapa anual de hábitos', free: 'Últimos ~2 meses', pro: 'Año completo' },
   { label: 'Informe mensual', free: 'Del mes en curso', pro: '+ métricas y evolución mes a mes' },
   { label: 'Planificador semanal', free: 'Semana actual y siguiente', pro: 'Cualquier semana' },
   { label: 'IA — sugerencias e insights', free: '3 por mes', pro: 'Sin límite' },

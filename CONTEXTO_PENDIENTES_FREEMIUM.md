@@ -9,19 +9,23 @@ esto en otra sesión, **leé esto entero + `CONTEXTO_FREEMIUM.md` antes de tocar
 
 Se diseñó e implementó el modelo freemium de Mi Progreso:
 - **Free** = rastreador completo para una etapa enfocada de la vida (5 objetivos diarios,
-  5 hábitos, 3 metas, 2 proyectos, 2 rutinas, historial 30 días, informe del mes,
-  IA 3×/mes, backup siempre).
+  1 semanal, 1 mensual, 3 hábitos, 2 metas activas, 1 proyecto activo, 1 rutina,
+  10 notas, 6 categorías, historial 14 días, informe del mes, IA 3×/mes, backup siempre).
 - **Premium** ("Premium" es el nombre visible, no "Pro") = todas las áreas sin límite +
-  historial 90 días/1 año + informes comparativos + IA sin tope.
+  historial 30/90 días/1 año + informes comparativos + IA sin tope.
 
 La estrategia completa (análisis de toda la app, matriz, momentos de conversión, copy de
-paywalls, plan técnico y **sección 13 con el detalle de archivos implementados**) está en
+paywalls, plan técnico, **sección 13 con el detalle de archivos implementados** y
+**sección 13.1 con el ajuste de números de la segunda pasada**) está en
 **`CONTEXTO_FREEMIUM.md`** — es el documento de referencia, no lo repito acá.
 
 Decisiones ya tomadas (NO volver a discutir):
-- Tope de 5 objetivos en el onboarding (copy de producto, no de paywall).
+- Tope de 5 objetivos diarios en el onboarding (copy de producto, no de paywall) —
+  es el único límite que NO se tocó en la segunda pasada.
 - Sin trial automático en v1.
-- Matriz completa implementada (no sólo el límite principal).
+- Matriz completa implementada (no sólo el límite principal), y ya ajustada una vez
+  hacia abajo ("limitá un poco más, con criterio" — ver `CONTEXTO_FREEMIUM.md` 13.1).
+  No volver a apretar sin que lo pida explícitamente: ya se hizo un pase de ajuste.
 - Nombre visible: "Premium" (se mantiene, no se migra a "Pro").
 - Grandfathering: el límite bloquea *agregar de más*, nunca toca lo existente.
 
@@ -83,11 +87,14 @@ Sin esto, los límites son **sólo frontend** (un request falsificado los saltea
 Correr `npm run dev` (puerto 5174, entrada `mi-progreso-dev` en `.claude/launch.json`)
 o probar en producción tras deploy. Chequear el recorrido:
 - Onboarding: no deja pasar de 5 objetivos, con el aviso de producto.
-- Editar objetivos: al llegar a 5, botón "Agregar" deshabilitado + `UpgradeCard`.
-- Hábitos / Metas / Proyectos / Rutinas / Notas / Categorías: idem su límite.
-- Historial: botones "90 días" / "1 año" con badge "Premium", click → `UpgradeCard`.
+- Editar objetivos: al llegar a 5 diarios / 1 semanal / 1 mensual, botón "Agregar"
+  deshabilitado + `UpgradeCard`.
+- Hábitos (3) / Metas activas (2) / Proyectos activos (1) / Rutinas (1) / Notas (10) /
+  Categorías (6): ídem, cada uno con su límite.
+- Historial: botones "30 días" / "90 días" / "1 año" con badge "Premium", click →
+  `UpgradeCard`.
 - Informe: sin métricas avanzadas + `UpgradeCard`.
-- Mapa anual: heatmap recortado + badge.
+- Mapa anual: heatmap recortado a ~8 semanas + badge.
 - Planificador: "semana siguiente" tope tras 1 semana adelante.
 - `/premium`: 4 pilares + tabla comparativa.
 - **Cuenta Premium** (`update profiles set plan='premium'`): todo sin límites, sin badges.

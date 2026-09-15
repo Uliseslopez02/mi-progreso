@@ -6,6 +6,8 @@ de upgrade y cómo se implementa** — antes de tocar código. Complementa
 
 > **Estado:** implementado (frontend + backend). Ver sección 13 al pie para el
 > detalle de archivos. Falta sólo aplicar la migración `0024` en Supabase.
+> **Sección 13.1** documenta una segunda pasada (2026-09-15) que ajustó varios
+> números hacia abajo — este documento ya refleja los definitivos.
 
 ---
 
@@ -79,32 +81,36 @@ Para cada una: ¿gratis? ¿con límite? ¿sólo Pro? ¿básica gratis + avanzada
    específico, proyectos) y necesita el 6.º, 7.º, 8.º.
 
 2. **Objetivos semanales / mensuales** (`Goal`, `period='weekly'|'monthly'`)
-   → **Gratis con límite: 2 de cada uno.** Mismo mecanismo que los diarios; casi nadie
-   los usa al principio, así que el límite es holgado y no molesta. Se percibe Pro
-   junto con el de diarios.
+   → **Gratis con límite: 1 de cada uno.** Casi nadie los usa al principio, así que
+   con 1 se alcanza a probar la función entera (crear, marcar, verla en Hoy). El
+   segundo ya es organización deliberada de un tramo más largo — Pro.
 
 3. **Hábitos** (`Goal`, `trackingKind='habit'`)
-   → **Gratis con límite: 5.** El consejo sano es "un hábito nuevo por vez", pero la
-   gente trackea 4-5 básicos (agua, moverse, dormir, leer). 5 no aprieta el primer mes.
-   Aprieta cuando arma un "sistema" de hábitos por área.
+   → **Gratis con límite: 3.** El consejo sano es "un hábito nuevo por vez"; 3 cubre
+   los básicos más comunes (agua, moverse, dormir) sin dejar margen para "guardar"
+   hábitos sin usarlos de verdad. Aprieta apenas la persona quiere armar un sistema
+   por área (salud + estudio + trabajo), que es rápido si ya viene de Objetivos.
 
 4. **Metas de vida** (`LifeGoal`, contamos las `status='active'`)
-   → **Gratis con límite: 3 activas.** 3 metas activas = foco real. Perseguir
-   carrera + salud + finanzas + un proyecto creativo a la vez es exactamente el perfil
-   que paga. Las metas completadas/abandonadas **no cuentan** (no castigamos el progreso).
+   → **Gratis con límite: 2 activas.** 2 metas activas es foco real (una personal,
+   una profesional, por ejemplo). La 3.ª en paralelo ya es el perfil que persigue
+   varias áreas a la vez — exactamente el que paga. Las completadas/abandonadas
+   **no cuentan** (no castigamos el progreso).
 
 5. **Proyectos activos** (`Project`, `status='active'`)
-   → **Gratis con límite: 2 activos.** Con 1 no se puede ni entender el tablero; con 2
-   se prueba de verdad. El límite pega al querer llevar 3+ frentes (mudanza + side
-   project + estudio). Proyectos archivados/completados no cuentan.
+   → **Gratis con límite: 1 activo.** Con 1 proyecto se prueba el Kanban entero
+   (columnas, tarjetas, arrastrar) sin límite de tareas — la experiencia no se siente
+   corta. Querer un 2.º proyecto en paralelo es motivación de compra clara y llega
+   rápido para cualquiera que use la app para más de una cosa a la vez.
 
 6. **Tareas por proyecto** (`ProjectTask`)
    → **Gratis, sin límite.** Limitar tarjetas de un Kanban se siente roto. El valor de
    Pro ya está en "cuántos proyectos", no en "cuántas tarjetas".
 
 7. **Rutinas** (`Routine`)
-   → **Gratis con límite: 2.** Matutina + nocturna es el par canónico. La 3.ª
-   (entrenamiento, trabajo) es comportamiento de usuario comprometido.
+   → **Gratis con límite: 1.** Alcanza para probar el ritual completo (pasos, marcar,
+   modo enfocado). La 2.ª rutina (el par matutina+nocturna, o sumar entrenamiento) ya
+   es armar una estructura diaria más completa — ahí aparece Pro.
 
 8. **Planificador semanal / Agenda** (`PlannerItem`)
    → **Gratis: semana actual + siguiente** (y semanas pasadas para consultar). **Pro:
@@ -116,13 +122,14 @@ Para cada una: ¿gratis? ¿con límite? ¿sólo Pro? ¿básica gratis + avanzada
    agregadas (minutos por semana, por tarea, tendencia) — hoy sólo muestra "hoy".
 
 10. **Historial — rango** (`HistoryPage`)
-    → **Free: 7 / 14 / 30 días. Pro: + 90 días + 1 año.** Nadie mira "hace 3 meses" en
-    su primera semana. Cuando lo querés mirar, ya llevás meses usando la app = súper
-    retenido = alta intención. Los datos ya están guardados; sólo se desbloquea la vista.
+    → **Free: 7 / 14 días. Pro: + 30 / 90 días + 1 año.** Ver la evolución de un mes
+    entero ya es señal de uso retenido (mes 2+), uno de los momentos de mayor
+    intención de compra. 7/14 días alcanza para el seguimiento de corto plazo sin
+    sentirse roto. Los datos ya están guardados; sólo se desbloquea la vista.
 
 11. **Mapa anual (heatmap 365 días)** (`HabitYearMapPage`)
-    → **Free: últimos ~90 días del heatmap visibles. Pro: año completo.** Mismo
-    argumento que el rango de historial.
+    → **Free: últimas ~8 semanas (~2 meses) del heatmap visibles. Pro: año completo.**
+    Mismo argumento que el rango de historial.
 
 12. **Informe mensual** (`InformesPage`)
     → **Básico gratis + avanzado Pro.**
@@ -138,12 +145,14 @@ Para cada una: ¿gratis? ¿con límite? ¿sólo Pro? ¿básica gratis + avanzada
     (Opcional Pro: historial completo de revisiones anteriores; Free ve las últimas 3.)
 
 14. **Notas** (`Note`)
-    → **Gratis con límite: 15.** Holgado; casi nadie lo toca. Es un límite "de red de
-    seguridad" contra abuso, no de conversión.
+    → **Gratis con límite: 10.** Sigue siendo generoso — casi nadie lo toca — pero ya
+    no es tan holgado como para no funcionar como límite "de red de seguridad" contra
+    abuso; no es una palanca de conversión.
 
 15. **Categorías** (`Category`)
-    → **Gratis con límite: 8.** El seed trae 4. 8 cubre cualquier organización
-    razonable; más categorías = alguien con muchas áreas = perfil Pro.
+    → **Gratis con límite: 6.** El seed trae 4. 6 sigue cubriendo cualquier
+    organización razonable (más categorías = alguien con muchas áreas = perfil Pro),
+    pero ya no regala tanto margen como 8.
 
 16. **Personalización** (nombre de la app, orden de pestañas, colores de categoría)
     → **Gratis, sin límite.** Es cosmético y barato; esconderlo se siente mezquino.
@@ -162,22 +171,22 @@ Para cada una: ¿gratis? ¿con límite? ¿sólo Pro? ¿básica gratis + avanzada
 | Función | FREE | PRO | Motivo del límite |
 | --- | --- | --- | --- |
 | Objetivos diarios | **5** | Ilimitado* | Límite principal. 5 = una etapa enfocada; sumar áreas de la vida lo supera solo. |
-| Objetivos semanales | 2 | Ilimitado* | Mismo mecanismo; holgado, no molesta al inicio. |
-| Objetivos mensuales | 2 | Ilimitado* | Ídem. |
-| Hábitos | **5** | Ilimitado* | Los básicos entran en 5; el "sistema" de hábitos por área no. |
-| Metas de vida activas | 3 | Ilimitado* | 3 metas activas = foco. Perseguir muchas a la vez es el perfil que paga. |
-| Proyectos activos | 2 | Ilimitado* | Con 2 se prueba el Kanban; 3+ frentes = usuario comprometido. |
+| Objetivos semanales | 1 | Ilimitado* | Alcanza para probar la función; el 2.º ya es planificar a más largo plazo. |
+| Objetivos mensuales | 1 | Ilimitado* | Ídem. |
+| Hábitos | 3 | Ilimitado* | Los básicos más comunes entran en 3; armar un sistema por área ya pide Pro. |
+| Metas de vida activas | 2 | Ilimitado* | 2 metas activas = foco real. La 3.ª en paralelo es el perfil que paga. |
+| Proyectos activos | 1 | Ilimitado* | Con 1 se prueba el Kanban entero; el 2.º frente en paralelo = usuario comprometido. |
 | Tareas por proyecto | Ilimitado | Ilimitado | Limitar tarjetas de un Kanban se siente roto. |
-| Rutinas | 2 | Ilimitado* | Matutina + nocturna gratis; la 3.ª es power-user. |
+| Rutinas | 1 | Ilimitado* | Alcanza para probar el ritual completo; la 2.ª ya es estructurar el día entero. |
 | Planificador — semanas | Actual + siguiente (pasado libre) | Cualquier semana | Planificar el mes entero = compromiso. |
 | Tareas por día (agenda) | Ilimitado | Ilimitado | Limitar esto se siente roto. |
 | Enfoque / Pomodoro | Completo | Completo + stats de enfoque | El timer no se limita nunca. |
-| Historial — rango | 7 / 14 / 30 días | + 90 días + 1 año | "Hace 3 meses" recién importa cuando llevás meses. |
-| Mapa anual | ~90 días | Año completo | Ídem. |
+| Historial — rango | 7 / 14 días | + 30 / 90 días + 1 año | Ver la evolución de un mes ya es señal de uso retenido (mes 2+). |
+| Mapa anual | ~8 semanas (~2 meses) | Año completo | Ídem. |
 | Informe mensual | Mes actual, métricas núcleo | + meses anteriores + métricas avanzadas | Comparar evolución necesita historia. |
 | Revisión mensual guiada | Completa (últimas 3 guardadas) | Completa + historial full | Herramienta de retención, no se limita. |
-| Notas | 15 | Ilimitado* | Red de seguridad anti-abuso, no de conversión. |
-| Categorías | 8 | Ilimitado* | El seed trae 4; 8 cubre cualquier caso normal. |
+| Notas | 10 | Ilimitado* | Red de seguridad anti-abuso, no de conversión. |
+| Categorías | 6 | Ilimitado* | El seed trae 4; 6 cubre cualquier caso normal sin regalar de más. |
 | Personalización (nombre, orden, colores) | Sí | Sí | Cosmético; esconderlo es mezquino. |
 | Backup export / import | Sí | Sí | Nadie es rehén de sus datos. Baja la fricción de probar Pro. |
 | IA (sugerencias + insights) | 3 / mes | Ilimitado | Ya implementado. |
@@ -192,9 +201,9 @@ blob de guardado por accidente o abuso — nunca se comunica como límite.
 ```
 REGISTRO → ONBOARDING → PRIMER DÍA → USO DIARIO (racha) → arma su sistema
    → [1] toca el límite de 5 objetivos diarios          ← intención MEDIA-ALTA
-   → [2] quiere 3.er proyecto / 3.ª rutina / 4.ª meta    ← intención ALTA (organiza varias áreas)
+   → [2] quiere 2.º proyecto / 2.ª rutina / 3.ª meta     ← intención ALTA (organiza varias áreas)
    → MES 2:
-   → [3] quiere ver historial > 30 días                  ← intención ALTA (muy retenido)
+   → [3] quiere ver historial > 14 días                  ← intención ALTA (muy retenido)
    → [4] quiere comparar el informe con el mes pasado    ← intención ALTA
    → [5] agota los 3 usos de IA del mes                  ← intención MEDIA (ya implementado)
 ```
@@ -216,7 +225,7 @@ Tres formatos, de menos a más intrusivo:
 ### a) `<ProBadge>` — etiqueta pasiva
 Una lozenge chiquita "Pro" al lado de un control bloqueado. No hace nada al montarse
 (no dispara analytics de "paywall viewed", no ocupa espacio). Ejemplos:
-- botones de rango "90 días" / "1 año" en Historial,
+- botones de rango "30 días" / "90 días" / "1 año" en Historial,
 - filas de métricas avanzadas del informe,
 - selector de semanas futuras lejanas en el Planificador.
 
@@ -231,9 +240,9 @@ Ejemplo (límite de objetivos diarios), al tocar "Agregar" con 5 ya creados:
 > día —trabajo, estudio, entrenamiento— Pro te deja sumar todos los que necesites.
 > `[ Ver Pro ]`
 
-Ejemplo (historial > 30 días):
-> **Estás mirando los últimos 30 días**
-> Con Pro podés ver tu progreso de los últimos 90 días y del último año completo —
+Ejemplo (historial > 14 días):
+> **Estás viendo los últimos 14 días**
+> Con Pro ves tu progreso de los últimos 30, 90 días y del último año completo —
 > tus datos ya están guardados, sólo se desbloquea la vista.
 > `[ Ver Pro ]`
 
@@ -251,7 +260,8 @@ Se le agrega una **tabla comparativa Free vs Pro** generada desde `src/domain/pl
 ### Contador de capacidad (informativo, no alarmante)
 En las cabeceras que ya muestran "N activos de M" (Editar objetivos, Hábitos, etc.),
 para usuarios Free y **sólo a partir del 80 % del límite**, se agrega un sufijo tenue:
-`· 4 / 5` y al llegar `· 5 / 5 · Pro para más`. Antes del 80 % no se muestra nada.
+`· 4 / 5` (u otro límite, p. ej. `· 2 / 3` en hábitos) y al llegar al tope se agrega
+"· Pro para más". Antes del 80 % no se muestra nada.
 
 ### Lo que NO se hace
 - No hay banner global ni nada en la barra de navegación.
@@ -334,8 +344,8 @@ como número de referencia.
 **Los 4 pilares (para `PremiumPage` y la tabla comparativa):**
 1. **Sin límites de capacidad.** Todos los objetivos, hábitos, proyectos, rutinas y
    metas que necesites para organizar todas tus áreas a la vez.
-2. **Tu historia completa.** Progreso de los últimos 90 días y del último año; el mapa
-   anual entero.
+2. **Tu historia completa.** Progreso de los últimos 30, 90 días y del último año; el
+   mapa anual entero.
 3. **Informes que comparan.** Tu evolución mes a mes y las métricas avanzadas que
    muestran qué reforzar.
 4. **IA sin tope.** Sugerencias e insights las veces que quieras.
@@ -355,16 +365,16 @@ Fuente única de verdad:
 
 ```ts
 export const PLAN_LIMITS = {
-  free:    { dailyGoals: 5, weeklyGoals: 2, monthlyGoals: 2, habits: 5,
-             activeLifeGoals: 3, activeProjects: 2, routines: 2,
-             notes: 15, categories: 8, plannerWeeksAhead: 1 },
+  free:    { dailyGoals: 5, weeklyGoals: 1, monthlyGoals: 1, habits: 3,
+             activeLifeGoals: 2, activeProjects: 1, routines: 1,
+             notes: 10, categories: 6, plannerWeeksAhead: 1 },
   premium: { /* mismas claves, Number.POSITIVE_INFINITY salvo topes técnicos */ },
 } as const
 
 export const LIMIT_COPY: Record<LimitKey, { title: string; body: string }> // para UpgradeCard
 export function limitFor(plan, key): number
 export function isAtLimit(plan, key, currentCount): boolean
-export function historyRangesFor(plan): number[]          // [7,14,30] | [7,14,30,90,365]
+export function historyRangesFor(plan): number[]          // [7,14] | [7,14,30,90,365]
 export function reportMonthsBackFor(plan): number         // 0 | 12
 // contadores puros sobre AppData:
 export function countDailyGoals(goals): number            // trackingKind!=='habit' && period==='daily'
@@ -405,7 +415,7 @@ lugar de `dispatch`. Pantallas afectadas:
 | `NotesPage` | notas |
 | `SettingsPage` | categorías |
 | `PlannerPage` / `DayAgendaPage` | límite de semanas hacia adelante |
-| `HistoryPage` | rangos 90 / 365 → `ProBadge`, click abre `UpgradeCard` inline |
+| `HistoryPage` | rangos 30 / 90 / 365 → `ProBadge`, click abre `UpgradeCard` inline |
 | `InformesPage` | navegación a meses anteriores + `Stat` avanzadas tras `plan==='premium'` |
 | `HabitYearMapPage` | recorte de ventana del heatmap para Free |
 | `FocusPage` | (v2) card de stats avanzadas |
@@ -475,7 +485,7 @@ se ve; si se ve (devtools, request falsificado), `AppProvider` ya tiene el banne
 | El límite de 5 se siente mezquino si aparece en el onboarding | Copy de producto ("es el número que mejor funciona"), no de paywall. Decisión sección 7. |
 | Usuario Pro que cancela y pierde acceso siente que "le rompieron la app" | Grandfathering + copy: "Todo tu progreso sigue acá, sólo no podés agregar más de X hasta volver a Pro." |
 | Demasiados `ProBadge` = sensación de app llena de candados | Sólo en 2 lugares (rangos de historial, métricas de informe). El resto es `UpgradeCard` que aparece únicamente al intentar la acción. |
-| El contador `5/5` genera ansiedad | Sólo se muestra a partir del 80 % del límite y con tono neutro. |
+| El contador `n/límite` genera ansiedad | Sólo se muestra a partir del 80 % del límite y con tono neutro. |
 | Backend rechaza un guardado legítimo y el usuario pierde cambios | La regla sólo rechaza aumentos por encima del límite; el frontend ya frena antes; el banner de guardado ya existe. |
 
 ---
@@ -483,7 +493,7 @@ se ve; si se ve (devtools, request falsificado), `AppProvider` ya tiene el banne
 ## 12. Resumen ejecutivo
 
 - **Free** = rastreador completo para una etapa enfocada de la vida: 5 objetivos
-  diarios, 5 hábitos, 3 metas, 2 proyectos, 2 rutinas, historial de 30 días, informe
+  diarios, 3 hábitos, 2 metas, 1 proyecto, 1 rutina, historial de 14 días, informe
   del mes, IA 3×/mes, backup siempre.
 - **Pro** = todas tus áreas sin límite + historial de meses/año + informes comparativos
   + IA sin tope. Nombre visible: "Premium" (sin cambios).
@@ -533,3 +543,38 @@ en 5. No se tocó el seed para no rehacer la matemática de pesos ni romper test
 **Edge conocido (no bloqueante):** multi-dispositivo + downgrade de Premium + podar por
 debajo del límite en un dispositivo puede hacer que el otro (con estado viejo) reciba un
 rechazo del backend hasta recargar. Muy improbable; el `hydrate` al recargar lo resuelve.
+
+---
+
+## 13.1 Segunda pasada: límites más estrictos (2026-09-15)
+
+A pedido explícito ("limitá un poco más, con criterio"), se ajustaron hacia abajo los
+límites que tenían demasiado margen para funcionar como palanca de conversión real,
+manteniendo el principio de la sección 1 (cada función se puede probar entera al menos
+una vez en Free antes de pedir upgrade). **No se tocó `dailyGoals` (sigue en 5)** por ser
+el límite principal, decidido explícitamente al arrancar este trabajo.
+
+| Función | Antes | Ahora | Por qué se ajustó |
+| --- | --- | --- | --- |
+| Objetivos semanales / mensuales | 2 c/u | **1 c/u** | Con 2 casi nadie llegaba a sentirlo; 1 alcanza para probar la función. |
+| Hábitos | 5 | **3** | 5 dejaba armar un sistema completo sin fricción; 3 cubre los básicos y deja sentir el límite antes. |
+| Metas activas | 3 | **2** | 2 sigue siendo foco real (ver principio); la 3.ª ahora es la señal de "varias áreas a la vez". |
+| Proyectos activos | 2 | **1** | Con 1 se prueba el Kanban entero igual de bien; el 2.º proyecto es una motivación de compra más nítida y más temprana. |
+| Rutinas | 2 | **1** | Con 1 se prueba el ritual completo; antes el par matutina+nocturna nunca llegaba a apretar. |
+| Notas | 15 | **10** | Sigue siendo "red de seguridad", no conversión — pero ya no regala tanto margen. |
+| Categorías | 8 | **6** | El seed trae 4; 6 sigue alcanzando para cualquier organización razonable. |
+| Historial (rango) | 7/14/30 → 90/365 | **7/14 → 30/90/365** | Ver un mes completo pasó a ser Premium: es la señal de retención real (mes 2+), no algo que se necesite en la primera semana. |
+| Mapa anual | ~13 semanas (~3 meses) | **~8 semanas (~2 meses)** | Mismo argumento que el historial. |
+
+Sin cambios: `plannerWeeksAhead` (sigue en 1 — cortarlo a 0 impediría planificar el día
+de mañana si cae en la semana siguiente, y eso sí se sentiría roto), el gating de
+Informes (ya era completo vs. avanzado, no una cuestión de cantidad), IA (3/mes, fuera
+de alcance de este trabajo) y todo lo que ya estaba sin límite (tareas por proyecto,
+tareas por día, personalización, backup, revisión mensual guiada).
+
+Archivos tocados en este ajuste: `src/domain/plan.ts` (`PLAN_LIMITS`, `FREE_HISTORY_RANGES`,
+`FREE_YEAR_MAP_WEEKS`, `LIMIT_COPY`), `supabase/migrations/0024_plan_limits.sql`
+(números en `enforce_free_plan_limits`, **todavía no aplicada en Supabase** — se edita en
+el archivo sin necesidad de una migración nueva), `src/components/PlanComparison.tsx`,
+`src/__tests__/plan.test.ts`. Ningún componente de página necesitó cambios de código: los
+contadores y copys ya leían de `plan.ts` dinámicamente.

@@ -284,7 +284,9 @@ describe('Mi Progreso', () => {
 
   it('el historial muestra el gráfico y las estadísticas', async () => {
     const user = userEvent.setup()
-    renderApp()
+    // 30 días es rango Premium (ver domain/plan.ts): para probar el cambio de
+    // rango en sí, no el gating, hace falta una cuenta sin ese tope.
+    renderApp({ plan: 'premium' })
     await screen.findByText('Objetivos de hoy')
 
     await user.click(screen.getByRole('button', { name: 'Historial' }))
@@ -298,6 +300,24 @@ describe('Mi Progreso', () => {
     expect(
       await screen.findByRole('img', { name: /Progreso diario de los últimos 30 días/ }),
     ).toBeInTheDocument()
+  })
+
+  it('Free no puede ver más de 14 días de historial, pero se le explica el porqué', async () => {
+    const user = userEvent.setup()
+    renderApp() // plan free por defecto
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Historial' }))
+    expect(
+      await screen.findByRole('img', { name: /Progreso diario de los últimos 14 días/ }),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /30 días/ }))
+
+    // El rango no cambia (sigue en 14) y aparece el aviso de upgrade, no un error.
+    expect(screen.getByRole('img', { name: /Progreso diario de los últimos 14 días/ })).toBeInTheDocument()
+    expect(await screen.findByText(/Estás viendo los últimos 14 días/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Ver Premium/ })).toHaveAttribute('href', '/premium')
   })
 
   it('el historial muestra la constancia de cada objetivo', async () => {

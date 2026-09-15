@@ -46,16 +46,21 @@ export interface PlanLimits {
 const SOFT_CAP = 100
 
 export const PLAN_LIMITS: Record<UserPlan, PlanLimits> = {
+  // Ajustado (ver CONTEXTO_FREEMIUM.md, sección 3.1 "Segunda pasada"): dailyGoals
+  // queda en 5 porque es el límite principal, decidido explícitamente. El resto
+  // se ajustó hacia abajo donde el margen era demasiado generoso para funcionar
+  // como palanca de conversión — cada uno sigue dejando probar la función entera
+  // al menos una vez antes de pedir upgrade.
   free: {
     dailyGoals: 5,
-    weeklyGoals: 2,
-    monthlyGoals: 2,
-    habits: 5,
-    activeLifeGoals: 3,
-    activeProjects: 2,
-    routines: 2,
-    notes: 15,
-    categories: 8,
+    weeklyGoals: 1,
+    monthlyGoals: 1,
+    habits: 3,
+    activeLifeGoals: 2,
+    activeProjects: 1,
+    routines: 1,
+    notes: 10,
+    categories: 6,
     plannerWeeksAhead: 1,
   },
   premium: {
@@ -136,7 +141,10 @@ export function goalPeriodLimitKey(period: GoalPeriod): CountLimitKey {
 
 // ---------- Profundidad histórica / informes ----------
 
-export const FREE_HISTORY_RANGES = [7, 14, 30] as const
+// 30 días pasó a ser Premium: ver la evolución de un mes entero ya es un uso
+// retenido (mes 2+), momento de mayor intención de compra (CONTEXTO_FREEMIUM.md
+// sección 4). 7/14 alcanza para el hábito de corto plazo sin sentirse roto.
+export const FREE_HISTORY_RANGES = [7, 14] as const
 export const PRO_HISTORY_RANGES = [7, 14, 30, 90, 365] as const
 
 export function historyRangesFor(plan: UserPlan): number[] {
@@ -148,8 +156,8 @@ export function isProHistoryRange(range: number): boolean {
   return !FREE_HISTORY_RANGES.includes(range as (typeof FREE_HISTORY_RANGES)[number])
 }
 
-/** Semanas visibles del mapa anual (heatmap). Free ve ~un trimestre; Premium el año. */
-export const FREE_YEAR_MAP_WEEKS = 13
+/** Semanas visibles del mapa anual (heatmap). Free ve ~2 meses; Premium el año. */
+export const FREE_YEAR_MAP_WEEKS = 8
 export function yearMapWeeksFor(plan: UserPlan, fullYearWeeks: number): number {
   return plan === 'premium' ? fullYearWeeks : FREE_YEAR_MAP_WEEKS
 }
@@ -184,40 +192,40 @@ export const LIMIT_COPY: Record<LimitKey, UpgradeCopy> = {
     body: `Es un buen número para mantener el foco. Cuando quieras organizar más áreas de tu día —trabajo, estudio, entrenamiento— ${PRO_NAME} te deja sumar todos los que necesites.`,
   },
   weeklyGoals: {
-    title: 'Llegaste a 2 objetivos semanales',
-    body: `Con ${PRO_NAME} podés armar todos los objetivos semanales que quieras, además de los diarios y mensuales.`,
+    title: 'Ya tenés tu objetivo semanal',
+    body: `El plan gratuito te deja armar 1 objetivo semanal. Con ${PRO_NAME} sumás todos los que quieras, además de los diarios y mensuales.`,
   },
   monthlyGoals: {
-    title: 'Llegaste a 2 objetivos mensuales',
-    body: `Con ${PRO_NAME} sumás objetivos mensuales sin límite para planificar tramos más largos.`,
+    title: 'Ya tenés tu objetivo mensual',
+    body: `El plan gratuito te deja armar 1 objetivo mensual. Con ${PRO_NAME} sumás todos los que quieras para planificar tramos más largos.`,
   },
   habits: {
-    title: 'Llegaste a 5 hábitos',
-    body: `Cinco hábitos a la vez ya es bastante para sostener. Cuando quieras armar un sistema más completo, ${PRO_NAME} te deja seguir sumando.`,
+    title: 'Llegaste a 3 hábitos',
+    body: `Tres hábitos a la vez es un buen punto de partida para sostenerlos de verdad. Cuando quieras armar un sistema más completo, ${PRO_NAME} te deja seguir sumando.`,
   },
   activeLifeGoals: {
-    title: 'Tenés 3 metas activas',
-    body: `Tres metas en paralelo mantienen el foco. Con ${PRO_NAME} podés perseguir todas las que quieras a la vez —y las que completás o pausás no ocupan lugar.`,
+    title: 'Tenés 2 metas activas',
+    body: `Dos metas en paralelo mantienen el foco real. Con ${PRO_NAME} podés perseguir todas las que quieras a la vez —y las que completás o pausás no ocupan lugar.`,
   },
   activeProjects: {
-    title: 'Tenés 2 proyectos activos',
-    body: `Con ${PRO_NAME} llevás todos los proyectos que necesites en paralelo. Los que archivás o completás no cuentan.`,
+    title: 'Ya tenés un proyecto activo',
+    body: `El plan gratuito te deja llevar 1 proyecto a la vez. Con ${PRO_NAME} organizás todos los que necesites en paralelo —los que archivás o completás no cuentan.`,
   },
   routines: {
-    title: 'Llegaste a 2 rutinas',
-    body: `Matutina y nocturna entran en el plan gratuito. Con ${PRO_NAME} sumás la de entrenamiento, la de trabajo y las que quieras.`,
+    title: 'Ya tenés tu rutina',
+    body: `El plan gratuito te deja sostener 1 rutina a la vez. Con ${PRO_NAME} sumás la matutina, la nocturna, la de entrenamiento y las que quieras.`,
   },
   notes: {
-    title: 'Llegaste a 15 notas',
+    title: 'Llegaste a 10 notas',
     body: `Con ${PRO_NAME} guardás notas sin límite. Tus notas actuales siguen todas acá.`,
   },
   categories: {
-    title: 'Llegaste a 8 categorías',
+    title: 'Llegaste a 6 categorías',
     body: `Con ${PRO_NAME} organizás tus objetivos en todas las categorías que necesites.`,
   },
   historyRange: {
-    title: 'Estás viendo los últimos 30 días',
-    body: `Con ${PRO_NAME} ves tu progreso de los últimos 90 días y del último año completo. Tus datos ya están guardados —sólo se desbloquea la vista.`,
+    title: 'Estás viendo los últimos 14 días',
+    body: `Con ${PRO_NAME} ves tu progreso de los últimos 30, 90 días y del último año completo. Tus datos ya están guardados —sólo se desbloquea la vista.`,
   },
   yearMap: {
     title: 'Estás viendo los últimos meses',

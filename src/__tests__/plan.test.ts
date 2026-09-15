@@ -68,7 +68,7 @@ describe('límites', () => {
   })
 
   it('remainingFor nunca es negativo', () => {
-    expect(remainingFor('free', 'habits', 2)).toBe(3)
+    expect(remainingFor('free', 'habits', 1)).toBe(2)
     expect(remainingFor('free', 'habits', 9)).toBe(0)
   })
 
@@ -87,29 +87,32 @@ describe('límites', () => {
 
   it('los números de Free coinciden con lo documentado', () => {
     expect(limitFor('free', 'dailyGoals')).toBe(5)
-    expect(limitFor('free', 'habits')).toBe(5)
-    expect(limitFor('free', 'activeLifeGoals')).toBe(3)
-    expect(limitFor('free', 'activeProjects')).toBe(2)
-    expect(limitFor('free', 'routines')).toBe(2)
-    expect(PLAN_LIMITS.free.notes).toBe(15)
-    expect(PLAN_LIMITS.free.categories).toBe(8)
+    expect(limitFor('free', 'weeklyGoals')).toBe(1)
+    expect(limitFor('free', 'monthlyGoals')).toBe(1)
+    expect(limitFor('free', 'habits')).toBe(3)
+    expect(limitFor('free', 'activeLifeGoals')).toBe(2)
+    expect(limitFor('free', 'activeProjects')).toBe(1)
+    expect(limitFor('free', 'routines')).toBe(1)
+    expect(PLAN_LIMITS.free.notes).toBe(10)
+    expect(PLAN_LIMITS.free.categories).toBe(6)
   })
 })
 
 describe('profundidad histórica', () => {
-  it('historyRangesFor: Free hasta 30 días, Premium suma 90 y 365', () => {
-    expect(historyRangesFor('free')).toEqual([7, 14, 30])
+  it('historyRangesFor: Free hasta 14 días, Premium suma 30/90/365', () => {
+    expect(historyRangesFor('free')).toEqual([7, 14])
     expect(historyRangesFor('premium')).toEqual([7, 14, 30, 90, 365])
   })
 
   it('isProHistoryRange marca los rangos exclusivos', () => {
-    expect(isProHistoryRange(30)).toBe(false)
+    expect(isProHistoryRange(14)).toBe(false)
+    expect(isProHistoryRange(30)).toBe(true)
     expect(isProHistoryRange(90)).toBe(true)
     expect(isProHistoryRange(365)).toBe(true)
   })
 
   it('yearMapWeeksFor recorta el heatmap para Free', () => {
-    expect(yearMapWeeksFor('free', 53)).toBe(13)
+    expect(yearMapWeeksFor('free', 53)).toBe(8)
     expect(yearMapWeeksFor('premium', 53)).toBe(53)
   })
 })
