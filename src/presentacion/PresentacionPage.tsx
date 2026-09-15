@@ -18,8 +18,7 @@ import { FocusSection } from './sections/FocusSection'
 import { ProjectsSection } from './sections/ProjectsSection'
 import { MetasSection } from './sections/MetasSection'
 import { RoutinasSection } from './sections/RoutinasSection'
-import { NotasSection } from './sections/NotasSection'
-import { MomentoMoriSection } from './sections/MomentoMoriSection'
+import { TestimonialsSection } from './sections/TestimonialsSection'
 import { JourneySection } from './sections/JourneySection'
 import { SecondaryFeaturesSection } from './sections/SecondaryFeaturesSection'
 import { FinalCtaSection } from './sections/FinalCtaSection'
@@ -62,8 +61,7 @@ export function PresentacionPage() {
           <ProjectsSection />
           <MetasSection />
           <RoutinasSection />
-          <NotasSection />
-          <MomentoMoriSection />
+          <TestimonialsSection />
           <div id="recorrido">
             <JourneySection />
           </div>

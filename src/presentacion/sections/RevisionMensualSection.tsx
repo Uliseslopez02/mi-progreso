@@ -22,9 +22,9 @@ const emptyAnswers = (): Record<string, string> =>
 /**
  * Recreación de Informes → Revisión mensual: el mismo wizard guiado de 4 pasos
  * (stats → preguntas → resumen → listo) que `MonthlyReviewPage`, con el mismo
- * `monthlyReport`/`monthlyConclusions` que ya usa `InformesSection`. Igual que
- * Momento Mori/Notas, las revisiones guardadas viven en estado local a la
- * sección — en la app real son `Reflection`s en `AppData`, que acá no existe.
+ * `monthlyReport`/`monthlyConclusions` que ya usa `InformesSection`. Las
+ * revisiones guardadas viven en estado local a la sección — en la app real
+ * son `Reflection`s en `AppData`, que acá no existe.
  */
 export function RevisionMensualSection() {
   const { days, plannerItems } = usePresentacion()

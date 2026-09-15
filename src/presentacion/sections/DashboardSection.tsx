@@ -30,7 +30,7 @@ export function DashboardSection() {
     <SectionFrame
       eyebrow="Tu día"
       title="Así se ve tu progreso, todos los días."
-      subtitle="Es la pantalla “Hoy” tal cual: marcá un objetivo y mirá el anillo, la nota y las rachas reaccionar en el momento. El número no es mágico — sale de los pesos de tus objetivos."
+      subtitle="Es la pantalla “Hoy” tal cual: marcá un objetivo y mirá el anillo, la nota y las rachas reaccionar en el momento. Ese porcentaje es la suma de los pesos que le diste a cada objetivo — nunca un promedio inventado."
       className="pr-dashboard"
     >
       <div className="pr-dashboard__grid">

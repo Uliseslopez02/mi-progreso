@@ -45,7 +45,7 @@ export function InformesSection() {
   return (
     <SectionFrame
       eyebrow="Informes"
-      title="El mes, resumido en números que salen solos."
+      title="El mes entero, con los mismos números que ya viste día a día."
       subtitle="Mismo motor que Historial, agregado por mes: cumplimiento, mejor y peor categoría, racha máxima, días perfectos. Ninguna frase se inventa — sólo aparece si el dato existe."
       className="pr-informes"
     >

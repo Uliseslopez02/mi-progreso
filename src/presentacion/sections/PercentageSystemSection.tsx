@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { GoalList } from '../../components/GoalList'
 import { computeDayStats, formatGrade } from '../../domain/scoring'
 import { SectionFrame } from '../SectionFrame'
 import { TODAY } from '../demoData'
@@ -29,31 +28,25 @@ const EXPLAIN: Record<Exclude<ExplainKey, null>, { label: string; text: string }
 /** Explicación del sistema de % con la lógica real de `domain/scoring.ts`, y el
  * peso editable igual que en Objetivos → Editar (input numérico, 1–999). */
 export function PercentageSystemSection() {
-  const { goals, days, toggleGoal, setGoalProgress, updateGoal } = usePresentacion()
+  const { goals, days, updateGoal } = usePresentacion()
   const [active, setActive] = useState<ExplainKey>('formula')
   const record = days[TODAY]
   const stats = computeDayStats(record)
-  const todayGoals = (record?.goals ?? []).filter((g) => g.trackingKind !== 'habit')
   const dailyGoals = goals.filter((g) => g.trackingKind !== 'habit' && g.period === 'daily')
 
   return (
     <SectionFrame
       eyebrow="El sistema de porcentajes"
       title="¿Qué significa realmente ese número?"
-      subtitle="Nada de porcentajes mágicos. Marcá objetivos, cambiá un peso, y mirá exactamente de dónde sale."
+      subtitle="Cambiá un peso acá abajo y mirá el número reaccionar al instante — son los mismos objetivos que ya marcaste en “Tu día”."
       className="pr-percent"
     >
       <div className="pr-percent__grid">
         <section className="card">
           <div className="card__header">
-            <h3 className="card__title">Marcá tus objetivos</h3>
+            <h3 className="card__title">Con los objetivos de hoy, así</h3>
+            <span className="card__hint">Mismos objetivos de arriba</span>
           </div>
-          <GoalList
-            goals={todayGoals}
-            goalProgress={record?.goalProgress ?? {}}
-            onToggle={toggleGoal}
-            onProgressChange={setGoalProgress}
-          />
           <div className="pr-percent__result">
             <button type="button" className="pr-percent__stat" onClick={() => setActive('formula')}>
               <span className="numeric">{stats.percent}%</span>
@@ -98,6 +91,7 @@ export function PercentageSystemSection() {
                     if (!Number.isFinite(weight)) return
                     updateGoal(goal.id, { weight: Math.min(999, Math.max(1, Math.round(weight))) })
                   }}
+                  onWheel={(e) => e.currentTarget.blur()}
                 />
               </div>
             ))}

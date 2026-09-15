@@ -227,6 +227,7 @@ export function FocusSection() {
                   aria-label="Duración personalizada en minutos"
                   value={minutes}
                   onChange={(e) => setMinutes(Math.max(1, Number(e.target.value) || 1))}
+                  onWheel={(e) => e.currentTarget.blur()}
                 />
               </div>
             )}

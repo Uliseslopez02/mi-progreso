@@ -118,6 +118,7 @@ export function GoalList({
                       disabled={disabled}
                       aria-label={goal.name}
                       onChange={(e) => onProgressChange?.(goal.goalId, +e.target.value)}
+                      onWheel={(e) => e.currentTarget.blur()}
                       className="goal__input"
                     />
                     <span className="goal__name">

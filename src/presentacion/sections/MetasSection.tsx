@@ -37,7 +37,7 @@ export function MetasSection() {
     <SectionFrame
       eyebrow="Largo plazo"
       title="Metas: adónde querés llegar, no sólo qué hacés hoy."
-      subtitle="Cada meta calcula su progreso sola según su tipo — hábitos vinculados, cantidad, hitos, checklist. Marcá “Caminar 30 minutos” arriba y mirá subir la meta de correr."
+      subtitle="Cada meta mide su avance distinto según su tipo — hábitos vinculados, cantidad, hitos, checklist. Marcá “Caminar 30 minutos” arriba y mirá subir la meta de correr."
       className="pr-metas"
     >
       <section className="card">
