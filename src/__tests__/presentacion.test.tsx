@@ -234,7 +234,7 @@ describe('PresentacionPage', () => {
 
     const carousel = screen.getByLabelText('Siguiente testimonio').closest('.pr-testimonials__carousel') as HTMLElement
     const activeQuote = () =>
-      carousel.querySelector('.pr-testimonials__card--active .pr-testimonials__quote')?.textContent
+      carousel.querySelector('.pr-testimonials__card .pr-testimonials__quote')?.textContent
 
     const first = activeQuote()
     await userEvent.click(within(carousel).getByRole('button', { name: 'Siguiente testimonio' }))

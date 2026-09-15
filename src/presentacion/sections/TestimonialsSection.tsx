@@ -86,19 +86,13 @@ export function TestimonialsSection() {
         </button>
 
         <div className="pr-testimonials__viewport" aria-live="polite">
-          {TESTIMONIOS.map((t, i) => (
-            <blockquote
-              key={t.name}
-              className={`pr-testimonials__card${i === index ? ' pr-testimonials__card--active' : ''}`}
-              aria-hidden={i !== index}
-            >
-              <p className="pr-testimonials__quote">“{t.quote}”</p>
-              <footer className="pr-testimonials__author">
-                <span className="pr-testimonials__name">{t.name}</span>
-                <span className="pr-testimonials__role">{t.role}</span>
-              </footer>
-            </blockquote>
-          ))}
+          <blockquote key={TESTIMONIOS[index].name} className="pr-testimonials__card">
+            <p className="pr-testimonials__quote">“{TESTIMONIOS[index].quote}”</p>
+            <footer className="pr-testimonials__author">
+              <span className="pr-testimonials__name">{TESTIMONIOS[index].name}</span>
+              <span className="pr-testimonials__role">{TESTIMONIOS[index].role}</span>
+            </footer>
+          </blockquote>
         </div>
 
         <button
