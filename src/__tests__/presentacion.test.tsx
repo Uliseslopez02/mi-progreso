@@ -184,6 +184,35 @@ describe('PresentacionPage', () => {
     ).toBeInTheDocument()
   })
 
+  it('Revisión mensual recrea el wizard de 4 pasos y guarda las respuestas', async () => {
+    render(<PresentacionPage />)
+
+    const reviewHeading = screen.getByRole('heading', { name: '¿Cómo estuvo el mes?' })
+    const reviewCard = reviewHeading.closest('.card') as HTMLElement
+
+    // Paso 1: mismos stats que Informes → Resumen (monthlyReport real).
+    expect(within(reviewCard).getByText('Categoría más fuerte')).toBeInTheDocument()
+    await userEvent.click(within(reviewCard).getByRole('button', { name: 'Continuar' }))
+
+    // Paso 2: preguntas fijas de MONTHLY_REVIEW_PROMPTS.
+    expect(within(reviewCard).getByText('Reflexioná sobre el mes')).toBeInTheDocument()
+    await userEvent.type(within(reviewCard).getByLabelText('¿Qué salió bien?'), 'Dormí mejor')
+    await userEvent.click(within(reviewCard).getByRole('button', { name: 'Continuar' }))
+
+    // Paso 3: resumen + prioridades.
+    expect(within(reviewCard).getByText('Resumen y prioridades')).toBeInTheDocument()
+    await userEvent.type(within(reviewCard).getByLabelText('Prioridades del próximo mes'), 'Leer más')
+    await userEvent.click(within(reviewCard).getByRole('button', { name: 'Continuar' }))
+
+    // Paso 4: guardar.
+    await userEvent.click(within(reviewCard).getByRole('button', { name: 'Guardar revisión' }))
+    expect(within(reviewCard).getByText('Revisión guardada')).toBeInTheDocument()
+
+    const listSection = screen.getByRole('heading', { name: 'Revisiones anteriores' }).closest('.card') as HTMLElement
+    expect(within(listSection).getByText('Dormí mejor')).toBeInTheDocument()
+    expect(within(listSection).getByText('Leer más')).toBeInTheDocument()
+  })
+
   it('el Mapa anual recrea el <HabitYearHeatmap> real y cambia de hábito', async () => {
     render(<PresentacionPage />)
 

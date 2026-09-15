@@ -213,7 +213,7 @@
 .pr-journey__path li:last-child { margin-left: 12px; padding-left: 24px; }
 
 /* ---------- Secundarias ---------- */
-.pr-secondary__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.pr-secondary__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 340px)); gap: 14px; }
 .pr-secondary__card h3 { font-size: 0.95rem; color: var(--text); margin-bottom: 6px; }
 .pr-secondary__card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
 
@@ -232,7 +232,6 @@
   .pr-dashboard__grid { grid-template-columns: 1fr; }
   .pr-percent__grid { grid-template-columns: 1fr; }
   .pr-problem__grid { grid-template-columns: 1fr; }
-  .pr-secondary__grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 620px) {
@@ -242,7 +241,6 @@
   .pr-main { gap: 64px; }
   .pr-card { padding: 16px; }
   .pr-kanban { grid-template-columns: 1fr; }
-  .pr-secondary__grid { grid-template-columns: 1fr; }
   .pr-cta { margin-top: 60px; }
 }
 

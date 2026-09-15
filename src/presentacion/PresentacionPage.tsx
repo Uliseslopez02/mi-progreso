@@ -11,6 +11,7 @@ import { PercentageSystemSection } from './sections/PercentageSystemSection'
 import { ProgressSection } from './sections/ProgressSection'
 import { CalendarioSection } from './sections/CalendarioSection'
 import { InformesSection } from './sections/InformesSection'
+import { RevisionMensualSection } from './sections/RevisionMensualSection'
 import { AgendaSection } from './sections/AgendaSection'
 import { PlanificadorSection } from './sections/PlanificadorSection'
 import { FocusSection } from './sections/FocusSection'
@@ -54,6 +55,7 @@ export function PresentacionPage() {
           <ProgressSection />
           <CalendarioSection />
           <InformesSection />
+          <RevisionMensualSection />
           <AgendaSection />
           <PlanificadorSection />
           <FocusSection />
