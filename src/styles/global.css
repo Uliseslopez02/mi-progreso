@@ -1362,6 +1362,32 @@ main { flex: 1; padding: 28px 0 72px; }
 
 .select option { background: var(--surface-2); }
 
+.number-stepper { display: flex; align-items: stretch; gap: 6px; }
+.number-stepper__input {
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.number-stepper__input::-webkit-outer-spin-button,
+.number-stepper__input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.number-stepper__btn {
+  flex: none;
+  width: 40px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+.number-stepper__btn:hover { border-color: var(--border-strong); color: var(--accent); }
+.number-stepper__btn:active { transform: scale(0.96); }
+.number-stepper__btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
 .btn {
   border: 1px solid var(--border-strong);
   background: var(--surface-2);

@@ -14,6 +14,7 @@ import type {
   SubGoal,
 } from '../domain/types'
 import { Modal } from './Modal'
+import { NumberStepper } from './NumberStepper'
 import { SelectMenu } from './SelectMenu'
 
 interface Props {
@@ -197,24 +198,24 @@ export function EditGoalModal({ goal, categories, habits, onUpdate, onClose }: P
               <label className="field__label" htmlFor={`edit-current-${goal.id}`}>
                 Actual
               </label>
-              <input
+              <NumberStepper
                 id={`edit-current-${goal.id}`}
-                className="input"
-                type="number"
                 value={goal.currentValue ?? 0}
-                onChange={(e) => onUpdate({ currentValue: Number(e.target.value) })}
+                min={0}
+                ariaLabel="Valor actual"
+                onCommit={(v) => onUpdate({ currentValue: v ?? 0 })}
               />
             </div>
             <div className="field">
               <label className="field__label" htmlFor={`edit-target-${goal.id}`}>
                 Meta
               </label>
-              <input
+              <NumberStepper
                 id={`edit-target-${goal.id}`}
-                className="input"
-                type="number"
                 value={goal.targetValue ?? 0}
-                onChange={(e) => onUpdate({ targetValue: Number(e.target.value) })}
+                min={0}
+                ariaLabel="Meta"
+                onCommit={(v) => onUpdate({ targetValue: v ?? 0 })}
               />
             </div>
             <div className="field">

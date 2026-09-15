@@ -2,6 +2,7 @@ import { WEEKDAY_KEYS, weekdayInitials } from '../domain/date'
 import { frequencyFrom, type FrequencyType } from '../domain/habits'
 import type { Category, Goal, GoalDifficulty } from '../domain/types'
 import { Modal } from './Modal'
+import { NumberStepper } from './NumberStepper'
 import { SelectMenu } from './SelectMenu'
 
 interface Props {
@@ -127,18 +128,13 @@ export function EditHabitModal({ habit, categories, onUpdate, onRemove, onClose 
             <label className="field__label" htmlFor={`habit-times-${habit.id}`}>
               Veces por semana
             </label>
-            <input
+            <NumberStepper
               id={`habit-times-${habit.id}`}
-              className="input"
-              type="number"
+              value={timesPerWeek}
               min={1}
               max={7}
-              value={timesPerWeek}
-              onChange={(e) => {
-                const value = Number(e.target.value)
-                if (!Number.isFinite(value) || value < 1) return
-                onUpdate({ frequency: { type: 'timesPerWeek', timesPerWeek: Math.min(7, value) } })
-              }}
+              ariaLabel="Veces por semana"
+              onCommit={(v) => onUpdate({ frequency: { type: 'timesPerWeek', timesPerWeek: v ?? 1 } })}
             />
           </div>
         )}
