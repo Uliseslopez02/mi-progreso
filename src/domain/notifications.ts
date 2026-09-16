@@ -6,9 +6,9 @@
  * archivo + `achievements.ts` + `notificationEngine.ts`, siempre a partir de
  * números reales ya calculados por `scoring.ts`/`consistency.ts`.
  */
-import { addDays, diffDays, startOfWeek, type DateKey } from './date'
-import { aggregate, computeDayStats, computeStreak, weekSummary } from './scoring'
-import type { AppData } from './types'
+import { addDays, diffDays, startOfWeek, type DateKey } from './date.js'
+import { aggregate, computeDayStats, computeStreak, weekSummary } from './scoring.js'
+import type { AppData } from './types.js'
 
 export type NotificationType =
   | 'achievement'

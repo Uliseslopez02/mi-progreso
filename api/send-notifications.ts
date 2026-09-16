@@ -1,12 +1,12 @@
 import webpush from 'web-push'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { phraseNotification } from './_lib/phraseNotification'
-import { evaluateNotifications, historyWindowStart } from '../src/domain/notificationEngine'
-import { buildUserContext, categoryForType, isQuietHour } from '../src/domain/notifications'
-import type { AppNotification, NotificationPreferences } from '../src/domain/notifications'
-import { toDateKey } from '../src/domain/date'
-import { SCHEMA_VERSION } from '../src/domain/types'
-import type { AppData, DayRecord, LifeGoal } from '../src/domain/types'
+import { phraseNotification } from './_lib/phraseNotification.js'
+import { evaluateNotifications, historyWindowStart } from '../src/domain/notificationEngine.js'
+import { buildUserContext, categoryForType, isQuietHour } from '../src/domain/notifications.js'
+import type { AppNotification, NotificationPreferences } from '../src/domain/notifications.js'
+import { toDateKey } from '../src/domain/date.js'
+import { SCHEMA_VERSION } from '../src/domain/types.js'
+import type { AppData, DayRecord, LifeGoal } from '../src/domain/types.js'
 
 /**
  * Cron de push real (ver vercel.json). Corre server-side, sin sesión de

@@ -1,5 +1,5 @@
-import { phraseNotification } from './_lib/phraseNotification'
-import type { PhraseContext } from './_lib/phraseNotification'
+import { phraseNotification } from './_lib/phraseNotification.js'
+import type { PhraseContext } from './_lib/phraseNotification.js'
 
 export const config = { runtime: 'edge' }
 

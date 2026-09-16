@@ -9,8 +9,8 @@
  * Prioridad (menor = más importante), ver `notifications.ts` `PRIORITY`:
  * logro > riesgo de racha > objetivo por cerrar > motivación/resumen > recordatorio.
  */
-import { addDays, startOfWeek, toDateKey, weekDays, type DateKey } from './date'
-import { detectAchievements } from './achievements'
+import { addDays, startOfWeek, toDateKey, weekDays, type DateKey } from './date.js'
+import { detectAchievements } from './achievements.js'
 import {
   buildUserContext,
   categoryForType,
@@ -20,8 +20,8 @@ import {
   type NotificationPreferences,
   type NotificationType,
   type UserContext,
-} from './notifications'
-import type { AppData } from './types'
+} from './notifications.js'
+import type { AppData } from './types.js'
 
 /** Notificación todavía sin persistir (sin id/createdAt/readAt/aiPhrased). */
 export interface NotificationCandidate {

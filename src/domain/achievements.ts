@@ -10,10 +10,10 @@
  * `dedupKey` — así que un logro nunca se repite, sin necesitar una tabla de
  * estado aparte (la fuente de verdad es el propio historial de notificaciones).
  */
-import { startOfWeek, type DateKey } from './date'
-import { computeDayStats } from './scoring'
-import type { AppData } from './types'
-import type { UserContext } from './notifications'
+import { startOfWeek, type DateKey } from './date.js'
+import { computeDayStats } from './scoring.js'
+import type { AppData } from './types.js'
+import type { UserContext } from './notifications.js'
 
 export interface Achievement {
   id: string
