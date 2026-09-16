@@ -8,6 +8,10 @@
  */
 export type AnalyticsEvent =
   | { name: 'paywall_viewed'; feature: 'suggest_habits' | 'habit_insights' }
+  // Límites de capacidad/profundidad del plan Free (ver domain/plan.ts):
+  // `limit` es la `LimitKey` que se alcanzó, sin acoplar este tipo al de plan.ts.
+  | { name: 'limit_reached'; limit: string }
+  | { name: 'upgrade_cta_clicked'; from: string }
   | { name: 'premium_page_viewed' }
   | { name: 'checkout_started'; planTier: 'premium_monthly' | 'premium_yearly' }
   | { name: 'checkout_redirected'; planTier: 'premium_monthly' | 'premium_yearly' }

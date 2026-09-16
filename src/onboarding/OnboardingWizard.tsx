@@ -16,6 +16,7 @@ import {
 import type { WeightTier } from '../domain/onboardingCatalog'
 import { createInitialData } from '../domain/defaults'
 import { createId } from '../domain/id'
+import { PLAN_LIMITS, PRO_NAME } from '../domain/plan'
 import { useAppData } from '../state/context'
 
 interface Props {
@@ -41,8 +42,11 @@ const WIZARD_STEPS = 4
 
 /** Wizard de primeros pasos para una cuenta nueva y vacía: nada se persiste hasta "Crear mis objetivos". */
 export function OnboardingWizard({ onComplete, stepOffset = 0 }: Props) {
-  const { data, dispatch } = useAppData()
+  const { data, plan, dispatch } = useAppData()
   const [step, setStep] = useState<Step>('areas')
+  // El plan Free arranca con hasta 5 objetivos diarios (ver domain/plan.ts). No es
+  // un muro de pago: es el número que mejor funciona para sostener el hábito.
+  const goalCap = plan === 'premium' ? Number.POSITIVE_INFINITY : PLAN_LIMITS.free.dailyGoals
   const [selectedAreaIds, setSelectedAreaIds] = useState<Set<string>>(() => {
     const focusAreaId = consumeFocusIntent()
     return focusAreaId ? new Set([focusAreaId]) : new Set()
@@ -80,6 +84,7 @@ export function OnboardingWizard({ onComplete, stepOffset = 0 }: Props) {
       if (prev.some((g) => g.name.trim().toLowerCase() === key)) {
         return prev.filter((g) => g.name.trim().toLowerCase() !== key)
       }
+      if (prev.length >= goalCap) return prev
       return [...prev, { id: createId('goal'), name, areaId, tier: 'media' }]
     })
   }
@@ -92,6 +97,7 @@ export function OnboardingWizard({ onComplete, stepOffset = 0 }: Props) {
       setCustomName('')
       return
     }
+    if (draftGoals.length >= goalCap) return
     const areaId = selectedAreas[0]?.id ?? 'otros'
     setDraftGoals((prev) => [...prev, { id: createId('goal'), name, areaId, tier: 'media' }])
     setCustomName('')
@@ -221,6 +227,7 @@ export function OnboardingWizard({ onComplete, stepOffset = 0 }: Props) {
                       type="button"
                       className={`onboarding-option${selected ? ' onboarding-option--selected' : ''}`}
                       aria-pressed={selected}
+                      disabled={!selected && draftGoals.length >= goalCap}
                       onClick={() => toggleSuggestion(suggestion.name, suggestion.areaId)}
                     >
                       {suggestion.name}
@@ -243,7 +250,12 @@ export function OnboardingWizard({ onComplete, stepOffset = 0 }: Props) {
                   onChange={(e) => setCustomName(e.target.value)}
                   onKeyDown={onCustomKeyDown}
                 />
-                <button type="button" className="btn" onClick={addCustomGoal}>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={addCustomGoal}
+                  disabled={draftGoals.length >= goalCap}
+                >
                   Agregar
                 </button>
               </div>
@@ -267,7 +279,14 @@ export function OnboardingWizard({ onComplete, stepOffset = 0 }: Props) {
               </div>
             )}
 
-            {draftGoals.length > RECOMMENDED_MAX_GOALS && (
+            {plan !== 'premium' && draftGoals.length >= goalCap && (
+              <p className="onboarding-warning" role="status">
+                Con el plan gratuito arrancás con {PLAN_LIMITS.free.dailyGoals} objetivos diarios —
+                es el número que mejor funciona para sostener el hábito. Vas a poder sumar más
+                cuando quieras{PRO_NAME ? ` con ${PRO_NAME}` : ''}.
+              </p>
+            )}
+            {plan === 'premium' && draftGoals.length > RECOMMENDED_MAX_GOALS && (
               <p className="onboarding-warning" role="status">
                 Elegiste bastantes objetivos para arrancar — con {RECOMMENDED_MAX_GOALS} suele ser más
                 fácil sostenerlos. Podés agregar el resto más adelante desde Ajustes.

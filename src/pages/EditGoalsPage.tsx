@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { NumberStepper } from '../components/NumberStepper'
+import { UpgradeCard } from '../components/UpgradeCard'
 import { createId } from '../domain/id'
+import { countGoalsByPeriod, goalPeriodLimitKey, isAtLimit, limitFor, shouldShowCounter } from '../domain/plan'
 import type { GoalKind, GoalPeriod } from '../domain/types'
 import { useAppData } from '../state/context'
 
@@ -20,7 +22,7 @@ const KIND_LABEL: Record<GoalKind, string> = {
  * que aparecen en Hoy bajo "Objetivos de hoy". Única fuente de verdad: la
  * edición ya no vive también en Ajustes. */
 export function EditGoalsPage() {
-  const { data, dispatch } = useAppData()
+  const { data, plan, dispatch } = useAppData()
   const [newGoalName, setNewGoalName] = useState('')
   const [newGoalCategory, setNewGoalCategory] = useState(data.categories[0]?.id ?? '')
   const [newGoalWeight, setNewGoalWeight] = useState(1)
@@ -33,9 +35,14 @@ export function EditGoalsPage() {
   const goals = allGoals.filter((g) => g.trackingKind !== 'habit')
   const categories = [...data.categories].sort((a, b) => a.order - b.order)
 
+  const newGoalLimitKey = goalPeriodLimitKey(newGoalPeriod)
+  const newGoalCount = countGoalsByPeriod(data.goals, newGoalPeriod)
+  const newGoalAtLimit = isAtLimit(plan, newGoalLimitKey, newGoalCount)
+
   const addGoal = () => {
     const name = newGoalName.trim()
     if (!name || !newGoalCategory) return
+    if (newGoalAtLimit) return
     const isBoolean = newGoalKind === 'boolean'
     dispatch({
       type: 'addGoal',
@@ -68,6 +75,9 @@ export function EditGoalsPage() {
           <h2 className="card__title">Objetivos</h2>
           <span className="card__hint">
             {goals.filter((g) => g.active).length} activos de {goals.length}
+            {shouldShowCounter(plan, 'dailyGoals', countGoalsByPeriod(data.goals, 'daily')) && (
+              <> · {countGoalsByPeriod(data.goals, 'daily')}/{limitFor(plan, 'dailyGoals')} diarios</>
+            )}
           </span>
         </div>
 
@@ -338,10 +348,24 @@ export function EditGoalsPage() {
               </div>
             </>
           )}
-          <button type="button" className="btn btn--primary" onClick={addGoal}>
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={addGoal}
+            disabled={newGoalAtLimit}
+          >
             Agregar
           </button>
         </div>
+
+        {newGoalAtLimit && (
+          <UpgradeCard
+            limit={newGoalLimitKey}
+            title={`Llegaste a ${limitFor(plan, newGoalLimitKey)} objetivos ${
+              newGoalPeriod === 'weekly' ? 'semanales' : newGoalPeriod === 'monthly' ? 'mensuales' : 'diarios'
+            }`}
+          />
+        )}
       </section>
     </div>
   )
