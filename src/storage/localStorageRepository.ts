@@ -67,7 +67,7 @@ export function createLocalStorageRepository(
       // Mismo criterio que getUserPlan: sin cuenta real no hay facturación
       // posible, siempre 'free' sin límite aplicado (no tiene sentido bloquear
       // IA en un modo que ni siquiera llega a los Edge Functions con sesión).
-      return { status: 'free', planTier: 'free', currentPeriodEnd: null, aiUsage: { count: 0, limit: 3 } }
+      return { status: 'free', planTier: 'free', currentPeriodEnd: null, trialEnd: null, aiUsage: { count: 0, limit: 3 } }
     },
     async getOnboardingCompleted() {
       // Sin cuenta real no hay perfil server-side — la señal local

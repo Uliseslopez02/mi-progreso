@@ -75,7 +75,15 @@ Archivos nuevos: `src/domain/plan.ts`, `src/components/{UpgradeCard,ProBadge,Pla
 
 ## 3. PENDIENTES (en orden)
 
-### 3.1 — Aplicar la migración `0024_plan_limits.sql` en Supabase  ⚠️ BLOQUEANTE, TODAVÍA PENDIENTE
+### 3.1 — Aplicar la migración `0024_plan_limits.sql` en Supabase  ✅ HECHO (aplicada en producción)
+
+**Actualización 2026-09-16:** esta migración ya está aplicada en producción — el método
+que funcionó fue `window.monaco.editor.getModels()[0].setValue(sql)` vía
+`javascript_tool` con Claude in Chrome (nunca tipear/pegar SQL largo, Monaco lo corrompe).
+El resto de esta sección queda como registro de cómo se resolvió, por si hace falta el
+mismo método de nuevo (como para la migración `0025`, ver `CONTEXTO_TERCERA_PASADA_TRIAL.md`
+sección 3.7 — **hay una migración `0025_free_trial.sql` nueva, todavía pendiente de
+aplicar**, no confundir con esta `0024` que ya está lista).
 
 Sin esto, los límites son **sólo frontend** (un request falsificado los saltea).
 

@@ -5,6 +5,7 @@ import { useAppContext } from '../state/context'
 import { track } from '../domain/analytics'
 import { toDateKey, formatLongDate } from '../domain/date'
 import { monthlyEquivalentLabel, yearlySavingsPercent } from '../domain/premiumPricing'
+import { isTrialActive, daysLeftInTrial } from '../domain/plan'
 import type { SubscriptionSummary } from '../domain/types'
 
 type PlanTier = 'premium_monthly' | 'premium_yearly'
@@ -77,6 +78,7 @@ export function PremiumPage() {
   const savings = yearlySavingsPercent(monthlyLabel, yearlyLabel)
   const yearlyPerMonth = monthlyEquivalentLabel(yearlyLabel)
   const isPremium = summary?.status === 'active'
+  const isTrialing = summary ? isTrialActive(summary.status, summary.trialEnd) : false
 
   const startCheckout = async (planTier: PlanTier) => {
     track({ name: 'checkout_started', planTier })
@@ -188,6 +190,16 @@ export function PremiumPage() {
 
   return (
     <div className="stack">
+      {isTrialing && (
+        <section className="card">
+          <h1 className="card__title">✨ Estás en tu prueba Premium</h1>
+          <p className="card__hint">
+            Te quedan {daysLeftInTrial(summary!.trialEnd)} días con acceso completo. Si te
+            sirve, podés sumarte a Premium ahora y seguir sin cortes cuando termine la prueba.
+          </p>
+        </section>
+      )}
+
       <section className="card">
         <h1 className="card__title">Cuando una sola parte de tu vida ya no alcanza ✨</h1>
         <p className="card__hint">

@@ -302,21 +302,21 @@ describe('Mi Progreso', () => {
     ).toBeInTheDocument()
   })
 
-  it('Free no puede ver más de 14 días de historial, pero se le explica el porqué', async () => {
+  it('Free no puede ver más de 7 días de historial, pero se le explica el porqué', async () => {
     const user = userEvent.setup()
     renderApp() // plan free por defecto
     await screen.findByText('Objetivos de hoy')
 
     await user.click(screen.getByRole('button', { name: 'Historial' }))
     expect(
-      await screen.findByRole('img', { name: /Progreso diario de los últimos 14 días/ }),
+      await screen.findByRole('img', { name: /Progreso diario de los últimos 7 días/ }),
     ).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /30 días/ }))
 
-    // El rango no cambia (sigue en 14) y aparece el aviso de upgrade, no un error.
-    expect(screen.getByRole('img', { name: /Progreso diario de los últimos 14 días/ })).toBeInTheDocument()
-    expect(await screen.findByText(/Estás viendo los últimos 14 días/)).toBeInTheDocument()
+    // El rango no cambia (sigue en 7) y aparece el aviso de upgrade, no un error.
+    expect(screen.getByRole('img', { name: /Progreso diario de los últimos 7 días/ })).toBeInTheDocument()
+    expect(await screen.findByText(/Estás viendo los últimos 7 días/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Ver Premium/ })).toHaveAttribute('href', '/premium')
   })
 

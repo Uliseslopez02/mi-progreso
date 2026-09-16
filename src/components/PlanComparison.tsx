@@ -1,4 +1,4 @@
-import { FREE_HISTORY_RANGES, PLAN_LIMITS, PRO_NAME } from '../domain/plan'
+import { FREE_HISTORY_RANGES, FREE_YEAR_MAP_WEEKS, PLAN_LIMITS, PRO_NAME } from '../domain/plan'
 
 interface Row {
   label: string
@@ -17,7 +17,7 @@ const ROWS: Row[] = [
   { label: 'Proyectos activos', free: String(f.activeProjects), pro: 'Sin límite' },
   { label: 'Rutinas', free: String(f.routines), pro: 'Sin límite' },
   { label: 'Historial de progreso', free: `${freeHistoryDays} días`, pro: '30/90 días + 1 año' },
-  { label: 'Mapa anual de hábitos', free: 'Últimos ~2 meses', pro: 'Año completo' },
+  { label: 'Mapa anual de hábitos', free: `Últimas ${FREE_YEAR_MAP_WEEKS} semanas`, pro: 'Año completo' },
   { label: 'Informe mensual', free: 'Del mes en curso', pro: '+ métricas y evolución mes a mes' },
   { label: 'Planificador semanal', free: 'Semana actual y siguiente', pro: 'Cualquier semana' },
   { label: 'IA — sugerencias e insights', free: '3 por mes', pro: 'Sin límite' },

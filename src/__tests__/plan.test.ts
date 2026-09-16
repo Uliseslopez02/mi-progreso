@@ -9,9 +9,11 @@ import {
   countGoalsByPeriod,
   countHabits,
   goalPeriodLimitKey,
+  daysLeftInTrial,
   historyRangesFor,
   isAtLimit,
   isProHistoryRange,
+  isTrialActive,
   limitFor,
   remainingFor,
   shouldShowCounter,
@@ -68,7 +70,7 @@ describe('límites', () => {
   })
 
   it('remainingFor nunca es negativo', () => {
-    expect(remainingFor('free', 'habits', 1)).toBe(2)
+    expect(remainingFor('free', 'habits', 1)).toBe(1)
     expect(remainingFor('free', 'habits', 9)).toBe(0)
   })
 
@@ -89,31 +91,70 @@ describe('límites', () => {
     expect(limitFor('free', 'dailyGoals')).toBe(5)
     expect(limitFor('free', 'weeklyGoals')).toBe(1)
     expect(limitFor('free', 'monthlyGoals')).toBe(1)
-    expect(limitFor('free', 'habits')).toBe(3)
-    expect(limitFor('free', 'activeLifeGoals')).toBe(2)
+    expect(limitFor('free', 'habits')).toBe(2)
+    expect(limitFor('free', 'activeLifeGoals')).toBe(1)
     expect(limitFor('free', 'activeProjects')).toBe(1)
     expect(limitFor('free', 'routines')).toBe(1)
     expect(PLAN_LIMITS.free.notes).toBe(10)
-    expect(PLAN_LIMITS.free.categories).toBe(6)
+    expect(PLAN_LIMITS.free.categories).toBe(5)
   })
 })
 
 describe('profundidad histórica', () => {
-  it('historyRangesFor: Free hasta 14 días, Premium suma 30/90/365', () => {
-    expect(historyRangesFor('free')).toEqual([7, 14])
+  it('historyRangesFor: Free sólo 7 días, Premium suma 14/30/90/365', () => {
+    expect(historyRangesFor('free')).toEqual([7])
     expect(historyRangesFor('premium')).toEqual([7, 14, 30, 90, 365])
   })
 
   it('isProHistoryRange marca los rangos exclusivos', () => {
-    expect(isProHistoryRange(14)).toBe(false)
+    expect(isProHistoryRange(14)).toBe(true)
     expect(isProHistoryRange(30)).toBe(true)
     expect(isProHistoryRange(90)).toBe(true)
     expect(isProHistoryRange(365)).toBe(true)
   })
 
   it('yearMapWeeksFor recorta el heatmap para Free', () => {
-    expect(yearMapWeeksFor('free', 53)).toBe(8)
+    expect(yearMapWeeksFor('free', 53)).toBe(4)
     expect(yearMapWeeksFor('premium', 53)).toBe(53)
+  })
+})
+
+describe('trial reverso', () => {
+  it('isTrialActive: false sin trialEnd', () => {
+    expect(isTrialActive('trial', null)).toBe(false)
+  })
+
+  it('isTrialActive: true con trial vigente', () => {
+    const future = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    expect(isTrialActive('trial', future)).toBe(true)
+  })
+
+  it('isTrialActive: false con trial vencido', () => {
+    const past = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    expect(isTrialActive('trial', past)).toBe(false)
+  })
+
+  it('isTrialActive: false si status no es trial, aunque trialEnd esté en el futuro', () => {
+    const future = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    expect(isTrialActive('active', future)).toBe(false)
+    expect(isTrialActive('free', future)).toBe(false)
+  })
+
+  it('daysLeftInTrial: 0 sin trialEnd', () => {
+    expect(daysLeftInTrial(null)).toBe(0)
+  })
+
+  it('daysLeftInTrial: 0 si ya venció', () => {
+    const past = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    expect(daysLeftInTrial(past)).toBe(0)
+  })
+
+  it('daysLeftInTrial: redondea hacia arriba', () => {
+    const in30Min = new Date(Date.now() + 30 * 60 * 1000).toISOString()
+    expect(daysLeftInTrial(in30Min)).toBe(1)
+
+    const in13Days = new Date(Date.now() + 13.2 * 24 * 60 * 60 * 1000).toISOString()
+    expect(daysLeftInTrial(in13Days)).toBe(14)
   })
 })
 

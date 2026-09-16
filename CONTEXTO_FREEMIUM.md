@@ -173,20 +173,20 @@ Para cada una: ¿gratis? ¿con límite? ¿sólo Pro? ¿básica gratis + avanzada
 | Objetivos diarios | **5** | Ilimitado* | Límite principal. 5 = una etapa enfocada; sumar áreas de la vida lo supera solo. |
 | Objetivos semanales | 1 | Ilimitado* | Alcanza para probar la función; el 2.º ya es planificar a más largo plazo. |
 | Objetivos mensuales | 1 | Ilimitado* | Ídem. |
-| Hábitos | 3 | Ilimitado* | Los básicos más comunes entran en 3; armar un sistema por área ya pide Pro. |
-| Metas de vida activas | 2 | Ilimitado* | 2 metas activas = foco real. La 3.ª en paralelo es el perfil que paga. |
+| Hábitos | 2 | Ilimitado* | Con 2 se cubre el básico más común; armar un sistema por área ya pide Pro. |
+| Metas de vida activas | 1 | Ilimitado* | 1 meta activa = foco real. La 2.ª en paralelo es el perfil que paga. |
 | Proyectos activos | 1 | Ilimitado* | Con 1 se prueba el Kanban entero; el 2.º frente en paralelo = usuario comprometido. |
 | Tareas por proyecto | Ilimitado | Ilimitado | Limitar tarjetas de un Kanban se siente roto. |
 | Rutinas | 1 | Ilimitado* | Alcanza para probar el ritual completo; la 2.ª ya es estructurar el día entero. |
 | Planificador — semanas | Actual + siguiente (pasado libre) | Cualquier semana | Planificar el mes entero = compromiso. |
 | Tareas por día (agenda) | Ilimitado | Ilimitado | Limitar esto se siente roto. |
 | Enfoque / Pomodoro | Completo | Completo + stats de enfoque | El timer no se limita nunca. |
-| Historial — rango | 7 / 14 días | + 30 / 90 días + 1 año | Ver la evolución de un mes ya es señal de uso retenido (mes 2+). |
-| Mapa anual | ~8 semanas (~2 meses) | Año completo | Ídem. |
+| Historial — rango | 7 días | + 14 / 30 / 90 días + 1 año | Ver la evolución de un mes ya es señal de uso retenido (mes 2+); "quiero ver 2 semanas" pasa a ser el primer contacto con Premium. |
+| Mapa anual | 4 semanas (~1 mes) | Año completo | Ídem. |
 | Informe mensual | Mes actual, métricas núcleo | + meses anteriores + métricas avanzadas | Comparar evolución necesita historia. |
 | Revisión mensual guiada | Completa (últimas 3 guardadas) | Completa + historial full | Herramienta de retención, no se limita. |
 | Notas | 10 | Ilimitado* | Red de seguridad anti-abuso, no de conversión. |
-| Categorías | 6 | Ilimitado* | El seed trae 4; 6 cubre cualquier caso normal sin regalar de más. |
+| Categorías | 5 | Ilimitado* | El seed trae 4; 5 cubre cualquier caso normal sin regalar de más. |
 | Personalización (nombre, orden, colores) | Sí | Sí | Cosmético; esconderlo es mezquino. |
 | Backup export / import | Sí | Sí | Nadie es rehén de sus datos. Baja la fricción de probar Pro. |
 | IA (sugerencias + insights) | 3 / mes | Ilimitado | Ya implementado. |
@@ -578,3 +578,60 @@ Archivos tocados en este ajuste: `src/domain/plan.ts` (`PLAN_LIMITS`, `FREE_HIST
 el archivo sin necesidad de una migración nueva), `src/components/PlanComparison.tsx`,
 `src/__tests__/plan.test.ts`. Ningún componente de página necesitó cambios de código: los
 contadores y copys ya leían de `plan.ts` dinámicamente.
+
+`0024_plan_limits.sql` ya está aplicada en producción (ver `CONTEXTO_PENDIENTES_FREEMIUM.md`).
+
+## 13.2 Tercera pasada: límites y trial reverso de 14 días (2026-09-16)
+
+Contexto de negocio: "creo que la versión gratis es suficiente... muchos se van a quedar
+con esa versión". Se evaluó reemplazar el freemium por un modelo de trial puro (matar el
+free tier) y se descartó — en una app de hábitos el valor se siente recién en el mes 2-3
+(sección 4); un trial puro corta a la gente justo antes de engancharse y pierde el boca a
+boca del free tier. Decisión final, confirmada por el usuario ("hacelo"): apretar un poco
+más los límites Free **y además** sumar un trial reverso de 14 días.
+
+| Límite | Antes (2da pasada) | Ahora (3ra pasada) | Por qué |
+| --- | --- | --- | --- |
+| Objetivos diarios | 5 | **5 (sin cambio)** | Límite principal, ya decidido explícitamente. |
+| Objetivos semanales / mensuales | 1 | **1 (sin cambio)** | Ya está en el piso; bajar a 0 elimina la función. |
+| Hábitos | 3 | **2** | Con 3 se armaba un sistema completo sin sentir nunca el límite. |
+| Metas de vida activas | 2 | **1** | Con 1 se prueba toda la función; la 2da en paralelo es el perfil que paga. |
+| Proyectos activos | 1 | **1 (sin cambio)** | Ya está en el piso. |
+| Rutinas | 1 | **1 (sin cambio)** | Ya está en el piso. |
+| Notas | 10 | **10 (sin cambio)** | Red de seguridad anti-abuso, no palanca de conversión. |
+| Categorías | 6 | **5** | El seed trae 4; 5 sigue alcanzando sin regalar margen extra. |
+| Historial | 7 / 14 días | **sólo 7 días** | "Quiero ver 2 semanas" pasa a ser el primer contacto con Premium. |
+| Mapa anual (heatmap) | ~8 semanas (~2 meses) | **4 semanas (~1 mes)** | Mismo criterio que historial. |
+| Planificador (semanas adelante) | 1 | **1 (sin cambio)** | Bajar a 0 se siente roto (anti-objetivo: no degradar la UI). |
+| IA | 3/mes | **3/mes (sin cambio)** | Fuera de alcance de esta pasada. |
+
+**Trial reverso (`TRIAL_DAYS = 14`, sin tarjeta):** toda cuenta nueva arranca con Premium
+completo al registrarse y cae a Free automáticamente al vencer. Como el grandfathering
+existente (sección 6) nunca borra nada y sólo bloquea *agregar* de más, alguien que en el
+trial armó 6 objetivos diarios o 2 metas activas se encuentra con avisos de upgrade reales
+(generados por su propio uso), no con un paywall inventado. No se aplica retroactivamente
+a cuentas ya existentes: siguen resolviendo a `'free'` exactamente igual que antes.
+
+Implementación: `supabase/migrations/0025_free_trial.sql` agrega `get_effective_plan(uid)`
+(lee `subscriptions.status`/`trial_end` y devuelve `'premium'` si hay suscripción activa o
+trial vigente, `'free'` en cualquier otro caso incluida cuenta sin fila) y actualiza
+`handle_new_user()` para crear la fila de `subscriptions` en `'trial'` con
+`trial_end = now() + 14 days`. `enforce_free_plan_limits` pasa a resolver el plan con
+`get_effective_plan` en vez de leer `profiles.plan` directo. En el frontend,
+`src/domain/plan.ts` suma `isTrialActive`/`daysLeftInTrial`, y
+`supabaseRepository.getUserPlan`/`getSubscriptionSummary` llaman al RPC
+`get_effective_plan` en vez de leer `profiles.plan` — como todo el gating de la app ya lee
+`state.plan` (poblado una sola vez desde `getUserPlan()`), el trial se trata como Premium
+en toda la UI sin tocar un componente más. Única UI nueva: una tarjeta en `/premium`
+(`PremiumPage.tsx`) que muestra los días restantes de trial — sin banner global, por el
+anti-objetivo de la sección 5.
+
+Archivos tocados: `src/domain/plan.ts`, `supabase/migrations/0025_free_trial.sql`,
+`src/domain/types.ts` (`SubscriptionSummary.trialEnd`), `src/storage/supabaseRepository.ts`,
+`src/storage/memoryRepository.ts`, `src/storage/localStorageRepository.ts`,
+`src/pages/PremiumPage.tsx`, `src/components/PlanComparison.tsx` (texto del mapa anual
+dejó de estar hardcodeado), `src/pages/HistoryPage.tsx` (el rango inicial de 14 días
+quedó inválido para Free con `FREE_HISTORY_RANGES = [7]`; ahora arranca en el rango
+permitido más alto, `14` para Premium y `7` para Free), `src/__tests__/plan.test.ts`,
+`src/__tests__/premiumPage.test.tsx`, `src/__tests__/premiumConfirmationPage.test.tsx`,
+`src/__tests__/app.test.tsx`.

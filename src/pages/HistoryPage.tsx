@@ -18,9 +18,14 @@ const RANGE_LABEL: Record<number, string> = { 7: '7 días', 14: '14 días', 30: 
 
 export function HistoryPage() {
   const { data, today, plan } = useAppData()
-  const [range, setRange] = useState<number>(14)
-  const [rangeUpgrade, setRangeUpgrade] = useState(false)
   const allowedRanges = historyRangesFor(plan)
+  // 14 es el default de siempre (Premium ya lo tenía habilitado). Para Free,
+  // desde la tercera pasada (FREE_HISTORY_RANGES = [7]) 14 ya no es un rango
+  // propio — arrancar ahí mostraría un rango bloqueado sin el aviso de upgrade.
+  const [range, setRange] = useState<number>(() =>
+    allowedRanges.includes(14) ? 14 : allowedRanges[allowedRanges.length - 1],
+  )
+  const [rangeUpgrade, setRangeUpgrade] = useState(false)
 
   const chooseRange = (option: number) => {
     if (allowedRanges.includes(option)) {

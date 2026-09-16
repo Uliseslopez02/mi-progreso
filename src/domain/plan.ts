@@ -46,21 +46,25 @@ export interface PlanLimits {
 const SOFT_CAP = 100
 
 export const PLAN_LIMITS: Record<UserPlan, PlanLimits> = {
-  // Ajustado (ver CONTEXTO_FREEMIUM.md, sección 3.1 "Segunda pasada"): dailyGoals
-  // queda en 5 porque es el límite principal, decidido explícitamente. El resto
-  // se ajustó hacia abajo donde el margen era demasiado generoso para funcionar
-  // como palanca de conversión — cada uno sigue dejando probar la función entera
-  // al menos una vez antes de pedir upgrade.
+  // Ajustado dos veces (ver CONTEXTO_FREEMIUM.md sección 13.1 "segunda pasada" y
+  // 13.2 "tercera pasada"): dailyGoals queda en 5, el límite principal, decidido
+  // explícitamente y sin tocar de nuevo. habits y activeLifeGoals bajaron un
+  // escalón más en la tercera pasada porque con el número anterior alcanzaba para
+  // armar un sistema completo sin sentir nunca el límite — quedaban demasiado
+  // generosos para funcionar como palanca de conversión. weeklyGoals/monthlyGoals/
+  // activeProjects/routines ya estaban en el piso (1) y no se tocan: bajar a 0
+  // elimina la función en vez de limitarla. notes se deja igual a propósito: es
+  // red de seguridad anti-abuso, no palanca de conversión (ver comentario abajo).
   free: {
     dailyGoals: 5,
     weeklyGoals: 1,
     monthlyGoals: 1,
-    habits: 3,
-    activeLifeGoals: 2,
+    habits: 2,
+    activeLifeGoals: 1,
     activeProjects: 1,
     routines: 1,
     notes: 10,
-    categories: 6,
+    categories: 5,
     plannerWeeksAhead: 1,
   },
   premium: {
@@ -143,8 +147,10 @@ export function goalPeriodLimitKey(period: GoalPeriod): CountLimitKey {
 
 // 30 días pasó a ser Premium: ver la evolución de un mes entero ya es un uso
 // retenido (mes 2+), momento de mayor intención de compra (CONTEXTO_FREEMIUM.md
-// sección 4). 7/14 alcanza para el hábito de corto plazo sin sentirse roto.
-export const FREE_HISTORY_RANGES = [7, 14] as const
+// sección 4). Tercera pasada (13.2): se saca 14 y se deja sólo 7 — la semana
+// actual alcanza para el hábito de corto plazo, y "quiero ver las últimas 2
+// semanas" pasa a ser el primer contacto con Premium en vez del segundo.
+export const FREE_HISTORY_RANGES = [7] as const
 export const PRO_HISTORY_RANGES = [7, 14, 30, 90, 365] as const
 
 export function historyRangesFor(plan: UserPlan): number[] {
@@ -156,8 +162,9 @@ export function isProHistoryRange(range: number): boolean {
   return !FREE_HISTORY_RANGES.includes(range as (typeof FREE_HISTORY_RANGES)[number])
 }
 
-/** Semanas visibles del mapa anual (heatmap). Free ve ~2 meses; Premium el año. */
-export const FREE_YEAR_MAP_WEEKS = 8
+/** Semanas visibles del mapa anual (heatmap). Free ve ~1 mes; Premium el año
+ * (bajado de 8 a 4 en la tercera pasada, mismo criterio que el historial). */
+export const FREE_YEAR_MAP_WEEKS = 4
 export function yearMapWeeksFor(plan: UserPlan, fullYearWeeks: number): number {
   return plan === 'premium' ? fullYearWeeks : FREE_YEAR_MAP_WEEKS
 }
@@ -200,12 +207,12 @@ export const LIMIT_COPY: Record<LimitKey, UpgradeCopy> = {
     body: `El plan gratuito te deja armar 1 objetivo mensual. Con ${PRO_NAME} sumás todos los que quieras para planificar tramos más largos.`,
   },
   habits: {
-    title: 'Llegaste a 3 hábitos',
-    body: `Tres hábitos a la vez es un buen punto de partida para sostenerlos de verdad. Cuando quieras armar un sistema más completo, ${PRO_NAME} te deja seguir sumando.`,
+    title: 'Llegaste a 2 hábitos',
+    body: `Dos hábitos a la vez es un buen punto de partida para sostenerlos de verdad. Cuando quieras armar un sistema más completo, ${PRO_NAME} te deja seguir sumando.`,
   },
   activeLifeGoals: {
-    title: 'Tenés 2 metas activas',
-    body: `Dos metas en paralelo mantienen el foco real. Con ${PRO_NAME} podés perseguir todas las que quieras a la vez —y las que completás o pausás no ocupan lugar.`,
+    title: 'Tenés 1 meta activa',
+    body: `Una meta a la vez mantiene el foco real. Con ${PRO_NAME} podés perseguir todas las que quieras en paralelo —y las que completás o pausás no ocupan lugar.`,
   },
   activeProjects: {
     title: 'Ya tenés un proyecto activo',
@@ -220,12 +227,12 @@ export const LIMIT_COPY: Record<LimitKey, UpgradeCopy> = {
     body: `Con ${PRO_NAME} guardás notas sin límite. Tus notas actuales siguen todas acá.`,
   },
   categories: {
-    title: 'Llegaste a 6 categorías',
+    title: 'Llegaste a 5 categorías',
     body: `Con ${PRO_NAME} organizás tus objetivos en todas las categorías que necesites.`,
   },
   historyRange: {
-    title: 'Estás viendo los últimos 14 días',
-    body: `Con ${PRO_NAME} ves tu progreso de los últimos 30, 90 días y del último año completo. Tus datos ya están guardados —sólo se desbloquea la vista.`,
+    title: 'Estás viendo los últimos 7 días',
+    body: `Con ${PRO_NAME} ves tu progreso de los últimos 14, 30, 90 días y del último año completo. Tus datos ya están guardados —sólo se desbloquea la vista.`,
   },
   yearMap: {
     title: 'Estás viendo los últimos meses',
@@ -239,4 +246,31 @@ export const LIMIT_COPY: Record<LimitKey, UpgradeCopy> = {
     title: 'Planificá más adelante con Premium',
     body: `El plan gratuito planifica la semana actual y la siguiente. Con ${PRO_NAME} organizás cualquier semana futura.`,
   },
+}
+
+// ---------- Trial reverso ----------
+//
+// Toda cuenta nueva arranca con Premium completo por `TRIAL_DAYS` días (sin
+// tarjeta, ver `handle_new_user()` en 0025_free_trial.sql) en vez de arrancar
+// limitada. La idea: en una app de hábitos el valor se siente recién con uso
+// sostenido (mes 2+, CONTEXTO_FREEMIUM.md sección 4) — dar los límites de Free
+// desde el día 1 deja a mucha gente conforme con "lo gratis ya me alcanza" sin
+// haber probado nunca el sistema completo. Con el trial, arman más de lo que
+// el límite Free permite; al vencer, el grandfathering (nunca borra, sólo
+// bloquea agregar más) hace que la presión de upgrade sea genuina — generada
+// por su propio uso, no por un paywall inventado.
+export const TRIAL_DAYS = 14
+
+/** true si el estado de suscripción implica trial vigente (no vencido). */
+export function isTrialActive(status: string, trialEnd: string | null): boolean {
+  if (status !== 'trial' || !trialEnd) return false
+  return new Date(trialEnd).getTime() > Date.now()
+}
+
+/** Días enteros que quedan de trial (0 si ya venció o no hay trial). Redondea
+ * hacia arriba: a 30 minutos de vencer todavía se muestra "1 día", no "0". */
+export function daysLeftInTrial(trialEnd: string | null): number {
+  if (!trialEnd) return 0
+  const ms = new Date(trialEnd).getTime() - Date.now()
+  return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)))
 }
