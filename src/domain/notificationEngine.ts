@@ -63,11 +63,11 @@ function motivationCandidate(ctx: UserContext, today: DateKey): NotificationCand
   if (ctx.needsRecognition) {
     const body =
       ctx.currentStreak >= 3
-        ? `Ya llevás ${ctx.currentStreak} días cumpliendo. Hoy no necesitás hacer algo extraordinario, solo mantener lo que ya construiste.`
+        ? `${ctx.currentStreak} días seguidos. Hoy no hace falta nada extraordinario, solo sostener lo que ya construiste.`
         : `Esta semana promediás ${ctx.weekAverage}%${
             ctx.weekDelta !== null && ctx.weekDelta > 0 ? `, ${ctx.weekDelta} puntos más que la anterior` : ''
-          }. Vas mejor.`
-    return candidate('motivation_positive', 'Buen momento', body, dedupKey, '/historial')
+          }. Se nota.`
+    return candidate('motivation_positive', 'Va en serio', body, dedupKey, '/historial')
   }
   if (ctx.needsMotivation) {
     const body =
@@ -142,8 +142,8 @@ function reminderMorningCandidate(ctx: UserContext, today: DateKey, hour: number
   if (hour >= 12 || ctx.todayGoalsTotal === 0 || ctx.todayGoalsCompleted >= ctx.todayGoalsTotal) return null
   return candidate(
     'reminder_morning',
-    'Para hoy',
-    `Tenés ${ctx.todayGoalsTotal} objetivo${ctx.todayGoalsTotal === 1 ? '' : 's'} activo${ctx.todayGoalsTotal === 1 ? '' : 's'} hoy. Empezá por el más importante.`,
+    'Arranca por acá',
+    `${ctx.todayGoalsTotal} objetivo${ctx.todayGoalsTotal === 1 ? '' : 's'} activo${ctx.todayGoalsTotal === 1 ? '' : 's'} hoy. El que más pesa, primero.`,
     `reminder:${today}`,
     '/',
   )
