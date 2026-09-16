@@ -1,11 +1,18 @@
 import { SCHEMA_VERSION } from '../domain/types'
 import type { AppData, FocusSession, Goal, PeriodRecord, RecurringPeriod } from '../domain/types'
 import { DEFAULT_SETTINGS, defaultGoals } from '../domain/defaults'
+import { DEFAULT_NOTIFICATION_PREFERENCES } from '../domain/notifications'
+import type { AppNotification } from '../domain/notifications'
 import type { ProgressRepository } from './repository'
 
 export const STORAGE_KEY = 'mi-progreso:data'
 /** Historial de enfoque: clave separada a propósito, fuera del blob principal. */
 export const FOCUS_SESSIONS_KEY = 'mi-progreso:focus-sessions'
+/** Centro de notificaciones local: mismo criterio que el historial de enfoque. */
+export const NOTIFICATIONS_KEY = 'mi-progreso:notifications'
+export const NOTIFICATION_PREFERENCES_KEY = 'mi-progreso:notification-preferences'
+/** Tope del historial guardado en localStorage — evita crecer sin límite en un storage con cupo chico. */
+const MAX_STORED_NOTIFICATIONS = 200
 
 /** Persistencia local. Tolera datos viejos o corruptos sin romper la app. */
 export function createLocalStorageRepository(
@@ -37,6 +44,8 @@ export function createLocalStorageRepository(
       try {
         storage.removeItem(STORAGE_KEY)
         storage.removeItem(FOCUS_SESSIONS_KEY)
+        storage.removeItem(NOTIFICATIONS_KEY)
+        storage.removeItem(NOTIFICATION_PREFERENCES_KEY)
       } catch {
         // ignorado a propósito
       }
@@ -77,7 +86,86 @@ export function createLocalStorageRepository(
     async completeOnboarding() {
       // No-op a propósito: ver getOnboardingCompleted arriba.
     },
+    async loadNotifications() {
+      try {
+        const raw = storage.getItem(NOTIFICATIONS_KEY)
+        return raw ? normalizeNotifications(JSON.parse(raw)) : []
+      } catch {
+        return []
+      }
+    },
+    async insertNotification(notification) {
+      try {
+        const raw = storage.getItem(NOTIFICATIONS_KEY)
+        const existing = raw ? normalizeNotifications(JSON.parse(raw)) : []
+        const next = [notification, ...existing.filter((n) => n.id !== notification.id)].slice(
+          0,
+          MAX_STORED_NOTIFICATIONS,
+        )
+        storage.setItem(NOTIFICATIONS_KEY, JSON.stringify(next))
+      } catch {
+        // sin espacio o modo privado: se pierde la notificación, no rompe la app
+      }
+    },
+    async markNotificationRead(id) {
+      try {
+        const raw = storage.getItem(NOTIFICATIONS_KEY)
+        const existing = raw ? normalizeNotifications(JSON.parse(raw)) : []
+        const readAt = new Date().toISOString()
+        const next = existing.map((n) => (n.id === id ? { ...n, readAt } : n))
+        storage.setItem(NOTIFICATIONS_KEY, JSON.stringify(next))
+      } catch {
+        // ignorado a propósito
+      }
+    },
+    async markAllNotificationsRead() {
+      try {
+        const raw = storage.getItem(NOTIFICATIONS_KEY)
+        const existing = raw ? normalizeNotifications(JSON.parse(raw)) : []
+        const readAt = new Date().toISOString()
+        const next = existing.map((n) => (n.readAt ? n : { ...n, readAt }))
+        storage.setItem(NOTIFICATIONS_KEY, JSON.stringify(next))
+      } catch {
+        // ignorado a propósito
+      }
+    },
+    async getNotificationPreferences() {
+      try {
+        const raw = storage.getItem(NOTIFICATION_PREFERENCES_KEY)
+        return raw ? { ...DEFAULT_NOTIFICATION_PREFERENCES, ...JSON.parse(raw) } : { ...DEFAULT_NOTIFICATION_PREFERENCES }
+      } catch {
+        return { ...DEFAULT_NOTIFICATION_PREFERENCES }
+      }
+    },
+    async saveNotificationPreferences(patch) {
+      try {
+        const raw = storage.getItem(NOTIFICATION_PREFERENCES_KEY)
+        const current = raw ? { ...DEFAULT_NOTIFICATION_PREFERENCES, ...JSON.parse(raw) } : { ...DEFAULT_NOTIFICATION_PREFERENCES }
+        storage.setItem(NOTIFICATION_PREFERENCES_KEY, JSON.stringify({ ...current, ...patch }))
+      } catch {
+        // ignorado a propósito
+      }
+    },
   }
+}
+
+function normalizeNotifications(input: unknown): AppNotification[] {
+  if (!Array.isArray(input)) return []
+  return input
+    .filter((n): n is Record<string, unknown> => !!n && typeof n === 'object')
+    .map((n) => ({
+      id: String(n.id),
+      type: n.type as AppNotification['type'],
+      category: n.category as AppNotification['category'],
+      priority: typeof n.priority === 'number' ? n.priority : 5,
+      title: String(n.title ?? ''),
+      body: String(n.body ?? ''),
+      actionPath: typeof n.actionPath === 'string' ? n.actionPath : undefined,
+      dedupKey: String(n.dedupKey ?? ''),
+      aiPhrased: n.aiPhrased === true,
+      createdAt: typeof n.createdAt === 'string' ? n.createdAt : new Date(0).toISOString(),
+      readAt: typeof n.readAt === 'string' ? n.readAt : null,
+    }))
 }
 
 function normalizeFocusSessions(input: unknown): FocusSession[] {

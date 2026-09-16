@@ -10,9 +10,21 @@
  * - Los HÁBITOS no puntúan: se miden por racha propia y constancia. Su `weight`
  *   siempre es 1 y no entra en el cálculo del día.
  */
-import { addDays, todayKey, type DateKey } from '../domain/date'
+import { addDays, startOfWeek, todayKey, type DateKey } from '../domain/date'
 import { snapshotGoals } from '../domain/day'
-import type { Category, DayRecord, Goal, LifeGoal, Project, ProjectTask, Routine } from '../domain/types'
+import { routineRunKey } from '../domain/routine'
+import type {
+  Category,
+  DayRecord,
+  FocusSession,
+  Goal,
+  LifeGoal,
+  PlannerItem,
+  Project,
+  ProjectTask,
+  Routine,
+  RoutineRun,
+} from '../domain/types'
 
 export const TODAY: DateKey = todayKey()
 /** Ventana de historial fabricado. 45 > 30 para que el heatmap de hábitos
@@ -121,25 +133,103 @@ export function buildDemoDays(): Record<DateKey, DayRecord> {
   return days
 }
 
-export function buildDemoLifeGoal(): LifeGoal {
-  return {
-    id: 'lg-10k',
-    name: 'Correr 10 km',
-    description: 'De sofá a 10 km en 10 semanas.',
-    categoryId: 'pr-salud',
-    scope: 'personal',
-    priority: 'high',
-    progress: 62,
-    status: 'active',
-    subGoals: [
-      { id: 'sg-1', text: 'Entrenar 3 veces por semana', done: true },
-      { id: 'sg-2', text: 'Mejorar resistencia', done: true },
-      { id: 'sg-3', text: 'Completar 8 km seguidos', done: false },
-    ],
-    linkedHabitIds: ['h-caminar'],
-    order: 0,
-    createdAt: TODAY,
-  }
+/**
+ * Metas (LifeGoal) — visión de largo plazo, separada de los objetivos diarios.
+ * `progress` lo recalcula el estado con `computeLifeGoalProgress`, igual que la
+ * app; los valores acá son sólo un punto de partida.
+ */
+export function buildDemoLifeGoals(): LifeGoal[] {
+  const createdAt = addDays(TODAY, -40)
+  return [
+    {
+      id: 'lg-10k',
+      name: 'Correr 10 km sin parar',
+      description: 'De sofá a 10 km, apoyándome en el hábito de caminar.',
+      scope: 'personal',
+      priority: 'high',
+      progress: 0,
+      status: 'active',
+      kind: 'habits',
+      subGoals: [],
+      linkedHabitIds: ['h-caminar'],
+      targetDate: addDays(TODAY, 35),
+      order: 0,
+      createdAt,
+    },
+    {
+      id: 'lg-libros',
+      name: 'Leer 12 libros este año',
+      scope: 'personal',
+      priority: 'medium',
+      progress: 0,
+      status: 'active',
+      kind: 'quantity',
+      currentValue: 7,
+      targetValue: 12,
+      unit: 'libros',
+      subGoals: [],
+      linkedHabitIds: [],
+      order: 1,
+      createdAt,
+    },
+    {
+      id: 'lg-lanzar',
+      name: 'Lanzar mi proyecto',
+      description: 'De la idea a los primeros usuarios reales.',
+      scope: 'professional',
+      priority: 'high',
+      progress: 0,
+      status: 'active',
+      kind: 'milestones',
+      subGoals: [],
+      linkedHabitIds: [],
+      milestones: [
+        { id: 'ms-1', name: 'Definir el problema', done: true },
+        { id: 'ms-2', name: 'Prototipo funcionando', done: true },
+        { id: 'ms-3', name: 'Probarlo con 5 personas', done: true },
+        { id: 'ms-4', name: 'Ajustar según feedback', done: false },
+        { id: 'ms-5', name: 'Publicarlo', done: false },
+      ],
+      order: 2,
+      createdAt,
+    },
+  ]
+}
+
+const AGO = (n: number) => addDays(TODAY, -n)
+
+/**
+ * Agenda de la semana: hoy tiene el día completo (eventos con hora, tareas con
+ * y sin horario, distintas prioridades, una vinculada a un hábito); el resto
+ * de la semana tiene menos ítems repartidos, como en una semana real — y un
+ * día (domingo) queda sin nada, para que el Planificador muestre también su
+ * estado vacío. Los ids `pi-1`..`pi-7` de hoy son estables porque Enfoque los
+ * referencia (`linkedPlannerItemId: 'pi-4'`).
+ */
+export function buildDemoPlannerItems(): PlannerItem[] {
+  const base = { date: TODAY, done: false, createdAt: AGO(1) } as const
+  const weekStart = startOfWeek(TODAY)
+  const day = (offset: number) => addDays(weekStart, offset)
+
+  return [
+    { ...base, id: 'pi-1', title: 'Entrenar', type: 'task', category: 'personal', priority: 'high', order: 0, startTime: '07:30', durationMinutes: 60, linkedHabitId: 'h-caminar', habitCompletionMode: 'auto' },
+    { ...base, id: 'pi-2', title: 'Revisar mails y responder lo urgente', type: 'task', category: 'professional', priority: 'medium', order: 1, startTime: '09:00', durationMinutes: 30 },
+    { ...base, id: 'pi-3', title: 'Reunión de equipo', type: 'event', category: 'professional', priority: 'medium', order: 2, startTime: '10:00', durationMinutes: 45, done: true },
+    { ...base, id: 'pi-4', title: 'Bloque de trabajo profundo', type: 'task', category: 'professional', priority: 'high', order: 3, startTime: '11:00', durationMinutes: 90 },
+    { ...base, id: 'pi-5', title: 'Almuerzo con Sofía', type: 'event', category: 'personal', priority: 'low', order: 4, startTime: '13:30', durationMinutes: 60 },
+    { ...base, id: 'pi-6', title: 'Llamar al banco', type: 'task', category: 'personal', priority: 'low', order: 5 },
+    { ...base, id: 'pi-7', title: 'Comprar para la cena', type: 'task', category: 'personal', priority: 'medium', order: 6 },
+
+    // Resto de la semana (para el Planificador semanal).
+    { id: 'pi-w1', date: day(0), done: true, createdAt: AGO(3), title: 'Armar la agenda de la semana', type: 'task', category: 'professional', priority: 'medium', order: 0 },
+    { id: 'pi-w2', date: day(1), done: false, createdAt: AGO(3), title: 'Dentista', type: 'event', category: 'personal', priority: 'medium', order: 0, startTime: '16:00', durationMinutes: 45 },
+    { id: 'pi-w3', date: day(1), done: false, createdAt: AGO(3), title: 'Pagar el alquiler', type: 'task', category: 'personal', priority: 'high', order: 1 },
+    { id: 'pi-w4', date: day(3), done: false, createdAt: AGO(2), title: 'Demo con el cliente', type: 'event', category: 'professional', priority: 'high', order: 0, startTime: '15:00', durationMinutes: 45 },
+    { id: 'pi-w5', date: day(4), done: false, createdAt: AGO(2), title: 'Cierre de sprint', type: 'event', category: 'professional', priority: 'medium', order: 0, startTime: '17:00', durationMinutes: 30 },
+    { id: 'pi-w6', date: day(4), done: false, createdAt: AGO(2), title: 'Enviar informe semanal', type: 'task', category: 'professional', priority: 'medium', order: 1 },
+    { id: 'pi-w7', date: day(5), done: false, createdAt: AGO(1), title: 'Juntada con amigos', type: 'event', category: 'personal', priority: 'low', order: 0, startTime: '20:00', durationMinutes: 180 },
+    // day(6) — domingo — a propósito sin nada: el Planificador también muestra el día vacío.
+  ]
 }
 
 export const DEMO_PROJECT: Project = {
@@ -161,17 +251,74 @@ export function buildDemoProjectTasks(): ProjectTask[] {
   ]
 }
 
-export const DEMO_ROUTINE: Routine = {
-  id: 'rt-manana',
-  name: 'Ritual de la mañana',
-  category: 'morning',
-  active: true,
-  order: 0,
-  createdAt: TODAY,
-  steps: [
-    { id: 'rs-1', text: 'Tender la cama', order: 0 },
-    { id: 'rs-2', text: 'Vaso de agua', order: 1 },
-    { id: 'rs-3', text: '10 minutos de estiramiento', order: 2 },
-    { id: 'rs-4', text: 'Revisar la agenda del día', order: 3 },
-  ],
+export function buildDemoRoutines(): Routine[] {
+  return [
+    {
+      id: 'rt-manana',
+      name: 'Ritual de la mañana',
+      category: 'morning',
+      active: true,
+      order: 0,
+      createdAt: TODAY,
+      steps: [
+        { id: 'rs-1', text: 'Tender la cama', order: 0 },
+        { id: 'rs-2', text: 'Vaso de agua', order: 1 },
+        { id: 'rs-3', text: '10 minutos de estiramiento', order: 2 },
+        { id: 'rs-4', text: 'Revisar la agenda del día', order: 3 },
+      ],
+    },
+    {
+      id: 'rt-noche',
+      name: 'Cierre del día',
+      category: 'evening',
+      active: true,
+      order: 1,
+      createdAt: TODAY,
+      steps: [
+        { id: 'rs-5', text: 'Anotar 3 cosas logradas hoy', order: 0 },
+        { id: 'rs-6', text: 'Dejar la ropa lista para mañana', order: 1 },
+        { id: 'rs-7', text: 'Pantallas apagadas 30 min antes de dormir', order: 2 },
+      ],
+    },
+  ]
 }
+
+/** El ritual de la mañana ya lleva 2 de 4 pasos hoy; el de la noche todavía no arrancó. */
+export function buildDemoRoutineRuns(): Record<string, RoutineRun> {
+  const run: RoutineRun = {
+    routineId: 'rt-manana',
+    date: TODAY,
+    completedStepIds: ['rs-1', 'rs-2'],
+  }
+  return { [routineRunKey(run.routineId, run.date)]: run }
+}
+
+/** Historial de sesiones de Enfoque: 2 completadas hoy (una vinculada a la
+ * tarea `pi-4`, "Bloque de trabajo profundo") y una detenida ayer. */
+export const DEMO_FOCUS_SESSIONS: FocusSession[] = [
+  {
+    id: 'fs-1',
+    startedAt: `${TODAY}T09:00:00.000Z`,
+    completedAt: `${TODAY}T09:25:00.000Z`,
+    plannedMinutes: 25,
+    type: 'focus',
+    status: 'completed',
+  },
+  {
+    id: 'fs-2',
+    startedAt: `${TODAY}T11:00:00.000Z`,
+    completedAt: `${TODAY}T11:50:00.000Z`,
+    plannedMinutes: 50,
+    type: 'focus',
+    status: 'completed',
+    linkedPlannerItemId: 'pi-4',
+  },
+  {
+    id: 'fs-3',
+    startedAt: `${addDays(TODAY, -1)}T16:00:00.000Z`,
+    completedAt: `${addDays(TODAY, -1)}T16:12:00.000Z`,
+    plannedMinutes: 25,
+    type: 'focus',
+    status: 'stopped',
+  },
+]

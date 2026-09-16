@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { GoalList } from '../components/GoalList'
 import { HabitCard } from '../components/HabitCard'
-import { HabitInsightsCard } from '../components/HabitInsightsCard'
+import { NumberStepper } from '../components/NumberStepper'
 import { SelectMenu } from '../components/SelectMenu'
 import { UpgradeCard } from '../components/UpgradeCard'
 import { WEEKDAY_KEYS, weekdayInitials } from '../domain/date'
@@ -148,8 +148,6 @@ export function HabitsPage() {
         )}
       </section>
 
-      <HabitInsightsCard data={data} today={today} />
-
       <section className="card">
         <div className="card__header">
           <h2 className="card__title">Nuevo hábito</h2>
@@ -203,17 +201,12 @@ export function HabitsPage() {
               <label className="field__label" htmlFor="new-habit-times">
                 Veces
               </label>
-              <input
+              <NumberStepper
                 id="new-habit-times"
-                className="input"
-                type="number"
                 min={1}
                 max={7}
                 value={newHabitTimesPerWeek}
-                onChange={(e) => {
-                  const value = Number(e.target.value)
-                  setNewHabitTimesPerWeek(Number.isFinite(value) ? Math.min(7, Math.max(1, value)) : 3)
-                }}
+                onCommit={(value) => setNewHabitTimesPerWeek(value ?? 3)}
               />
             </div>
           )}

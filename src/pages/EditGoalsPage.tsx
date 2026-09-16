@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { NumberStepper } from '../components/NumberStepper'
 import { UpgradeCard } from '../components/UpgradeCard'
 import { createId } from '../domain/id'
 import { countGoalsByPeriod, goalPeriodLimitKey, isAtLimit, limitFor, shouldShowCounter } from '../domain/plan'
@@ -130,20 +131,16 @@ export function EditGoalsPage() {
                   </option>
                 ))}
               </select>
-              <input
-                className="input"
-                type="number"
+              <NumberStepper
                 min={1}
                 max={999}
-                aria-label={`Peso de ${goal.name}`}
+                ariaLabel={`Peso de ${goal.name}`}
                 value={goal.weight}
-                onChange={(e) => {
-                  const weight = Number(e.target.value)
-                  if (!Number.isFinite(weight)) return
+                onCommit={(weight) => {
                   dispatch({
                     type: 'updateGoal',
                     id: goal.id,
-                    patch: { weight: Math.min(999, Math.max(1, Math.round(weight))) },
+                    patch: { weight: weight ?? 1 },
                   })
                 }}
               />
@@ -172,20 +169,18 @@ export function EditGoalsPage() {
                 </select>
                 {goal.kind !== 'boolean' && (
                   <>
-                    <input
-                      className="input"
-                      type="number"
+                    <NumberStepper
                       min={1}
-                      aria-label={`Meta de ${goal.name}`}
+                      allowEmpty
+                      ariaLabel={`Meta de ${goal.name}`}
                       placeholder="Meta"
-                      style={{ width: 90 }}
-                      value={goal.targetValue ?? ''}
-                      onChange={(e) => {
-                        const value = Number(e.target.value)
+                      style={{ width: 120 }}
+                      value={goal.targetValue}
+                      onCommit={(value) => {
                         dispatch({
                           type: 'updateGoal',
                           id: goal.id,
-                          patch: { targetValue: Number.isFinite(value) && value > 0 ? value : undefined },
+                          patch: { targetValue: value },
                         })
                       }}
                     />
@@ -301,17 +296,12 @@ export function EditGoalsPage() {
             <label className="field__label" htmlFor="new-goal-weight">
               Peso
             </label>
-            <input
+            <NumberStepper
               id="new-goal-weight"
-              className="input"
-              type="number"
               min={1}
               max={999}
               value={newGoalWeight}
-              onChange={(e) => {
-                const weight = Number(e.target.value)
-                setNewGoalWeight(Number.isFinite(weight) ? Math.min(999, Math.max(1, weight)) : 1)
-              }}
+              onCommit={(weight) => setNewGoalWeight(weight ?? 1)}
             />
           </div>
           <div className="field" style={{ flex: '1 1 150px' }}>
@@ -337,16 +327,11 @@ export function EditGoalsPage() {
                 <label className="field__label" htmlFor="new-goal-target">
                   Meta
                 </label>
-                <input
+                <NumberStepper
                   id="new-goal-target"
-                  className="input"
-                  type="number"
                   min={1}
                   value={newGoalTarget}
-                  onChange={(e) => {
-                    const value = Number(e.target.value)
-                    setNewGoalTarget(Number.isFinite(value) && value > 0 ? value : 1)
-                  }}
+                  onCommit={(value) => setNewGoalTarget(value ?? 1)}
                 />
               </div>
               <div className="field" style={{ flex: '1 1 140px' }}>

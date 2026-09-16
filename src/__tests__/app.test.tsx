@@ -5,6 +5,7 @@ import { App } from '../App'
 import * as supabaseAuth from '../auth/supabaseAuth'
 import { addDays, formatShortDate, todayKey } from '../domain/date'
 import { createInitialData } from '../domain/defaults'
+import { DEFAULT_NOTIFICATION_PREFERENCES } from '../domain/notifications'
 import { AppProvider } from '../state/AppProvider'
 import { serializeBackup } from '../storage/backup'
 import { STORAGE_KEY, createLocalStorageRepository } from '../storage/localStorageRepository'
@@ -74,6 +75,8 @@ describe('Mi Progreso', () => {
       save: vi.fn().mockResolvedValue(undefined),
       clear: vi.fn().mockResolvedValue(undefined),
       getUserPlan: vi.fn().mockResolvedValue('free'),
+      loadNotifications: vi.fn().mockResolvedValue([]),
+      getNotificationPreferences: vi.fn().mockResolvedValue(DEFAULT_NOTIFICATION_PREFERENCES),
     }
 
     render(
@@ -633,6 +636,7 @@ describe('Mi Progreso', () => {
     await screen.findByText('Objetivos de hoy')
 
     await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.click(screen.getByRole('button', { name: 'Hábitos' }))
     await user.type(screen.getByLabelText('Nombre'), 'Meditar')
     await user.click(screen.getByRole('button', { name: 'Crear hábito' }))
 
@@ -781,6 +785,7 @@ describe('Mi Progreso', () => {
     await screen.findByText('Objetivos de hoy')
 
     await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.click(screen.getByRole('button', { name: 'Hábitos' }))
     await user.type(screen.getByLabelText('Nombre'), 'Meditar')
     await user.click(screen.getByRole('button', { name: 'Crear hábito' }))
 

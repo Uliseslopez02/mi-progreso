@@ -127,12 +127,15 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   if (!response.ok) {
-    const mpError = (await response.json().catch(() => null)) as { message?: string; error?: string } | null
+    const mpError = (await response.json().catch(() => null)) as {
+      message?: string
+      error?: string
+      cause?: Array<{ code?: number | string; description?: string }>
+    } | null
     console.error('MP preapproval error', response.status, mpError)
-    return jsonResponse(
-      { error: `Mercado Pago no pudo iniciar el checkout: ${mpError?.message ?? mpError?.error ?? response.status}` },
-      502,
-    )
+    const causeDetail = mpError?.cause?.map((c) => c.description).filter(Boolean).join('; ')
+    const detail = causeDetail || mpError?.message || mpError?.error || String(response.status)
+    return jsonResponse({ error: `Mercado Pago no pudo iniciar el checkout: ${detail}` }, 502)
   }
 
   const data = (await response.json()) as { init_point?: string }

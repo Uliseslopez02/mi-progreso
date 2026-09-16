@@ -67,4 +67,211 @@ describe('PresentacionPage', () => {
     expect(within(progressCard).getByText(/Días seguidos con 70% o más/)).toBeInTheDocument()
     expect(within(progressCard).getByText(/Con 70% o más/)).toBeInTheDocument()
   })
+
+  it('la Agenda recrea el <DayTimeline> real con los ítems de la demo', () => {
+    render(<PresentacionPage />)
+    const agendaCard = screen.getByRole('heading', { name: 'Agenda del día' }).closest('.card') as HTMLElement
+    expect(within(agendaCard).getByText('Llamar al banco')).toBeInTheDocument()
+    expect(within(agendaCard).getByText('Bloque de trabajo profundo')).toBeInTheDocument()
+    // Ítem vinculado a un hábito muestra el link real.
+    expect(within(agendaCard).getByText(/Caminar 30 minutos/)).toBeInTheDocument()
+  })
+
+  it('marcar el hábito vinculado en Hábitos sube el % de la meta en Metas', async () => {
+    render(<PresentacionPage />)
+
+    const habitsCard = screen
+      .getByText(/Los hábitos no puntúan tu día/)
+      .closest('.pr-section') as HTMLElement
+    const metasCard = screen
+      .getByRole('heading', { name: 'Objetivos y metas' })
+      .closest('.card') as HTMLElement
+
+    const goalCard = within(metasCard)
+      .getByText('Correr 10 km sin parar')
+      .closest('.lifegoal-card') as HTMLElement
+    const before = Number(within(goalCard).getByText(/%$/).textContent!.replace('%', ''))
+
+    await userEvent.click(within(habitsCard).getByRole('checkbox', { name: /Caminar 30 minutos/i }))
+
+    const after = Number(within(goalCard).getByText(/%$/).textContent!.replace('%', ''))
+    expect(after).not.toBe(before)
+  })
+
+  it('Rutinas: marcar un paso recalcula el progreso y el modo enfocado avanza paso a paso', async () => {
+    render(<PresentacionPage />)
+
+    const rutinasCard = screen
+      .getByRole('heading', { name: 'Rutinas de hoy' })
+      .closest('.card') as HTMLElement
+    // Demo: el ritual de la mañana ya lleva 2 de 4 pasos.
+    expect(within(rutinasCard).getByText('2 de 4 completados')).toBeInTheDocument()
+
+    await userEvent.click(within(rutinasCard).getByRole('checkbox', { name: '10 minutos de estiramiento' }))
+    expect(within(rutinasCard).getByText('3 de 4 completados')).toBeInTheDocument()
+
+    await userEvent.click(
+      within(rutinasCard).getAllByRole('button', { name: 'Modo enfocado' })[0],
+    )
+    const dialog = screen.getByRole('dialog', { name: /Modo enfocado — Ritual de la mañana/i })
+    expect(within(dialog).getByText('Paso 4 de 4')).toBeInTheDocument()
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Hecho, siguiente' }))
+    expect(within(dialog).getByText(/Rutina completa/)).toBeInTheDocument()
+  })
+
+  it('el Calendario recrea el <MonthCalendar> real: hoy es editable, los días pasados son sólo lectura', async () => {
+    render(<PresentacionPage />)
+
+    const calendarCard = screen
+      .getByRole('heading', { name: /Calendario: tu mes/i })
+      .closest('.pr-section') as HTMLElement
+
+    // Hoy: editable, con el GoalList real.
+    expect(within(calendarCard).getByRole('checkbox', { name: /Entrenar/i })).toBeInTheDocument()
+
+    const pastDay = within(calendarCard)
+      .getAllByRole('button')
+      .find(
+        (b) =>
+          b.className.includes('calendar__day') &&
+          !b.className.includes('calendar__day--today') &&
+          !(b as HTMLButtonElement).disabled &&
+          /%/.test(b.getAttribute('aria-label') ?? ''),
+      ) as HTMLElement
+    expect(pastDay).toBeTruthy()
+    await userEvent.click(pastDay)
+
+    // Día pasado: sólo lectura (Completados/Pendientes), no checkboxes.
+    expect(within(calendarCard).getByText('Completados')).toBeInTheDocument()
+    expect(within(calendarCard).queryByRole('checkbox')).not.toBeInTheDocument()
+
+    const titleBefore = within(calendarCard).getByText(/^\w+ \d{4}$/).textContent
+    await userEvent.click(within(calendarCard).getByRole('button', { name: 'Mes anterior' }))
+    expect(within(calendarCard).getByText(/^\w+ \d{4}$/).textContent).not.toBe(titleBefore)
+  })
+
+  it('Enfoque: muestra el historial real, arranca un temporizador y lo puede detener', async () => {
+    render(<PresentacionPage />)
+
+    const focusCard = screen.getByRole('heading', { name: 'Enfoque' }).closest('.pr-focus') as HTMLElement
+    // Demo: 25 + 50 min completados hoy, una vinculada a una tarea de la agenda.
+    expect(within(focusCard).getByText('75')).toBeInTheDocument()
+    expect(within(focusCard).getByText(/50 min · Bloque de trabajo profundo/)).toBeInTheDocument()
+
+    await userEvent.click(within(focusCard).getByRole('button', { name: 'Iniciar' }))
+    expect(within(focusCard).getByText(/^\d{2}:\d{2}$/)).toBeInTheDocument()
+
+    await userEvent.click(within(focusCard).getByRole('button', { name: 'Detener' }))
+    // Vuelve al setup y la sesión detenida queda primera en el historial.
+    expect(within(focusCard).getByRole('button', { name: 'Iniciar' })).toBeInTheDocument()
+    expect(within(focusCard).getAllByText('Detenida')[0]).toBeInTheDocument()
+  })
+
+  it('Informes recrea el monthlyReport real: stats, conclusiones y ninguna frase inventada', () => {
+    render(<PresentacionPage />)
+
+    const informesCard = screen
+      .getByRole('heading', { name: /Informe de/i })
+      .closest('.card') as HTMLElement
+
+    // Fuente de verdad: domain/monthlyReport.ts + monthlyConclusions.ts sobre los mismos `days` de la demo.
+    expect(within(informesCard).getByText('Categoría más fuerte')).toBeInTheDocument()
+    expect(within(informesCard).getByText('Salud')).toBeInTheDocument()
+    expect(within(informesCard).getByText('Conclusiones')).toBeInTheDocument()
+    expect(
+      within(informesCard).getByText(/Tu categoría más fuerte fue Salud\./),
+    ).toBeInTheDocument()
+  })
+
+  it('Revisión mensual recrea el wizard de 4 pasos y guarda las respuestas', async () => {
+    render(<PresentacionPage />)
+
+    const reviewHeading = screen.getByRole('heading', { name: '¿Cómo estuvo el mes?' })
+    const reviewCard = reviewHeading.closest('.card') as HTMLElement
+
+    // Paso 1: mismos stats que Informes → Resumen (monthlyReport real).
+    expect(within(reviewCard).getByText('Categoría más fuerte')).toBeInTheDocument()
+    await userEvent.click(within(reviewCard).getByRole('button', { name: 'Continuar' }))
+
+    // Paso 2: preguntas fijas de MONTHLY_REVIEW_PROMPTS.
+    expect(within(reviewCard).getByText('Reflexioná sobre el mes')).toBeInTheDocument()
+    await userEvent.type(within(reviewCard).getByLabelText('¿Qué salió bien?'), 'Dormí mejor')
+    await userEvent.click(within(reviewCard).getByRole('button', { name: 'Continuar' }))
+
+    // Paso 3: resumen + prioridades.
+    expect(within(reviewCard).getByText('Resumen y prioridades')).toBeInTheDocument()
+    await userEvent.type(within(reviewCard).getByLabelText('Prioridades del próximo mes'), 'Leer más')
+    await userEvent.click(within(reviewCard).getByRole('button', { name: 'Continuar' }))
+
+    // Paso 4: guardar.
+    await userEvent.click(within(reviewCard).getByRole('button', { name: 'Guardar revisión' }))
+    expect(within(reviewCard).getByText('Revisión guardada')).toBeInTheDocument()
+
+    const listSection = screen.getByRole('heading', { name: 'Revisiones anteriores' }).closest('.card') as HTMLElement
+    expect(within(listSection).getByText('Dormí mejor')).toBeInTheDocument()
+    expect(within(listSection).getByText('Leer más')).toBeInTheDocument()
+  })
+
+  it('el Mapa anual recrea el <HabitYearHeatmap> real y cambia de hábito', async () => {
+    render(<PresentacionPage />)
+
+    const mapaCard = screen.getByRole('heading', { name: 'Mapa anual' }).closest('.card') as HTMLElement
+    const habitSelect = within(mapaCard).getByLabelText('Hábito') as HTMLSelectElement
+
+    const statValue = () => within(mapaCard).getByText('Cumplimiento').nextElementSibling?.textContent
+    const before = statValue()
+
+    await userEvent.selectOptions(habitSelect, 'Leer 20 minutos')
+    expect(statValue()).not.toBe(before)
+
+    // 45 días de historial fabricado: la mayoría del año queda "sin registro", como en una cuenta nueva real.
+    expect(within(mapaCard).getByText('Sin registro')).toBeInTheDocument()
+  })
+
+  it('Testimonios: el carrusel cambia de tarjeta con los botones y los puntos', async () => {
+    render(<PresentacionPage />)
+
+    const carousel = screen.getByLabelText('Siguiente testimonio').closest('.pr-testimonials__carousel') as HTMLElement
+    const activeQuote = () =>
+      carousel.querySelector('.pr-testimonials__card .pr-testimonials__quote')?.textContent
+
+    const first = activeQuote()
+    await userEvent.click(within(carousel).getByRole('button', { name: 'Siguiente testimonio' }))
+    expect(activeQuote()).not.toBe(first)
+
+    await userEvent.click(within(carousel).getByRole('button', { name: 'Testimonio anterior' }))
+    expect(activeQuote()).toBe(first)
+
+    const dots = screen.getByRole('tablist', { name: 'Elegir testimonio' })
+    await userEvent.click(within(dots).getAllByRole('tab')[2])
+    expect(activeQuote()).not.toBe(first)
+  })
+
+  it('Planificador: comparte las tareas con Agenda, edita el detalle y agrega una tarea nueva', async () => {
+    render(<PresentacionPage />)
+
+    const planificadorCard = screen
+      .getByRole('heading', { name: 'Planificador semanal' })
+      .closest('.card') as HTMLElement
+
+    // "Dentista" está otro día de la semana (no hoy) — el Planificador ve toda la semana.
+    await userEvent.click(within(planificadorCard).getByText('Dentista'))
+    const dialog = screen.getByRole('dialog', { name: 'Detalle de la tarea' })
+    expect(within(dialog).getByLabelText('Título')).toHaveValue('Dentista')
+
+    await userEvent.selectOptions(within(dialog).getByLabelText('Prioridad'), 'Alta')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Listo' }))
+
+    // El cambio de prioridad se ve reflejado en la tarjeta del tablero (borde de prioridad alta).
+    const dentistaCard = within(planificadorCard).getByText('Dentista').closest('.planner-card') as HTMLElement
+    expect(dentistaCard.className).toContain('planner-card--prio-high')
+
+    // Agregar una tarea nueva desde el formulario aparece en el tablero.
+    const addSection = screen.getByRole('heading', { name: 'Agregar a la semana' }).closest('.card') as HTMLElement
+    await userEvent.type(within(addSection).getByLabelText('Título'), 'Tarea de prueba')
+    await userEvent.click(within(addSection).getByRole('button', { name: 'Agregar' }))
+
+    expect(within(planificadorCard).getByText('Tarea de prueba')).toBeInTheDocument()
+  })
 })

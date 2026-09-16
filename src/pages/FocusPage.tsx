@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { NumberStepper } from '../components/NumberStepper'
 import { ProgressRing } from '../components/ProgressRing'
 import { Stat } from '../components/Stat'
 import { createId } from '../domain/id'
@@ -256,14 +257,11 @@ export function FocusPage() {
                     {m} min
                   </button>
                 ))}
-                <input
-                  className="input"
-                  style={{ width: 90 }}
-                  type="number"
+                <NumberStepper
                   min={1}
-                  aria-label="Duración personalizada en minutos"
+                  ariaLabel="Duración personalizada en minutos"
                   value={minutes}
-                  onChange={(e) => setMinutes(Math.max(1, Number(e.target.value) || 1))}
+                  onCommit={(value) => setMinutes(value ?? 1)}
                 />
               </div>
             )}

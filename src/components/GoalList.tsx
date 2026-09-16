@@ -1,3 +1,4 @@
+import { NumberStepper } from './NumberStepper'
 import type { GoalSnapshot } from '../domain/types'
 
 interface Props {
@@ -110,15 +111,14 @@ export function GoalList({
                 // Cuantitativo/temporal: mostrar input numérico
                 return (
                   <div key={goal.goalId} className="goal">
-                    <input
-                      type="number"
-                      min="0"
+                    <NumberStepper
+                      min={0}
                       max={goal.targetValue}
                       value={progress as number}
                       disabled={disabled}
-                      aria-label={goal.name}
-                      onChange={(e) => onProgressChange?.(goal.goalId, +e.target.value)}
-                      className="goal__input"
+                      ariaLabel={goal.name}
+                      onCommit={(value) => onProgressChange?.(goal.goalId, value ?? 0)}
+                      inputClassName="goal__input"
                     />
                     <span className="goal__name">
                       {goal.name} {goal.unit && `(${progress}/${goal.targetValue} ${goal.unit})`}

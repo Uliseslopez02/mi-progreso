@@ -2,9 +2,9 @@
  * Cálculo del progreso. Todo lo de este archivo es puro: entra data, sale número.
  * El porcentaje sale siempre de los objetivos reales del día, nunca de valores fijos.
  */
-import type { DateKey } from './date'
-import { addDays, diffDays, startOfWeek, weekDays } from './date'
-import type { DayRecord, GoalSnapshot } from './types'
+import type { DateKey } from './date.js'
+import { addDays, diffDays, startOfWeek, weekDays } from './date.js'
+import type { DayRecord, GoalSnapshot } from './types.js'
 
 /** Lo mínimo que hace falta para calcular un progreso: día o período, da igual. */
 export interface Completable {

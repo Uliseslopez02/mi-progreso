@@ -3,6 +3,7 @@ import { suggestHabits } from '../domain/habitSuggestions'
 import type { GoalFrequency } from '../domain/types'
 import { AiUpsellCard } from './AiUpsellCard'
 import { Modal } from './Modal'
+import { NumberStepper } from './NumberStepper'
 
 interface SuggestionItem {
   text: string
@@ -118,19 +119,13 @@ export function HabitSuggestionModal({ goalName, categoryName, onConfirm, onSkip
                   onChange={(e) => updateItem(index, { text: e.target.value })}
                   aria-label="Nombre del hábito sugerido"
                 />
-                <input
-                  className="input"
-                  type="number"
+                <NumberStepper
                   min={1}
                   max={7}
-                  style={{ width: 56, flex: 'none' }}
+                  style={{ flex: 'none' }}
                   value={item.timesPerWeek}
-                  aria-label={`Veces por semana de ${item.text}`}
-                  onChange={(e) => {
-                    const value = Number(e.target.value)
-                    if (!Number.isFinite(value)) return
-                    updateItem(index, { timesPerWeek: Math.min(7, Math.max(1, value)) })
-                  }}
+                  ariaLabel={`Veces por semana de ${item.text}`}
+                  onCommit={(value) => updateItem(index, { timesPerWeek: value ?? 1 })}
                 />
                 <span className="card__hint">{item.timesPerWeek === 7 ? 'todos los días' : 'veces/sem'}</span>
               </label>
