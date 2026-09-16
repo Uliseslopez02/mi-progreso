@@ -143,5 +143,13 @@ export default async function handler(request: Request): Promise<Response> {
     return jsonResponse({ error: 'Mercado Pago no devolvió una URL de checkout.' }, 502)
   }
 
-  return jsonResponse({ initPoint: data.init_point }, 200)
+  // Bug conocido de Mercado Pago (ver mercadopago/sdk-nodejs#480): desde el
+  // 2026-09-02, el init_point de /preapproval trae `&activation=true` y esa
+  // URL abre "Esta página no existe" en vez del checkout. La misma URL sin
+  // ese parámetro funciona bien — workaround confirmado por MP hasta que lo
+  // arreglen del lado de ellos.
+  const initPoint = new URL(data.init_point)
+  initPoint.searchParams.delete('activation')
+
+  return jsonResponse({ initPoint: initPoint.toString() }, 200)
 }
