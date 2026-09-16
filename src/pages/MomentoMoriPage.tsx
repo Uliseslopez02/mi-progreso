@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { NumberStepper } from '../components/NumberStepper'
 import { formatLongDate } from '../domain/date'
 import { createId } from '../domain/id'
 import { timeLived } from '../domain/momentoMori'
@@ -79,14 +80,12 @@ export function MomentoMoriPage() {
                 <label className="field__label" htmlFor="mm-life-expectancy">
                   Expectativa de vida (años, opcional)
                 </label>
-                <input
+                <NumberStepper
                   id="mm-life-expectancy"
-                  className="input"
-                  type="number"
                   min={1}
                   max={130}
                   value={draftLifeExpectancy}
-                  onChange={(e) => setDraftLifeExpectancy(Number(e.target.value))}
+                  onCommit={(value) => setDraftLifeExpectancy(value ?? 1)}
                 />
               </div>
               <button type="button" className="btn btn--primary" onClick={saveDates}>
@@ -134,14 +133,12 @@ export function MomentoMoriPage() {
                   <label className="field__label" htmlFor="mm-life-expectancy">
                     Expectativa de vida (años)
                   </label>
-                  <input
+                  <NumberStepper
                     id="mm-life-expectancy"
-                    className="input"
-                    type="number"
                     min={1}
                     max={130}
                     value={draftLifeExpectancy}
-                    onChange={(e) => setDraftLifeExpectancy(Number(e.target.value))}
+                    onCommit={(value) => setDraftLifeExpectancy(value ?? 1)}
                   />
                 </div>
                 <button type="button" className="btn btn--ghost" onClick={saveDates}>

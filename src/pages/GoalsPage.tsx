@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { HabitSuggestionModal, type ConfirmedHabit } from '../components/HabitSuggestionModal'
 import { LifeGoalCard } from '../components/LifeGoalCard'
+import { NumberStepper } from '../components/NumberStepper'
 import { SelectMenu } from '../components/SelectMenu'
 import { createId } from '../domain/id'
 import type { LifeGoalKind, LifeGoalPriority, LifeGoalScope } from '../domain/types'
@@ -214,12 +215,11 @@ export function GoalsPage() {
               <label className="field__label" htmlFor="new-lifegoal-target">
                 Meta
               </label>
-              <input
+              <NumberStepper
                 id="new-lifegoal-target"
-                className="input"
-                type="number"
+                min={0}
                 value={newTargetValue}
-                onChange={(e) => setNewTargetValue(Number(e.target.value))}
+                onCommit={(value) => setNewTargetValue(value ?? 0)}
               />
             </div>
           )}

@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { GoalList } from '../components/GoalList'
 import { HabitCard } from '../components/HabitCard'
+import { NumberStepper } from '../components/NumberStepper'
 import { SelectMenu } from '../components/SelectMenu'
 import { WEEKDAY_KEYS, weekdayInitials } from '../domain/date'
 import { frequencyFrom, type FrequencyType } from '../domain/habits'
@@ -192,17 +193,12 @@ export function HabitsPage() {
               <label className="field__label" htmlFor="new-habit-times">
                 Veces
               </label>
-              <input
+              <NumberStepper
                 id="new-habit-times"
-                className="input"
-                type="number"
                 min={1}
                 max={7}
                 value={newHabitTimesPerWeek}
-                onChange={(e) => {
-                  const value = Number(e.target.value)
-                  setNewHabitTimesPerWeek(Number.isFinite(value) ? Math.min(7, Math.max(1, value)) : 3)
-                }}
+                onCommit={(value) => setNewHabitTimesPerWeek(value ?? 3)}
               />
             </div>
           )}
