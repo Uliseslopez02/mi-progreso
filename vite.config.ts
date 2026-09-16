@@ -9,6 +9,12 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
+      // `injectManifest` (en vez de `generateSW`) porque necesitamos un
+      // Service Worker propio con handlers de `push`/`notificationclick`
+      // (ver src/sw.ts) — generateSW no permite agregar código custom.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       includeAssets: ['logo.svg', 'apple-touch-icon.png', 'favicon-48.png'],
       manifest: {
         name: 'Mi Progreso',
@@ -35,30 +41,11 @@ export default defineConfig({
           },
         ],
       },
-      workbox: {
+      // El resto del comportamiento de caché (precache, fallback de
+      // navegación, NetworkFirst para /rest/v1/) ahora vive escrito a mano en
+      // src/sw.ts — con injectManifest, `workbox: {...}` ya no aplica.
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff,woff2}'],
-        navigateFallback: '/index.html',
-        // Las funciones serverless de Vercel nunca deben resolverse contra el
-        // index.html cacheado.
-        navigateFallbackDenylist: [/^\/api\//],
-        cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        runtimeCaching: [
-          {
-            // Lecturas a Supabase (GET /rest/v1/...): NetworkFirst para que al
-            // reabrir la app sin conexión se vea el último estado conocido.
-            // Los writes y /auth/v1/ nunca se cachean.
-            urlPattern: ({ url, request }) =>
-              request.method === 'GET' && url.pathname.startsWith('/rest/v1/'),
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-rest',
-              networkTimeoutSeconds: 4,
-              expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 },
-              cacheableResponse: { statuses: [200] },
-            },
-          },
-        ],
       },
       devOptions: {
         // El service worker no se registra en `vite dev` (evita cachear en

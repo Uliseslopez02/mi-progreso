@@ -1,4 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { DEFAULT_NOTIFICATION_PREFERENCES } from '../domain/notifications'
+import type { AppNotification, NotificationCategory, NotificationPreferences, NotificationType } from '../domain/notifications'
 import { SCHEMA_VERSION } from '../domain/types'
 import type {
   AppData,
@@ -335,5 +337,106 @@ export function createSupabaseRepository(client: SupabaseClient = supabase): Pro
       const { error } = await client.from('profiles').update({ onboarding_completed: true })
       if (error) throw error
     },
+
+    // Excepción al patrón load/save de un solo blob, mismo motivo que
+    // FocusSession (ver arriba): el historial de notificaciones crece sin
+    // límite superior. Se trae acotado a ~60 días, suficiente para que el
+    // motor de reglas deduplique/cuente cooldown (ver notificationEngine.ts).
+    async loadNotifications() {
+      const since = new Date()
+      since.setDate(since.getDate() - 60)
+      const { data, error } = await client
+        .from('notifications')
+        .select('*')
+        .gte('created_at', since.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(200)
+      if (error) throw error
+      return (data ?? []).map(
+        (row): AppNotification => ({
+          id: row.id,
+          type: row.type as NotificationType,
+          category: row.category as NotificationCategory,
+          priority: row.priority,
+          title: row.title,
+          body: row.body,
+          actionPath: row.action_path ?? undefined,
+          dedupKey: row.dedup_key,
+          aiPhrased: row.ai_phrased,
+          createdAt: row.created_at,
+          readAt: row.read_at,
+        }),
+      )
+    },
+
+    async insertNotification(notification) {
+      const { error } = await client.from('notifications').insert({
+        id: notification.id,
+        type: notification.type,
+        category: notification.category,
+        priority: notification.priority,
+        title: notification.title,
+        body: notification.body,
+        action_path: notification.actionPath ?? null,
+        dedup_key: notification.dedupKey,
+        ai_phrased: notification.aiPhrased,
+        metadata: notification.metadata ?? {},
+        created_at: notification.createdAt,
+      })
+      if (error) throw error
+    },
+
+    async markNotificationRead(id) {
+      const { error } = await client
+        .from('notifications')
+        .update({ read_at: new Date().toISOString() })
+        .eq('id', id)
+      if (error) throw error
+    },
+
+    async markAllNotificationsRead() {
+      const { error } = await client
+        .from('notifications')
+        .update({ read_at: new Date().toISOString() })
+        .is('read_at', null)
+      if (error) throw error
+    },
+
+    async getNotificationPreferences() {
+      return loadNotificationPreferences(client)
+    },
+
+    async saveNotificationPreferences(patch) {
+      const current = await loadNotificationPreferences(client)
+      const next = { ...current, ...patch }
+      const { error } = await client.from('notification_preferences').upsert({
+        enabled: next.enabled,
+        achievements: next.achievements,
+        streaks: next.streaks,
+        motivation: next.motivation,
+        reminders: next.reminders,
+        push_enabled: next.pushEnabled,
+        quiet_hours_start: next.quietHoursStart,
+        quiet_hours_end: next.quietHoursEnd,
+        updated_at: new Date().toISOString(),
+      })
+      if (error) throw error
+    },
+  }
+}
+
+async function loadNotificationPreferences(client: SupabaseClient): Promise<NotificationPreferences> {
+  const { data, error } = await client.from('notification_preferences').select('*').maybeSingle()
+  if (error) throw error
+  if (!data) return { ...DEFAULT_NOTIFICATION_PREFERENCES }
+  return {
+    enabled: data.enabled,
+    achievements: data.achievements,
+    streaks: data.streaks,
+    motivation: data.motivation,
+    reminders: data.reminders,
+    pushEnabled: data.push_enabled,
+    quietHoursStart: data.quiet_hours_start,
+    quietHoursEnd: data.quiet_hours_end,
   }
 }

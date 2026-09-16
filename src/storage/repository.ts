@@ -1,3 +1,4 @@
+import type { AppNotification, NotificationPreferences } from '../domain/notifications'
 import type { AppData, FocusSession, SubscriptionSummary, UserPlan } from '../domain/types'
 
 /**
@@ -21,6 +22,14 @@ import type { AppData, FocusSession, SubscriptionSummary, UserPlan } from '../do
  * qué mostrar con una señal local más inmediata (ver `onboarding/onboardingStatus.ts`,
  * sin este viaje de red), pero este flag queda disponible server-side, por
  * cuenta, para lo que haga falta después (panel propio, IA, otro dispositivo).
+ *
+ * `loadNotifications`/`insertNotification`/`markNotification*` — mismo
+ * criterio que FocusSession: el historial de notificaciones crece sin límite
+ * superior, así que vive fuera del blob `AppData`. A diferencia de las
+ * suscripciones push (que necesitan una cuenta real y viven aparte, ver
+ * `src/domain/push.ts`), el centro de notificaciones funciona también en modo
+ * local: `localStorageRepository`/`memoryRepository` lo implementan con su
+ * propia clave, para que alguien sin cuenta también tenga acompañamiento.
  */
 export interface ProgressRepository {
   load(): Promise<AppData | null>
@@ -32,4 +41,10 @@ export interface ProgressRepository {
   getSubscriptionSummary(): Promise<SubscriptionSummary>
   getOnboardingCompleted(): Promise<boolean>
   completeOnboarding(): Promise<void>
+  loadNotifications(): Promise<AppNotification[]>
+  insertNotification(notification: AppNotification): Promise<void>
+  markNotificationRead(id: string): Promise<void>
+  markAllNotificationsRead(): Promise<void>
+  getNotificationPreferences(): Promise<NotificationPreferences>
+  saveNotificationPreferences(patch: Partial<NotificationPreferences>): Promise<void>
 }

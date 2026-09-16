@@ -16,5 +16,8 @@
         { "key": "Content-Type", "value": "application/manifest+json" }
       ]
     }
+  ],
+  "crons": [
+    { "path": "/api/send-notifications", "schedule": "0 0 * * *" }
   ]
 }
