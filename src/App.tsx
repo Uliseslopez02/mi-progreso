@@ -4,10 +4,12 @@ import { consumeEntryIntent } from './auth/entryIntent'
 import { signOut } from './auth/supabaseAuth'
 import { ErrorScreen } from './components/ErrorScreen'
 import { LoadingScreen } from './components/LoadingScreen'
+import { NotificationBell } from './components/NotificationBell'
 import { SectionLayout } from './components/SectionLayout'
 import { formatLongDate } from './domain/date'
 import { LogoMark } from './components/Logo'
 import { NAV_TABS, orderTabs } from './domain/navigation'
+import { NotificationProvider } from './state/NotificationProvider'
 import { CalendarPage } from './pages/CalendarPage'
 import { DayAgendaPage } from './pages/DayAgendaPage'
 import { EditGoalsPage } from './pages/EditGoalsPage'
@@ -174,71 +176,76 @@ function AppShell() {
   }
 
   return (
-    <div className="app-shell">
-      {saveStatus === 'error' && (
-        <div className="save-banner" role="status">
-          No pudimos guardar tus últimos cambios. Reintentando…
-        </div>
-      )}
-      <header className="app-header">
-        <div className="container app-header__row">
-          <div className="brand">
-            <div className="brand__row">
-              <LogoMark size={26} />
-              <h1 className="brand__name">{appName}</h1>
-            </div>
-            <p className="brand__date">{formatLongDate(state.today)}</p>
+    <NotificationProvider>
+      <div className="app-shell">
+        {saveStatus === 'error' && (
+          <div className="save-banner" role="status">
+            No pudimos guardar tus últimos cambios. Reintentando…
           </div>
-          <nav className="nav" aria-label="Secciones">
-            {orderTabs(NAV_TABS, state.data.settings.navOrder).map((item) => (
-              <button
-                key={item.path}
-                type="button"
-                className={`nav__item${isWithin(location.pathname, item.path) ? ' nav__item--active' : ''}`}
-                aria-current={isWithin(location.pathname, item.path) ? 'page' : undefined}
-                onClick={() => navigate(item.path)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </nav>
-        </div>
-      </header>
+        )}
+        <header className="app-header">
+          <div className="container app-header__row">
+            <div className="brand">
+              <div className="brand__row">
+                <LogoMark size={26} />
+                <h1 className="brand__name">{appName}</h1>
+              </div>
+              <p className="brand__date">{formatLongDate(state.today)}</p>
+            </div>
+            <div className="app-header__actions">
+              <nav className="nav" aria-label="Secciones">
+                {orderTabs(NAV_TABS, state.data.settings.navOrder).map((item) => (
+                  <button
+                    key={item.path}
+                    type="button"
+                    className={`nav__item${isWithin(location.pathname, item.path) ? ' nav__item--active' : ''}`}
+                    aria-current={isWithin(location.pathname, item.path) ? 'page' : undefined}
+                    onClick={() => navigate(item.path)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </nav>
+              <NotificationBell />
+            </div>
+          </div>
+        </header>
 
-      <main>
-        <div className="container">
-          <Routes>
-            <Route path="/" element={<TodayPage onNavigate={navigate} />} />
-            <Route path="/agenda" element={<SectionLayout items={AGENDA_ITEMS} ariaLabel="Agenda" />}>
-              <Route index element={<DayAgendaPage />} />
-              <Route path="mes" element={<MonthAgendaPage />} />
-              <Route path="semana" element={<PlannerPage />} />
-              <Route path="enfoque" element={<FocusPage />} />
-            </Route>
-            <Route path="/proyectos" element={<ProjectsPage />} />
-            <Route path="/objetivos" element={<SectionLayout items={OBJETIVOS_ITEMS} ariaLabel="Objetivos" />}>
-              <Route index element={<GoalsPage />} />
-              <Route path="habitos" element={<HabitsPage />} />
-              <Route path="rutinas" element={<RoutinesPage />} />
-              <Route path="editar" element={<EditGoalsPage />} />
-            </Route>
-            <Route path="/historial" element={<SectionLayout items={HISTORIAL_ITEMS} ariaLabel="Historial" />}>
-              <Route index element={<HistoryPage />} />
-              <Route path="calendario" element={<CalendarPage />} />
-              <Route path="mapa-anual" element={<HabitYearMapPage />} />
-              <Route path="notas" element={<NotesPage />} />
-            </Route>
-            <Route path="/informes" element={<SectionLayout items={INFORMES_ITEMS} ariaLabel="Informes" />}>
-              <Route index element={<InformesPage />} />
-              <Route path="revision" element={<MonthlyReviewPage />} />
-            </Route>
-            <Route path="/ajustes" element={<SettingsPage />} />
-            <Route path="/premium" element={<PremiumPage />} />
-            <Route path="/premium/confirmacion" element={<PremiumConfirmationPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </div>
-      </main>
-    </div>
+        <main>
+          <div className="container">
+            <Routes>
+              <Route path="/" element={<TodayPage onNavigate={navigate} />} />
+              <Route path="/agenda" element={<SectionLayout items={AGENDA_ITEMS} ariaLabel="Agenda" />}>
+                <Route index element={<DayAgendaPage />} />
+                <Route path="mes" element={<MonthAgendaPage />} />
+                <Route path="semana" element={<PlannerPage />} />
+                <Route path="enfoque" element={<FocusPage />} />
+              </Route>
+              <Route path="/proyectos" element={<ProjectsPage />} />
+              <Route path="/objetivos" element={<SectionLayout items={OBJETIVOS_ITEMS} ariaLabel="Objetivos" />}>
+                <Route index element={<GoalsPage />} />
+                <Route path="habitos" element={<HabitsPage />} />
+                <Route path="rutinas" element={<RoutinesPage />} />
+                <Route path="editar" element={<EditGoalsPage />} />
+              </Route>
+              <Route path="/historial" element={<SectionLayout items={HISTORIAL_ITEMS} ariaLabel="Historial" />}>
+                <Route index element={<HistoryPage />} />
+                <Route path="calendario" element={<CalendarPage />} />
+                <Route path="mapa-anual" element={<HabitYearMapPage />} />
+                <Route path="notas" element={<NotesPage />} />
+              </Route>
+              <Route path="/informes" element={<SectionLayout items={INFORMES_ITEMS} ariaLabel="Informes" />}>
+                <Route index element={<InformesPage />} />
+                <Route path="revision" element={<MonthlyReviewPage />} />
+              </Route>
+              <Route path="/ajustes" element={<SettingsPage />} />
+              <Route path="/premium" element={<PremiumPage />} />
+              <Route path="/premium/confirmacion" element={<PremiumConfirmationPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
+        </main>
+      </div>
+    </NotificationProvider>
   )
 }

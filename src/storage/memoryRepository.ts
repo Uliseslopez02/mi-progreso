@@ -1,3 +1,5 @@
+import { DEFAULT_NOTIFICATION_PREFERENCES } from '../domain/notifications'
+import type { AppNotification, NotificationPreferences } from '../domain/notifications'
 import type { AppData, FocusSession, UserPlan } from '../domain/types'
 import type { ProgressRepository } from './repository'
 
@@ -9,6 +11,8 @@ export function createMemoryRepository(
   let data = initial
   let focusSessions: FocusSession[] = []
   let onboardingCompleted = false
+  let notifications: AppNotification[] = []
+  let notificationPreferences: NotificationPreferences = { ...DEFAULT_NOTIFICATION_PREFERENCES }
   return {
     async load() {
       return data ? structuredClone(data) : null
@@ -19,6 +23,8 @@ export function createMemoryRepository(
     async clear() {
       data = null
       focusSessions = []
+      notifications = []
+      notificationPreferences = { ...DEFAULT_NOTIFICATION_PREFERENCES }
     },
     async loadFocusSessions() {
       return structuredClone(focusSessions)
@@ -42,6 +48,26 @@ export function createMemoryRepository(
     },
     async completeOnboarding() {
       onboardingCompleted = true
+    },
+    async loadNotifications() {
+      return structuredClone(notifications)
+    },
+    async insertNotification(notification) {
+      notifications = [notification, ...notifications.filter((n) => n.id !== notification.id)]
+    },
+    async markNotificationRead(id) {
+      const readAt = new Date().toISOString()
+      notifications = notifications.map((n) => (n.id === id ? { ...n, readAt } : n))
+    },
+    async markAllNotificationsRead() {
+      const readAt = new Date().toISOString()
+      notifications = notifications.map((n) => (n.readAt ? n : { ...n, readAt }))
+    },
+    async getNotificationPreferences() {
+      return { ...notificationPreferences }
+    },
+    async saveNotificationPreferences(patch) {
+      notificationPreferences = { ...notificationPreferences, ...patch }
     },
   }
 }
