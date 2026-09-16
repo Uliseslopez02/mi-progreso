@@ -2413,7 +2413,20 @@ main { flex: 1; padding: 28px 0 72px; }
   .app-header__actions { width: 100%; }
   .nav { width: 100%; }
   .nav__item { flex: 1; text-align: center; }
-  .notif-panel { right: -8px; left: -8px; width: auto; }
+  /* `position: absolute` con left/right calcula el ancho contra el
+     contenedor posicionado más cercano (`.notif-bell`, ~38px, el botón de
+     la campana) — no contra el viewport, así que el panel quedaba angosto
+     y corrido hacia la derecha, fuera de pantalla. `fixed` lo ancla al
+     viewport: se abre centrado debajo del header, no "al costado". */
+  .notif-panel {
+    position: fixed;
+    top: calc(64px + env(safe-area-inset-top));
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100vh - 84px - env(safe-area-inset-top));
+  }
   .settings-goal { grid-template-columns: 1fr; }
   .stat-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
   .goal-edit-modal__row > * { flex-basis: 100%; }

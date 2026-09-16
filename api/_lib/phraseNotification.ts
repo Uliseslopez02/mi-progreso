@@ -39,7 +39,26 @@ function extractJsonObjectText(raw: string): string {
   return trimmed
 }
 
+/**
+ * Dos familias de notificación, mismo prompt base pero distinta licencia de
+ * tono: las de estadística/acción (logro, racha, objetivo, recordatorio) son
+ * directas y quirúrgicas — el dato ES el mensaje, no necesitan calidez extra.
+ * Las motivacionales (positiva, "volver a entrar", resumen semanal) son las
+ * que acompañan cuando no hay un número puntual que festejar o resolver, así
+ * que ahí sí hay lugar para un emoji con criterio y un poco más de calidez,
+ * sin perder la voz (nunca "cheerleader").
+ */
+const MOTIVATIONAL_TYPES = new Set(['motivation_positive', 'motivation_comeback', 'recap_weekly'])
+
 function buildPrompt(type: string, context: PhraseContext, fallbackTitle: string, fallbackBody: string): string {
+  const isMotivational = MOTIVATIONAL_TYPES.has(type)
+  const emojiRule = isMotivational
+    ? 'Podés sumar como máximo 1 emoji, sólo si refuerza genuinamente el sentimiento del mensaje (nunca decorativo ni al final "porque sí").'
+    : 'Sin emojis en el cuerpo salvo que la plantilla ya tuviera uno — acá el dato es el mensaje.'
+  const toneNote = isMotivational
+    ? 'Esta es una notificación motivacional (no hay un logro puntual ni una acción urgente que resolver): tenés algo más de licencia para la calidez humana, siempre y cuando siga siendo específica y no genérica.'
+    : 'Esta es una notificación de estadística/acción: priorizá precisión y claridad sobre calidez — el número y la acción concreta van primero.'
+
   const contextSummary = JSON.stringify({
     tipo: type,
     tendencia: context.trend,
@@ -75,7 +94,7 @@ Ya se decidió QUÉ notificación mandar (eso no lo decidís vos) — tu única 
 el cuerpo de ese mensaje, en español rioplatense, usando SÓLO los datos reales de este contexto (nunca
 inventes números, nombres ni logros que no estén acá). Personalizá de verdad: el número concreto del
 contexto (racha, porcentaje, delta semanal) tiene que aparecer o notarse en el mensaje, no quedar
-implícito — es lo que lo distingue de un genérico:
+implícito — es lo que lo distingue de un genérico. ${toneNote}
 ${contextSummary}
 
 Mensaje de referencia (versión plantilla, es el piso — mejorala, dale más filo y personalidad, pero no la
@@ -84,7 +103,7 @@ Título: "${fallbackTitle}"
 Cuerpo: "${fallbackBody}"
 
 Reglas estrictas:
-- Cuerpo: una sola frase corta (máximo 22 palabras), sin emojis salvo que la plantilla ya tuviera uno.
+- Cuerpo: una sola frase corta (máximo 22 palabras). ${emojiRule}
 - Nunca frases genéricas tipo "¡Vos podés!", "¡Nunca te rindas!", "¡Hoy es un gran día!", "¡Seguí así!".
 - Nunca dobles espacios ni comillas dentro del texto.
 - Si el contexto sugiere un momento difícil (tendencia descendente, baja actividad), el tono acompaña
