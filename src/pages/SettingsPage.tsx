@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { NotificationPreferencesCard } from '../components/NotificationPreferencesCard'
+import { NumberStepper } from '../components/NumberStepper'
 import { Toggle } from '../components/Toggle'
 import { CATEGORY_COLOR_NAMES, CATEGORY_PALETTE } from '../domain/categoryColors'
 import { createEmptyData } from '../domain/defaults'
@@ -107,22 +108,17 @@ export function SettingsPage() {
               Porcentaje mínimo para mantener la racha
             </label>
             <div className="row">
-              <input
+              <NumberStepper
                 id="streak-threshold"
-                className="input"
-                type="number"
                 min={1}
                 max={100}
-                style={{ width: 110 }}
                 value={data.settings.streakThreshold}
-                onChange={(e) => {
-                  const value = Number(e.target.value)
-                  if (!Number.isFinite(value)) return
+                onCommit={(value) =>
                   dispatch({
                     type: 'updateSettings',
-                    patch: { streakThreshold: Math.min(100, Math.max(1, Math.round(value))) },
+                    patch: { streakThreshold: value ?? 1 },
                   })
-                }}
+                }
               />
               <span className="card__hint">Un día cuenta para la racha si llega a este valor.</span>
             </div>
