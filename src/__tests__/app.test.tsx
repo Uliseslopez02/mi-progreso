@@ -12,8 +12,12 @@ import { STORAGE_KEY, createLocalStorageRepository } from '../storage/localStora
 
 vi.mock('../auth/supabaseAuth', () => ({ signOut: vi.fn(), getSession: vi.fn().mockResolvedValue(null) }))
 
-function renderApp() {
+function renderApp(options: { plan?: 'free' | 'premium' } = {}) {
   const repository = createLocalStorageRepository()
+  if (options.plan) {
+    const plan = options.plan
+    repository.getUserPlan = () => Promise.resolve(plan)
+  }
   // AppProvider ya no siembra createInitialData() por defecto (eso ahora lo
   // hace el onboarding) — para probar la app "normal" hay que sembrar acá, pero
   // sólo si todavía no hay nada guardado: algunos tests llaman a renderApp()
@@ -162,7 +166,9 @@ describe('Mi Progreso', () => {
 
   it('un objetivo creado en Objetivos → Editar aparece hoy', async () => {
     const user = userEvent.setup()
-    renderApp()
+    // El seed de ejemplo trae 11 objetivos diarios (por encima del límite Free):
+    // para probar el alta hace falta una cuenta sin ese tope.
+    renderApp({ plan: 'premium' })
     await screen.findByText('Objetivos de hoy')
 
     await user.click(screen.getByRole('button', { name: 'Objetivos' }))
@@ -182,6 +188,22 @@ describe('Mi Progreso', () => {
 
     await user.click(screen.getByRole('button', { name: 'Ajustes' }))
     expect(await screen.findByText('Pasar a Premium →')).toBeInTheDocument()
+  })
+
+  it('Free por encima del límite de objetivos diarios: no rompe nada, pero no deja agregar y ofrece Premium', async () => {
+    const user = userEvent.setup()
+    renderApp() // seed de ejemplo = 11 objetivos diarios, cuenta Free
+    await screen.findByText('Objetivos de hoy')
+
+    // Los 11 objetivos existentes se siguen viendo y marcando (grandfathering).
+    expect(screen.getByRole('checkbox', { name: /Hacer actividad física/ })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Objetivos' }))
+    await user.click(screen.getByRole('button', { name: 'Editar' }))
+
+    expect(await screen.findByText(/Llegaste a 5 objetivos diarios/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Ver Premium/ })).toHaveAttribute('href', '/premium')
+    expect(screen.getByRole('button', { name: 'Agregar' })).toBeDisabled()
   })
 
   it('reordenar la navegación en Ajustes cambia la barra superior y persiste', async () => {
@@ -265,7 +287,9 @@ describe('Mi Progreso', () => {
 
   it('el historial muestra el gráfico y las estadísticas', async () => {
     const user = userEvent.setup()
-    renderApp()
+    // 30 días es rango Premium (ver domain/plan.ts): para probar el cambio de
+    // rango en sí, no el gating, hace falta una cuenta sin ese tope.
+    renderApp({ plan: 'premium' })
     await screen.findByText('Objetivos de hoy')
 
     await user.click(screen.getByRole('button', { name: 'Historial' }))
@@ -279,6 +303,24 @@ describe('Mi Progreso', () => {
     expect(
       await screen.findByRole('img', { name: /Progreso diario de los últimos 30 días/ }),
     ).toBeInTheDocument()
+  })
+
+  it('Free no puede ver más de 7 días de historial, pero se le explica el porqué', async () => {
+    const user = userEvent.setup()
+    renderApp() // plan free por defecto
+    await screen.findByText('Objetivos de hoy')
+
+    await user.click(screen.getByRole('button', { name: 'Historial' }))
+    expect(
+      await screen.findByRole('img', { name: /Progreso diario de los últimos 7 días/ }),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /30 días/ }))
+
+    // El rango no cambia (sigue en 7) y aparece el aviso de upgrade, no un error.
+    expect(screen.getByRole('img', { name: /Progreso diario de los últimos 7 días/ })).toBeInTheDocument()
+    expect(await screen.findByText(/Estás viendo los últimos 7 días/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Ver Premium/ })).toHaveAttribute('href', '/premium')
   })
 
   it('el historial muestra la constancia de cada objetivo', async () => {
@@ -382,7 +424,7 @@ describe('Mi Progreso', () => {
 
   it('un objetivo cuantitativo se crea desde Objetivos → Editar, se puede cargar progreso y persiste', async () => {
     const user = userEvent.setup()
-    const { repository } = renderApp()
+    const { repository } = renderApp({ plan: 'premium' })
     await screen.findByText('Objetivos de hoy')
 
     await user.click(screen.getByRole('button', { name: 'Objetivos' }))

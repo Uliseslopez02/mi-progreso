@@ -40,6 +40,7 @@ export function createMemoryRepository(
         status: plan === 'premium' ? 'active' : 'free',
         planTier: plan === 'premium' ? 'premium_monthly' : 'free',
         currentPeriodEnd: null,
+        trialEnd: null,
         aiUsage: plan === 'premium' ? null : { count: 0, limit: 3 },
       }
     },

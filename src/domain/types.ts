@@ -385,5 +385,6 @@ export interface SubscriptionSummary {
   status: 'free' | 'trial' | 'active' | 'past_due' | 'canceled' | 'expired'
   planTier: 'free' | 'premium_monthly' | 'premium_yearly'
   currentPeriodEnd: string | null
+  trialEnd: string | null
   aiUsage: { count: number; limit: number } | null
 }

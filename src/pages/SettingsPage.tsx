@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom'
 import { NotificationPreferencesCard } from '../components/NotificationPreferencesCard'
 import { NumberStepper } from '../components/NumberStepper'
 import { Toggle } from '../components/Toggle'
+import { UpgradeCard } from '../components/UpgradeCard'
 import { CATEGORY_COLOR_NAMES, CATEGORY_PALETTE } from '../domain/categoryColors'
+import { isAtLimit } from '../domain/plan'
 import { createEmptyData } from '../domain/defaults'
 import { NAV_TABS, orderTabs } from '../domain/navigation'
 import { createId } from '../domain/id'
@@ -67,9 +69,11 @@ export function SettingsPage() {
     dispatch({ type: 'updateSettings', patch: { navOrder: next } })
   }
 
+  const categoriesAtLimit = isAtLimit(plan, 'categories', data.categories.length)
+
   const addCategory = () => {
     const name = newCategory.trim()
-    if (!name) return
+    if (!name || categoriesAtLimit) return
     dispatch({
       type: 'addCategory',
       category: { id: createId('cat'), name, order: categories.length },
@@ -250,10 +254,11 @@ export function SettingsPage() {
               }}
             />
           </div>
-          <button type="button" className="btn" onClick={addCategory}>
+          <button type="button" className="btn" onClick={addCategory} disabled={categoriesAtLimit}>
             Agregar categoría
           </button>
         </div>
+        {categoriesAtLimit && <UpgradeCard limit="categories" compact />}
       </section>
 
       <section className="card">

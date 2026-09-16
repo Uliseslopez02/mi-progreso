@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react'
+import { UpgradeCard } from '../components/UpgradeCard'
 import { formatLongDate } from '../domain/date'
 import { createId } from '../domain/id'
+import { isAtLimit } from '../domain/plan'
 import type { Note } from '../domain/types'
 import { useAppData } from '../state/context'
 
 /** Notas: texto libre sin consigna fija — distinto de Reflection (Momento Mori/Revisión mensual). */
 export function NotesPage() {
-  const { data, today, dispatch } = useAppData()
+  const { data, today, plan, dispatch } = useAppData()
+  const notesAtLimit = isAtLimit(plan, 'notes', data.notes.length)
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -22,7 +25,7 @@ export function NotesPage() {
 
   const saveNote = () => {
     const text = body.trim()
-    if (!text) return
+    if (!text || notesAtLimit) return
     dispatch({
       type: 'addNote',
       note: {
@@ -67,9 +70,15 @@ export function NotesPage() {
             onChange={(e) => setBody(e.target.value)}
           />
         </div>
-        <button type="button" className="btn btn--primary" onClick={saveNote}>
+        <button
+          type="button"
+          className="btn btn--primary"
+          onClick={saveNote}
+          disabled={notesAtLimit}
+        >
           Guardar nota
         </button>
+        {notesAtLimit && <UpgradeCard limit="notes" compact />}
       </section>
 
       {sortedNotes.length > 0 && (
