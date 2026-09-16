@@ -13,6 +13,9 @@ interface Props {
   placeholder?: string
   style?: React.CSSProperties
   className?: string
+  /** Clase adicional aplicada al <input>, no al contenedor (para reusar estilos existentes de un input suelto). */
+  inputClassName?: string
+  disabled?: boolean
 }
 
 /**
@@ -32,6 +35,8 @@ export function NumberStepper({
   placeholder,
   style,
   className,
+  inputClassName,
+  disabled = false,
 }: Props) {
   const [text, setText] = useState(value === undefined ? '' : String(value))
 
@@ -90,13 +95,14 @@ export function NumberStepper({
         type="button"
         className="number-stepper__btn"
         aria-label={ariaLabel ? `Bajar ${ariaLabel}` : 'Bajar valor'}
+        disabled={disabled}
         onClick={() => stepBy(-step)}
       >
         −
       </button>
       <input
         id={id}
-        className="input number-stepper__input"
+        className={`input number-stepper__input${inputClassName ? ` ${inputClassName}` : ''}`}
         type="number"
         inputMode="numeric"
         min={min}
@@ -104,8 +110,10 @@ export function NumberStepper({
         value={text}
         placeholder={placeholder}
         aria-label={ariaLabel}
+        disabled={disabled}
         onChange={(e) => handleChange(e.target.value)}
         onBlur={(e) => commitFromText(e.target.value)}
+        onWheel={(e) => e.currentTarget.blur()}
         onKeyDown={(e) => {
           if (e.key === 'Enter') e.currentTarget.blur()
         }}
@@ -114,6 +122,7 @@ export function NumberStepper({
         type="button"
         className="number-stepper__btn"
         aria-label={ariaLabel ? `Subir ${ariaLabel}` : 'Subir valor'}
+        disabled={disabled}
         onClick={() => stepBy(step)}
       >
         +
