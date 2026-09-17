@@ -13,6 +13,9 @@ export type AnalyticsEvent =
   | { name: 'limit_reached'; limit: string }
   | { name: 'upgrade_cta_clicked'; from: string }
   | { name: 'premium_page_viewed' }
+  | { name: 'premium_banner_viewed' }
+  | { name: 'premium_banner_clicked' }
+  | { name: 'premium_banner_dismissed' }
   | { name: 'checkout_started'; planTier: 'premium_monthly' | 'premium_yearly' }
   | { name: 'checkout_redirected'; planTier: 'premium_monthly' | 'premium_yearly' }
   | { name: 'checkout_failed'; planTier: 'premium_monthly' | 'premium_yearly'; reason: string }

@@ -265,6 +265,34 @@ main { flex: 1; padding: 28px 0 72px; }
 .plan-compare__free { color: var(--text-dim); }
 .plan-compare__pro { color: var(--text); font-weight: 550; }
 
+/* ---------- Banner de Premium (dashboard) ---------- */
+.premium-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 52px 18px 20px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.14) 0%, var(--surface) 70%);
+}
+
+.premium-banner__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+
+.premium-banner__title { font-weight: 600; font-size: 0.95rem; }
+
+.premium-banner__hint { font-size: 0.85rem; color: var(--text-muted); }
+
+.premium-banner__cta { flex-shrink: 0; text-decoration: none; }
+
+.premium-banner__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+}
+
 .card__title { font-size: 1rem; font-weight: 600; }
 
 .card__hint { font-size: 0.82rem; color: var(--text-muted); }
@@ -2472,6 +2500,8 @@ main { flex: 1; padding: 28px 0 72px; }
   main { padding: 20px 0 56px; }
   .card { padding: 18px; }
   .hero { padding: 24px 16px; }
+  .premium-banner { flex-direction: column; align-items: stretch; padding: 18px 44px 18px 18px; }
+  .premium-banner__cta { width: 100%; text-align: center; }
   .ring__percent { font-size: 2.9rem; }
   .app-header__row { flex-direction: column; align-items: stretch; }
   .app-header__actions { width: 100%; }

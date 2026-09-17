@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { GoalList } from '../components/GoalList'
 import { PeriodGoalsCard } from '../components/PeriodGoalsCard'
+import { PremiumBanner } from '../components/PremiumBanner'
 import { ProgressRing } from '../components/ProgressRing'
 import { WeekCard } from '../components/WeekCard'
 import { goalCompletionOn } from '../domain/consistency'
@@ -30,7 +31,7 @@ interface Props {
 }
 
 export function TodayPage({ onNavigate }: Props) {
-  const { data, today, dispatch } = useAppData()
+  const { data, today, dispatch, plan } = useAppData()
   const record = data.days[today]
   const stats = computeDayStats(record)
   // Los hábitos tienen su propia sección (Hábitos): acá sólo objetivos que puntúan.
@@ -75,6 +76,8 @@ export function TodayPage({ onNavigate }: Props) {
 
   return (
     <div className="stack">
+      {plan !== 'premium' && <PremiumBanner />}
+
       <div className="today-grid">
         <section className="card hero">
           <p className="hero__eyebrow">
