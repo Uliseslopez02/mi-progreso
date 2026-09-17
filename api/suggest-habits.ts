@@ -21,6 +21,22 @@ function jsonResponse(body: unknown, status: number): Response {
 }
 
 /**
+ * Haiku a veces ignora "sin texto adicional ni markdown" y envuelve el JSON
+ * en un code fence (```json ... ```) o le agrega una frase antes/después.
+ * Sin esto, `JSON.parse` tira y la persona usuaria ve "no se generaron
+ * sugerencias" aunque Claude sí haya respondido bien.
+ */
+function extractJsonArrayText(raw: string): string {
+  const trimmed = raw.trim()
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+  if (fenced) return fenced[1].trim()
+  const start = trimmed.indexOf('[')
+  const end = trimmed.lastIndexOf(']')
+  if (start !== -1 && end !== -1 && end > start) return trimmed.slice(start, end + 1)
+  return trimmed
+}
+
+/**
  * Valida el JWT de sesión de Supabase que manda el cliente (header
  * `Authorization: Bearer <token>`), reusando las mismas `VITE_SUPABASE_URL`/
  * `VITE_SUPABASE_ANON_KEY` que ya son públicas (Vercel las expone también a
@@ -168,7 +184,7 @@ Ejemplo de formato: [{"text":"Entrenar 30 minutos","timesPerWeek":4},{"text":"Pr
 
   let suggestions: Suggestion[] = []
   try {
-    const parsed = JSON.parse(text)
+    const parsed = JSON.parse(extractJsonArrayText(text))
     if (Array.isArray(parsed)) {
       suggestions = parsed
         .filter(
@@ -182,8 +198,14 @@ Ejemplo de formato: [{"text":"Entrenar 30 minutos","timesPerWeek":4},{"text":"Pr
         .slice(0, 5)
     }
   } catch (err) {
-    console.error('[suggest-habits] no se pudo parsear la respuesta de Claude', err)
+    console.error('[suggest-habits] no se pudo parsear la respuesta de Claude', err, 'texto crudo:', text.slice(0, 500))
     suggestions = []
+  }
+
+  if (suggestions.length === 0) {
+    // Parseó pero quedó vacío (o el filtro descartó todo) — nunca debería
+    // pasar con una meta válida, así que vale la pena verlo en los logs.
+    console.error('[suggest-habits] la respuesta de Claude no produjo sugerencias, texto crudo:', text.slice(0, 500))
   }
 
   return jsonResponse({ suggestions }, 200)

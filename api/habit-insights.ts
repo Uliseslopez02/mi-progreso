@@ -40,6 +40,17 @@ function jsonResponse(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
 }
 
+/** Ver la misma función en api/suggest-habits.ts — mismo motivo y mismo fix. */
+function extractJsonArrayText(raw: string): string {
+  const trimmed = raw.trim()
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+  if (fenced) return fenced[1].trim()
+  const start = trimmed.indexOf('[')
+  const end = trimmed.lastIndexOf(']')
+  if (start !== -1 && end !== -1 && end > start) return trimmed.slice(start, end + 1)
+  return trimmed
+}
+
 /** Ver la misma función en api/suggest-habits.ts — mismo criterio de auth. */
 async function isAuthenticated(request: Request): Promise<boolean> {
   const auth = request.headers.get('authorization')
@@ -184,12 +195,12 @@ Ejemplo de formato: ["Cumplís mejor los martes y jueves que el resto de la sema
 
   let insights: string[] = []
   try {
-    const parsed = JSON.parse(text)
+    const parsed = JSON.parse(extractJsonArrayText(text))
     if (Array.isArray(parsed)) {
       insights = parsed.filter((s): s is string => typeof s === 'string' && s.trim().length > 0).slice(0, 3)
     }
   } catch (err) {
-    console.error('[habit-insights] no se pudo parsear la respuesta de Claude', err)
+    console.error('[habit-insights] no se pudo parsear la respuesta de Claude', err, 'texto crudo:', text.slice(0, 500))
     insights = []
   }
 
