@@ -1,8 +1,11 @@
 // Middleware de Vercel (Edge Runtime, corre antes de servir cualquier ruta
-// — estáticos, rewrites del SPA y funciones de `api/`) que protege TODO el
-// sitio con un usuario/contraseña compartido entre las personas autorizadas.
-// Es un gate independiente del login real de la app (Supabase Auth, ver
-// `src/auth`): éste sólo decide si alguien puede siquiera ver el sitio.
+// — estáticos, rewrites del SPA y funciones de `api/`) que protege la app
+// real con un usuario/contraseña compartido entre las personas autorizadas,
+// dejando afuera del gate las landings públicas de marketing (ver
+// `PUBLIC_PATH_PREFIXES` más abajo) para que sigan siendo accesibles sin
+// cuenta e indexables por buscadores. Es un gate independiente del login
+// real de la app (Supabase Auth, ver `src/auth`): éste sólo decide si
+// alguien puede siquiera ver la app.
 //
 // Los usuarios autorizados viven en la tabla `site_gate_users` (ver
 // `supabase/migrations/0028_site_gate_users.sql`) — alta con
@@ -21,6 +24,37 @@ const SESSION_MS = 30 * 24 * 60 * 60 * 1000
 // webhook de Mercado Pago y el cron de notificaciones (éste ya valida su
 // propio CRON_SECRET, ver api/send-notifications.ts).
 const BYPASS_PATHS = new Set(['/api/mp-webhook', '/api/send-notifications'])
+
+// Landings públicas de marketing: tienen que verse sin cuenta ni contraseña
+// (son el material que se comparte en redes / lo que indexa Google) — el
+// gate de sitio es para no exponer la app real todavía, no para tapar las
+// páginas de venta. Cualquier subruta debajo de estos prefijos también pasa.
+const PUBLIC_PATH_PREFIXES = ['/producto', '/presentacion']
+
+// Assets estáticos que esas landings necesitan para renderizar (JS/CSS del
+// build de Vite + los archivos de `public/`). Sin esto, el HTML de
+// `/producto`/`/presentacion` cargaría pero se rompería al pedir su propio
+// bundle, porque quedaría atrapado por el gate igual que cualquier otra ruta.
+// No es información sensible: es el mismo bundle cliente que ya se sirve a
+// cualquiera que pase el gate, y no contiene secretos (ver CONTEXTO_IA.md).
+const PUBLIC_ASSET_PREFIXES = ['/assets/']
+const PUBLIC_ASSET_FILES = new Set([
+  '/logo.svg',
+  '/apple-touch-icon.png',
+  '/favicon-48.png',
+  '/pwa-192.png',
+  '/pwa-512.png',
+  '/pwa-maskable-512.png',
+  '/manifest.webmanifest',
+  '/sw.js',
+  '/registerSW.js',
+])
+
+function isPublicPath(pathname: string): boolean {
+  if (PUBLIC_ASSET_FILES.has(pathname)) return true
+  if (PUBLIC_ASSET_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return true
+  return PUBLIC_PATH_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+}
 
 async function hmacHex(secret: string, value: string): Promise<string> {
   const key = await crypto.subtle.importKey(
@@ -131,7 +165,7 @@ function html(body: string, status = 200): Response {
 export default async function middleware(request: Request): Promise<Response> {
   const url = new URL(request.url)
 
-  if (BYPASS_PATHS.has(url.pathname)) return next()
+  if (BYPASS_PATHS.has(url.pathname) || isPublicPath(url.pathname)) return next()
 
   const secret = process.env.SITE_GATE_SECRET
   if (!secret) return html('<h1>Sitio en configuración.</h1>', 503)
