@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { NumberStepper } from '../../components/NumberStepper'
 import { computeDayStats, formatGrade } from '../../domain/scoring'
 import { SectionFrame } from '../SectionFrame'
 import { TODAY } from '../demoData'
@@ -79,19 +80,13 @@ export function PercentageSystemSection() {
                   value={goal.name}
                   onChange={(e) => updateGoal(goal.id, { name: e.target.value })}
                 />
-                <input
-                  className="input pr-percent__weight-input"
-                  type="number"
+                <NumberStepper
+                  inputClassName="pr-percent__weight-input"
                   min={1}
                   max={999}
-                  aria-label={`Peso de ${goal.name}`}
+                  ariaLabel={`Peso de ${goal.name}`}
                   value={goal.weight}
-                  onChange={(e) => {
-                    const weight = Number(e.target.value)
-                    if (!Number.isFinite(weight)) return
-                    updateGoal(goal.id, { weight: Math.min(999, Math.max(1, Math.round(weight))) })
-                  }}
-                  onWheel={(e) => e.currentTarget.blur()}
+                  onCommit={(weight) => updateGoal(goal.id, { weight: weight ?? 1 })}
                 />
               </div>
             ))}

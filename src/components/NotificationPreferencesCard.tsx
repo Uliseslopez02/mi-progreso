@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { isPushSupported, subscribeToPush, unsubscribeFromPush } from '../domain/push'
+import { NumberStepper } from './NumberStepper'
 import { Toggle } from './Toggle'
 import { useNotifications } from '../state/notificationContext'
 
@@ -95,36 +96,22 @@ export function NotificationPreferencesCard() {
             Horario sin notificaciones
           </label>
           <div className="row" id="quiet-hours">
-            <input
-              className="input"
-              type="number"
+            <NumberStepper
               min={0}
               max={23}
-              style={{ width: 90 }}
-              aria-label="Desde qué hora"
+              ariaLabel="Desde qué hora"
               value={preferences.quietHoursStart}
               disabled={!preferences.enabled}
-              onChange={(e) => {
-                const value = Number(e.target.value)
-                if (!Number.isFinite(value)) return
-                void updatePreferences({ quietHoursStart: Math.min(23, Math.max(0, Math.round(value))) })
-              }}
+              onCommit={(value) => void updatePreferences({ quietHoursStart: value ?? 0 })}
             />
             <span className="card__hint">a</span>
-            <input
-              className="input"
-              type="number"
+            <NumberStepper
               min={0}
               max={23}
-              style={{ width: 90 }}
-              aria-label="Hasta qué hora"
+              ariaLabel="Hasta qué hora"
               value={preferences.quietHoursEnd}
               disabled={!preferences.enabled}
-              onChange={(e) => {
-                const value = Number(e.target.value)
-                if (!Number.isFinite(value)) return
-                void updatePreferences({ quietHoursEnd: Math.min(23, Math.max(0, Math.round(value))) })
-              }}
+              onCommit={(value) => void updatePreferences({ quietHoursEnd: value ?? 0 })}
             />
             <span className="card__hint">hs</span>
           </div>
