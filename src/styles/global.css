@@ -2505,22 +2505,16 @@ main { flex: 1; padding: 28px 0 72px; }
   .ring__percent { font-size: 2.9rem; }
   .app-header__row { flex-direction: column; align-items: stretch; }
   .app-header__actions { width: 100%; }
-  .nav { width: 100%; }
+  /* `width: 100%` acá (en vez de `flex: 1; min-width: 0;`) no dejaba lugar
+     para la campana de notificaciones, su hermana en el mismo flex row: el
+     nav pedía el 100% del ancho de `.app-header__actions` y la campana se
+     sumaba aparte, desbordando la fila hacia la derecha y empujando la
+     campana (y el badge) fuera de pantalla. `flex: 1` la deja compartir la
+     fila con la campana; el scroll horizontal propio del nav (ver
+     `overflow-x: auto` más arriba) sigue cubriendo el caso de que los tabs
+     no entren. */
+  .nav { flex: 1 1 auto; min-width: 0; }
   .nav__item { flex: 1; text-align: center; }
-  /* `position: absolute` con left/right calcula el ancho contra el
-     contenedor posicionado más cercano (`.notif-bell`, ~38px, el botón de
-     la campana) — no contra el viewport, así que el panel quedaba angosto
-     y corrido hacia la derecha, fuera de pantalla. `fixed` lo ancla al
-     viewport: se abre centrado debajo del header, no "al costado". */
-  .notif-panel {
-    position: fixed;
-    top: calc(64px + env(safe-area-inset-top));
-    left: 12px;
-    right: 12px;
-    width: auto;
-    max-width: none;
-    max-height: calc(100vh - 84px - env(safe-area-inset-top));
-  }
   .settings-goal { grid-template-columns: 1fr; }
   .stat-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
   .goal-edit-modal__row > * { flex-basis: 100%; }
@@ -2605,6 +2599,26 @@ main { flex: 1; padding: 28px 0 72px; }
   box-shadow: var(--shadow);
   padding: 16px;
   z-index: 30;
+}
+
+/* `position: absolute` con left/right calcula el ancho contra el
+   contenedor posicionado más cercano (`.notif-bell`, ~38px, el botón de la
+   campana) — no contra el viewport, así que el panel quedaba angosto y
+   corrido hacia la derecha, fuera de pantalla. `fixed` lo ancla al viewport:
+   se abre centrado debajo del header, no "al costado". Declarado después de
+   la regla base de arriba a propósito: misma especificidad, así que si
+   quedara antes la regla base (sin media query, siempre aplica) la pisa por
+   orden de cascada y este fix queda muerto. */
+@media (max-width: 620px) {
+  .notif-panel {
+    position: fixed;
+    top: calc(64px + env(safe-area-inset-top));
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100vh - 84px - env(safe-area-inset-top));
+  }
 }
 
 .notif-panel__header {
